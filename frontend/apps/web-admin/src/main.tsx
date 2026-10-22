@@ -1,4 +1,6 @@
 import '@dop/ui/tokens.css';
+import '@dop/ui/ember.css';
+import { preloadMotion } from '@dop/ui';
 import { initI18n, useTranslation } from '@dop/i18n';
 import { ErrorBoundary } from '@dop/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -114,6 +116,9 @@ const router = createBrowserRouter(
 );
 
 const queryClient = createQueryClient();
+
+// GSAP motion: loaded after first render, never for reduced motion (packages/ui/src/motion.ts).
+preloadMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

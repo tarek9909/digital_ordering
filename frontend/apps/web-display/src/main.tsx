@@ -1,6 +1,7 @@
 import '@dop/ui/tokens.css';
 import '@dop/ui/ember.css';
 import './display.css';
+import { preloadMotion } from '@dop/ui';
 import { pickLocale } from '@dop/client-sdk';
 import { initI18n, useTranslation } from '@dop/i18n';
 import { ErrorBoundary } from '@dop/ui';
@@ -25,6 +26,9 @@ function Fallback() {
   const { t } = useTranslation();
   return <main className="flex min-h-dvh items-center justify-center bg-surface p-8 text-center text-[4vmin] text-ink">{t('common:somethingWrong')}</main>;
 }
+
+// GSAP motion: loaded after first render, never for reduced motion (packages/ui/src/motion.ts).
+preloadMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
