@@ -1,21 +1,9 @@
 import { useTranslation } from '@dop/i18n';
 import type { ReactNode } from 'react';
 
-// Shared visuals for the landing page: device frames, the alert-ring motif, the placeholder brand mark and the
+// Shared visuals for the landing page: device frames, the alert-ring motif and the
 // illustrated "photo" scenes. The scenes stand in for real photography: each carries `data-photo-slot` so a
 // photo can replace it later without touching the layout.
-
-/** Placeholder for the Tanbeeh logo until the final mark exists: a bell inside the ember dot. */
-export function BrandMark({ className = 'size-8' }: { className?: string }) {
-  return (
-    <span aria-hidden="true" className={`relative inline-flex shrink-0 items-center justify-center rounded-full bg-primary text-on-primary ${className}`} data-logo-placeholder="">
-      <svg viewBox="0 0 24 24" className="size-[58%]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16z" />
-        <path d="M10 20a2 2 0 0 0 4 0" />
-      </svg>
-    </span>
-  );
-}
 
 /** Soft rings that radiate from a number when it becomes ready: Tanbeeh's alert motif. */
 export function AlertRings({ active, className = '' }: { active: boolean; className?: string }) {

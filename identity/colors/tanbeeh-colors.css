@@ -1,0 +1,18 @@
+/* Tanbeeh brand colours (Ember). Source of truth: frontend/packages/ui/src/ember.css */
+:root {
+  --tanbeeh-ember: #C2410C;
+  --tanbeeh-ember-deep: #9A3412;
+  --tanbeeh-glow: #FB923C;
+  --tanbeeh-ember-soft: #FFEDD5;
+  --tanbeeh-ember-wash: #FFF7ED;
+  --tanbeeh-ink: #1C1917;
+  --tanbeeh-ink-2: #44403C;
+  --tanbeeh-muted: #6F6863;
+  --tanbeeh-line: #EEEBE8;
+  --tanbeeh-canvas: #FAF9F7;
+  --tanbeeh-surface: #FFFFFF;
+  --tanbeeh-ok: #15803D;
+  --tanbeeh-warn: #A16207;
+  --tanbeeh-danger: #BE123C;
+  --tanbeeh-info: #1D4ED8;
+}

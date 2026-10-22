@@ -1,0 +1,242 @@
+{
+  "ember": {
+    "name": "Ember",
+    "hex": "#C2410C",
+    "rgb": [
+      194,
+      65,
+      12
+    ],
+    "cmykApprox": [
+      0,
+      66,
+      94,
+      24
+    ],
+    "use": "Primary accent: main action, live numbers, the dot"
+  },
+  "ember-deep": {
+    "name": "Ember deep",
+    "hex": "#9A3412",
+    "rgb": [
+      154,
+      52,
+      18
+    ],
+    "cmykApprox": [
+      0,
+      66,
+      88,
+      40
+    ],
+    "use": "Hover and pressed"
+  },
+  "glow": {
+    "name": "Glow",
+    "hex": "#FB923C",
+    "rgb": [
+      251,
+      146,
+      60
+    ],
+    "cmykApprox": [
+      0,
+      42,
+      76,
+      2
+    ],
+    "use": "Ember on ink surfaces only"
+  },
+  "ember-soft": {
+    "name": "Ember soft",
+    "hex": "#FFEDD5",
+    "rgb": [
+      255,
+      237,
+      213
+    ],
+    "cmykApprox": [
+      0,
+      7,
+      16,
+      0
+    ],
+    "use": "Focus halo, badges"
+  },
+  "ember-wash": {
+    "name": "Ember wash",
+    "hex": "#FFF7ED",
+    "rgb": [
+      255,
+      247,
+      237
+    ],
+    "cmykApprox": [
+      0,
+      3,
+      7,
+      0
+    ],
+    "use": "Row hover, quiet fills"
+  },
+  "ink": {
+    "name": "Ink",
+    "hex": "#1C1917",
+    "rgb": [
+      28,
+      25,
+      23
+    ],
+    "cmykApprox": [
+      0,
+      11,
+      18,
+      89
+    ],
+    "use": "Text, the tile, dark surfaces"
+  },
+  "ink-2": {
+    "name": "Ink 2",
+    "hex": "#44403C",
+    "rgb": [
+      68,
+      64,
+      60
+    ],
+    "cmykApprox": [
+      0,
+      6,
+      12,
+      73
+    ],
+    "use": "Secondary text"
+  },
+  "muted": {
+    "name": "Muted",
+    "hex": "#6F6863",
+    "rgb": [
+      111,
+      104,
+      99
+    ],
+    "cmykApprox": [
+      0,
+      6,
+      11,
+      56
+    ],
+    "use": "Labels, hints"
+  },
+  "line": {
+    "name": "Line",
+    "hex": "#EEEBE8",
+    "rgb": [
+      238,
+      235,
+      232
+    ],
+    "cmykApprox": [
+      0,
+      1,
+      3,
+      7
+    ],
+    "use": "Borders, dividers"
+  },
+  "canvas": {
+    "name": "Canvas",
+    "hex": "#FAF9F7",
+    "rgb": [
+      250,
+      249,
+      247
+    ],
+    "cmykApprox": [
+      0,
+      0,
+      1,
+      2
+    ],
+    "use": "Page background"
+  },
+  "surface": {
+    "name": "Surface",
+    "hex": "#FFFFFF",
+    "rgb": [
+      255,
+      255,
+      255
+    ],
+    "cmykApprox": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "use": "Cards, white base"
+  },
+  "ok": {
+    "name": "OK",
+    "hex": "#15803D",
+    "rgb": [
+      21,
+      128,
+      61
+    ],
+    "cmykApprox": [
+      84,
+      0,
+      52,
+      50
+    ],
+    "use": "Status only"
+  },
+  "warn": {
+    "name": "Warning",
+    "hex": "#A16207",
+    "rgb": [
+      161,
+      98,
+      7
+    ],
+    "cmykApprox": [
+      0,
+      39,
+      96,
+      37
+    ],
+    "use": "Status only"
+  },
+  "danger": {
+    "name": "Danger",
+    "hex": "#BE123C",
+    "rgb": [
+      190,
+      18,
+      60
+    ],
+    "cmykApprox": [
+      0,
+      91,
+      68,
+      25
+    ],
+    "use": "Status only"
+  },
+  "info": {
+    "name": "Info",
+    "hex": "#1D4ED8",
+    "rgb": [
+      29,
+      78,
+      216
+    ],
+    "cmykApprox": [
+      87,
+      64,
+      0,
+      15
+    ],
+    "use": "Status only"
+  }
+}

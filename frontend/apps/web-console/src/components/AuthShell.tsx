@@ -1,8 +1,7 @@
 import { useTranslation } from '@dop/i18n';
-import { Button } from '@dop/ui';
+import { BrandMark, Button } from '@dop/ui';
 import type { ReactNode } from 'react';
 import { switchLang } from '../lib/lang';
-import { BrandMark } from './BrandMark';
 
 /** Split screen for sign-in and invitation pages: ink brand panel (wide screens only) and the form. */
 export function AuthShell({ title, eyebrow, children }: { title: string; eyebrow?: string; children: ReactNode }) {
@@ -12,7 +11,7 @@ export function AuthShell({ title, eyebrow, children }: { title: string; eyebrow
     <div className="grid min-h-dvh bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <aside className="ember-glow hidden flex-col justify-between gap-10 bg-ink p-12 text-white lg:flex">
         <span className="flex items-center gap-3 font-display text-lg font-bold">
-          <BrandMark />
+          <BrandMark tone="light" />
           {t('appTitle')}
         </span>
         <div className="flex max-w-lg flex-col gap-6">

@@ -1,8 +1,8 @@
 import { useTranslation } from '@dop/i18n';
+import { BrandMark } from '@dop/ui';
 import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useSiteInfo } from '../landing/lib';
-import { BrandMark } from '../landing/visuals';
 import { LanguageToggle } from './LanguageToggle';
 
 // Ink carries weight (the active page); ember stays for the page's own main action, so the header trial link is

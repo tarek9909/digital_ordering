@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Button } from '@dop/ui';
+import { BrandMark, Button } from '@dop/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router';
@@ -7,7 +7,6 @@ import { authApi } from '../lib/api';
 import { switchLang } from '../lib/lang';
 import { useMe } from '../lib/me';
 import { can, type ConsolePermission } from '../lib/roles';
-import { BrandMark } from './BrandMark';
 
 /** Environment bar (TR-FE-24): red on production, neutral elsewhere. */
 export function EnvBar({ environment, className = '' }: { environment: string; className?: string }) {

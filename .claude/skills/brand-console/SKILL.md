@@ -14,6 +14,14 @@ White base, warm charcoal ("ink") partner, burnt-orange ("ember") accent. It sho
 - Fonts are self-hosted through `@fontsource/*` in `@dop/ui`. The CSP in `deploy/Caddyfile` blocks Google Fonts, so never add a fonts.googleapis.com link.
 - Customer apps also import `apps/web-customer/src/customer.css`, which maps `--color-primary` to the venue's `--brand-band`, because the venue's colour leads there.
 
+## Logo ("Almost ready")
+
+- A ring that has nearly closed, with an ember dot on its leading tip: an order about to be called. Use `<BrandMark />` from `@dop/ui` (ink tile) or `<BrandMark tone="light" />` on ink surfaces. Never redraw it inline.
+- Source SVGs are in `frontend/packages/ui/brand/` (tile, symbol, mono, app icon, notification badge, EN and AR lockups). The lockups use live Alexandria text, so outline them in a design tool before sending them to print.
+- The full identity kit (brand guidelines PDF, logo PNG/PDF exports, app-store icons, social images) lives in `identity/` at the repo root and is regenerated with `node identity/source/build-identity.mjs`. Keep `identity/source/brand.mjs` in step with `BrandMark.tsx` and `ember.css`.
+- After changing the mark, run `node tools/render-brand-icons.mjs` from `frontend/` to regenerate the customer PNG icons and the site and console favicons.
+- Keep clear of signal or Wi-Fi arcs, U-shaped "smile" curves and a dot floating above a curve. A competitor (Nadeeni) owns that look.
+
 ## Palette (use Tailwind token classes, never hex values in components)
 
 | Token / class | Value | Use |
