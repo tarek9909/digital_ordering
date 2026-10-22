@@ -1,0 +1,718 @@
+[
+  {
+    "name": "admin-home",
+    "url": "/admin/",
+    "headings": [
+      "Today",
+      "Get set up",
+      "Today",
+      "Alert reach when ready"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nToday\nGet set up\n\n2 of 8 steps done\n\n✓\nVerify your email address\nDone\n2\nAdd your logo or brand colour\nNot done yet\nSet up\n3\nWrite your customer messages\nNot done yet\nSet up\n4\nChange the staff PIN\nNot done yet\nSet up\n5\nSign in on a staff tablet\nNot done yet\nSet up\n6\nPair a TV display (optional)\nNot done yet\nSet up\n7\nPrint the QR posters\nNot done yet\nSet up\n✓\nCreate a test ticket\nDone\nToday\n\nBusiness day 2026-10-22\n\nOpen staff board\nTickets\n5\nOpen now\n2\nMedian preparation\n0:00\nPreparation time is measured from ticket creation.\nMedian pickup\n0:00\nFrom Ready to Collected.\nAlert reach when ready\nPush sent to phone\n0\nPage open\n0\nPage closed\n0\nNo alerts\n2\nPush sent or page open\n0%\nAcknowledged\n0%\n\nWe report what the system did (push sent, page open, acknowledged) — we cannot know whether a customer noticed the alert.\n\n●\nPreparing:\n1\n●\nReady:\n1\n●\nCollected:\n1\n●\nCancelled:\n1\n●\nClosed:\n1"
+  },
+  {
+    "name": "admin-venues",
+    "url": "/admin/venues",
+    "headings": [
+      "Venues",
+      "Add a venue"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nVenues\nAdd a venue\n\nEach venue has its own staff board, displays, QR posters and numbering. Your subscription is charged per venue.\n\nVenue name\nAdd venue\nVenues\nVenue name\tVenue code\t\t\nBurger House \n●\nSelected\t8F4ZXW\t\nOpen staff board\n\t\n\nAdding or archiving a venue changes your subscription from the next invoice (prorated)."
+  },
+  {
+    "name": "admin-venue",
+    "url": "/admin/venue",
+    "headings": [
+      "Venue"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nVenue\nGeneral\nBranding\nMessages\nTickets & alerts\nVenue name\nTime zone\nCustomer page languages\nArabic only\nEnglish only\nArabic and English (Arabic first)\nEnglish and Arabic (English first)\nDaily number reset\nAuto-close open tickets at\n\nChanges to the time zone, reset time and auto-close time apply from the next business day, so today's numbering is not disturbed.\n\nSave"
+  },
+  {
+    "name": "admin-counters",
+    "url": "/admin/counters",
+    "headings": [
+      "Counters",
+      "Add a counter",
+      "Prefixes"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nCounters\nAdd a counter\n\nCounters split orders by pickup point, for example Drinks and Food. The optional prefix appears before the number (A12, D1-7).\n\nCounter name\nPrefix (optional)\n\n1 to 3 characters: a capital letter, then letters or digits (A, D1).\n\nAdd counter\nPrefixes\n\nWhen prefixes are on, ticket numbers show the counter prefix.\n\nShow counter prefixes in ticket numbers\nFor example A12 for the Drinks counter. Set prefixes on the Counters page.\n\nNo counters yet. Without counters, all orders share one list."
+  },
+  {
+    "name": "admin-staff-access",
+    "url": "/admin/staff-access",
+    "headings": [
+      "Staff access",
+      "Staff board link",
+      "Staff PIN",
+      "Signed-in devices",
+      "Named staff"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nStaff access\nStaff board link\n\nOpen this link on the staff tablet or PC, then enter the PIN. Do not share it outside your team.\n\nhttp://burger-house.dop.localhost:5174/staff/NmFneCuIbfWVZYW5BZEtsqlmgfp10wTK\nCopy link\nReset link\n\nLink created Oct 22, 2026, 7:44 PM · PIN changed Oct 22, 2026, 7:44 PM\n\nStaff PIN\nNew PIN\n\n4 to 6 digits. Sequences like 1234 and repeated digits are not allowed.\n\nChanging the PIN signs out every staff device.\n\nChange PIN\nSigned-in devices\n\nDevices stay signed in for 30 days of use.\n\nNo devices are signed in.\n\nNamed staff\n\nGive each person a personal PIN. When named staff is on, the board asks for it before actions so the activity shows who did what.\n\nName\nPersonal PIN\n\n4 to 6 digits. Sequences like 1234 and repeated digits are not allowed.\n\nAdd staff member\n\nNo named staff yet."
+  },
+  {
+    "name": "admin-displays",
+    "url": "/admin/displays",
+    "headings": [
+      "Displays",
+      "Add a TV display",
+      "Pickup TV"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nDisplays\nAdd a TV display\n\nCreate a display, then open /display on the TV and enter the pairing code.\n\nDisplay name\nAdd display\nPickup TV\n●\nNot paired\nGet pairing code\nRename\nDisplay settings\nRemove display"
+  },
+  {
+    "name": "admin-posters",
+    "url": "/admin/posters",
+    "headings": [
+      "QR posters",
+      "Print-ready PDF posters",
+      "Print from the browser"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nQR posters\nPrint-ready PDF posters\n\nPlace them where customers wait. The QR opens your venue page.\n\nPoster language\nArabic\nEnglish\nA4 poster\nFor walls and counters\nTable tent\nFolds to stand on tables\nDoor sticker\nFor the entrance\nPrint from the browser\n\nAn Arabic poster you can print directly from this browser.\n\nOpen printable poster"
+  },
+  {
+    "name": "admin-reports",
+    "url": "/admin/reports",
+    "headings": [
+      "Reports",
+      "Filters",
+      "Compared with the previous period",
+      "Tickets per day"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nReports\nFilters\nFrom\nTo\nShow\nDownload CSV\n\nOne row per ticket for the dates above (Pro plan).\n\nTrends\nBusy hours\nPer day\nCompared with the previous period\n\nPrevious period: 2026-09-25 to 2026-10-08.\n\nTickets\n0\nNo change\nPrevious: 0\nPush sent or page open\n—\nNo comparison\nPrevious: —\nAcknowledged\n—\nNo comparison\nPrevious: —\nNeeded a repeat alert\n—\nNo comparison\nPrevious: —\nReady undone\n—\nNo comparison\nPrevious: —\nMedian preparation (from ticket creation)\n—\nNo comparison\nPrevious: —\nMedian pickup\n—\nNo comparison\nPrevious: —\nAverage rating\n—\nNo comparison\nPrevious: —\n\nPreparation time is measured from ticket creation. We report what the system did (push sent, page open, acknowledged) — we cannot know whether a customer noticed the alert.\n\nTickets per day\n\nNo data for this range yet. Reports update hourly."
+  },
+  {
+    "name": "admin-reports-heatmap",
+    "url": "/admin/reports",
+    "headings": [
+      "Reports",
+      "Filters"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nReports\nFilters\nFrom\nTo\nShow\nDownload CSV\n\nOne row per ticket for the dates above (Pro plan).\n\nTrends\nBusy hours\nPer day\n\nNo data for this range yet. Reports update hourly."
+  },
+  {
+    "name": "admin-reports-daily",
+    "url": "/admin/reports",
+    "headings": [
+      "Reports",
+      "Filters"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nReports\nFilters\nFrom\nTo\nShow\nDownload CSV\n\nOne row per ticket for the dates above (Pro plan).\n\nTrends\nBusy hours\nPer day\n\nNo data for this range yet. Reports update hourly."
+  },
+  {
+    "name": "admin-ratings",
+    "url": "/admin/ratings",
+    "headings": [
+      "Ratings"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nRatings\n\nWhat customers said after collecting their order. Deleting a comment keeps the stars in your reports.\n\nNo ratings yet."
+  },
+  {
+    "name": "admin-team",
+    "url": "/admin/team",
+    "headings": [
+      "Team",
+      "Invite a manager",
+      "Members",
+      "Pending invitations"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nTeam\nInvite a manager\n\nManagers can run the venue, staff access and reports. Billing and deletion stay with the owner.\n\nEmail address\nSend invitation\nMembers\nMembers\nName\tEmail\tRole\tTwo-factor\tSince\t\nBurger House Owner\towner@burger-house.localhost\tOwner\t\n●\nOff\tOct 22, 2026, 7:44 PM\t\nPending invitations\n\nNo pending invitations."
+  },
+  {
+    "name": "admin-integrations",
+    "url": "/admin/integrations",
+    "headings": [
+      "Integrations",
+      "API keys for this venue",
+      "Webhooks",
+      "Point of sale"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nIntegrations\n\nConnect your point of sale or other systems to create tickets automatically and receive status updates.\n\nAPI keys for this venue\n\nA key lets another system create and update tickets for this venue only.\n\nKey name\nCreate API key\n\nNo API keys yet.\n\nWebhooks\n\nWe send a signed HTTPS request to your URL when a ticket changes.\n\nEndpoint URL\n\nMust start with https:// and be reachable from the internet.\n\nEvents\nTicket created\nticket.created\nTicket ready\nticket.ready\nCustomer acknowledged\nticket.acknowledged\nTicket collected\nticket.collected\nTicket cancelled\nticket.cancelled\nTicket expired\nticket.expired\nVenue\nAll venues\nBurger House\nAdd webhook\n\nNo webhooks yet.\n\nPoint of sale\n\nConnected POS systems create tickets when an order is paid.\n\nNo POS connected.\n\nFoodics\n\nCreate tickets automatically from Foodics orders.\n\nConnect Foodics\n\nThe Foodics connection needs approval from Foodics as a partner app. It will open here once approved; contact support to join the pilot."
+  },
+  {
+    "name": "admin-support",
+    "url": "/admin/support",
+    "headings": [
+      "Support access",
+      "Support code",
+      "Access requests and sessions"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nSupport access\nSupport code\n\nIf you are on the phone with our support team, generate a code and read it to the agent to give them access.\n\nGenerate support code\nAccess requests and sessions\n\nOur support team can only open your account after you approve. You can end a session at any time.\n\nNo support requests."
+  },
+  {
+    "name": "admin-billing",
+    "url": "/admin/billing",
+    "headings": [
+      "Billing",
+      "Plan",
+      "Subscribe",
+      "Invoices"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nBilling\nPlan\nTrial\n●\nTrial\n\nTrial ends Nov 5, 2026, 6:44 PM.\n\nSubscribe\nBilling period\nMonthly — SAR 99.00 per venue\nEvery 3 months — SAR 267.30 per venue\nYearly — SAR 950.40 per venue\n\nPrices are in Saudi riyals. VAT is added at checkout.\n\nContinue to payment\nInvoices\n\nNo invoices yet."
+  },
+  {
+    "name": "admin-settings",
+    "url": "/admin/settings",
+    "headings": [
+      "Settings",
+      "Restaurant",
+      "Restaurant address",
+      "Export your data",
+      "Delete this restaurant",
+      "Activity log"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nSettings\nRestaurant\nRestaurant name\nBilling email\n\nInvoices go here. Leave empty to use the owner's email.\n\nSave\nRestaurant address\n\nCurrent address: burger-house.dop.localhost\n\nIf you change it, the old address keeps redirecting to the new one for 180 days. Printed QR codes and ticket links keep working because they do not use this address.\n\nNew address\n\n3 to 40 characters: lowercase letters, digits and hyphens.\n\nYour password\nChange address\nExport your data\n\nDownload a ZIP with your tickets, settings and team as CSV files.\n\nRequest export\nDelete this restaurant\n\nAll data is deleted 7 days after the request. You can cancel within those 7 days. Export your data first if you need it.\n\nYour password\nRequest deletion\nActivity log\nActivity log\nWhen\tWho\tWhat\nOct 22, 2026, 7:44 PM\tSystem\tDisplay added\nOct 22, 2026, 7:44 PM\tSystem\tStaff PIN changed\nOct 22, 2026, 7:44 PM\tTeam member\ttenant.created"
+  },
+  {
+    "name": "admin-account",
+    "url": "/admin/account",
+    "headings": [
+      "Account",
+      "Profile",
+      "Password",
+      "Two-factor authentication",
+      "Delete my account"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh· Burger House\nالعربية\nSign out\nToday\nVenues\nVenue\nCounters\nStaff access\nDisplays\nQR posters\nReports\nRatings\nTeam\nIntegrations\nSupport access\nBilling\nSettings\nAccount\nFree trial: 14 days left (ends Nov 5, 2026, 6:44 PM).\nGo to billing\nAccount\nProfile\nName\nEmail\n\nContact support to change your email address.\n\nEmail language\nArabic\nEnglish\nSave\nPassword\nCurrent password\nNew password\n\nAt least 10 characters.\n\nYour other sessions will be signed out.\n\nChange password\nTwo-factor authentication\n\nOptional, but recommended for owners.\n\n●\nTwo-factor is off\n\nUse an authenticator app (such as Google Authenticator or Microsoft Authenticator) to add a 6-digit code at sign-in.\n\nSet up two-factor\nDelete my account\n\nYour user account and sign-in are deleted. Restaurants you are a member of are not deleted. Your name is removed from the activity log.\n\nYour password\nDelete my account"
+  },
+  {
+    "name": "admin-posters-print",
+    "url": "/admin/posters/print",
+    "headings": [
+      "Burger House"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Back\nPrint\nBurger House\n\nامسح الرمز لتتابع طلبك\n\n١. امسح الرمز بكاميرا جوالك\n٢. أدخل رقم طلبك أو اتبع الرابط على إيصالك\n٣. سننبهك فور جاهزية طلبك\nبدون تطبيق وبدون تسجيل\nhttp://t.dop.localhost:5173/v/8F4ZXW"
+  },
+  {
+    "name": "console-tenants",
+    "url": "/tenants",
+    "headings": [
+      "Tenants"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nTenants\nCreate tenant\nSearch by name or address\nStatus\nAny\nTrial\nActive\nPast due\nSuspended\nTrial expired\nCancelled\nPlan\nAny\nTrial\nStandard\nPro\nMulti-site\nApply\nTenants\nName\tAddress (slug)\tStatus\tPlan\tOwner email\tTickets this month\tLast activity\tCreated\nFood Court 7\tfood-court-7\t\n■\nSuspended\tTrial\towner@food-court-7.localhost\t0\t—\tOct 22, 2026, 7:44 PM\nCafé Aroma\tcafe-aroma\t\n●\nActive\tTrial(complimentary)\towner@cafe-aroma.localhost\t0\t—\tOct 22, 2026, 7:44 PM\nBurger House\tburger-house\t\n◐\nTrial\tTrial\towner@burger-house.localhost\t0\tOct 22, 2026, 7:46 PM\tOct 22, 2026, 7:44 PM\nPrevious\nPage 1\nNext"
+  },
+  {
+    "name": "console-tenants-new",
+    "url": "/tenants/new",
+    "headings": [
+      "Create tenant"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nCreate tenant\nRestaurant name\nAddress (slug)\n\n3–40 lowercase letters, digits or hyphens, e.g. burger-house.\n\nCountry code\n\nTwo letters, e.g. SA.\n\nDefault language\nArabic\nEnglish\nOwner email (an invitation is sent)\nComplimentary\nActive without a subscription.\nCreate and invite owner"
+  },
+  {
+    "name": "console-tenants-01a1647f-f654-7318-ae15-12beab11ec3e",
+    "url": "/tenants/01a1647f-f654-7318-ae15-12beab11ec3e",
+    "headings": [
+      "Burger House",
+      "Profile",
+      "Members",
+      "Subscription",
+      "Lifecycle actions",
+      "Commercial and ownership"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\nProfile\nAddress (slug)\nburger-house\nStatus\n◐\nTrial\nPlan\nTrial\nTrial ends\nNov 5, 2026, 6:44 PM\nGrace period ends\n—\nDeletion requested\n—\nCountry\nSA\nDefault language\nar\nCreated via\nSelf sign-up\nCreated\nOct 22, 2026, 7:44 PM\nLast activity\nOct 22, 2026, 7:46 PM\nMembers\nBurger House Owner · Owner\nowner@burger-house.localhost\n✓ Email verified\nSubscription\n\nNo subscription.\n\nLifecycle actions\nSuspend\nExtend trial\nMake complimentary\nCancel account\nDelete\nCommercial and ownership\nChange plan\nApply coupon\nGrant free months\nTransfer ownership"
+  },
+  {
+    "name": "console-platform-users",
+    "url": "/platform-users",
+    "headings": [
+      "Platform users",
+      "Invite a platform user"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nPlatform users\nInvite a platform user\nName\nEmail\nRole\nSuper admin\nSupport\nFinance\nSend invitation\nPlatform users\nName\tEmail\tRole\tStatus\tTwo-factor\tLast sign-in\tActions\nSuper Admin\tsuper@dop.localhost\t\nRole for Super Admin\nSuper admin\nSupport\nFinance\n\tActive\t✓ Set up\tOct 22, 2026, 7:46 PM\t\nReset two-factor\n\nSupport Agent\tsupport@dop.localhost\t\nRole for Support Agent\nSuper admin\nSupport\nFinance\n\tActive\t✓ Set up\t—\t\nDisable\nReset two-factor\n\nFinance\tfinance@dop.localhost\t\nRole for Finance\nSuper admin\nSupport\nFinance\n\tActive\t✓ Set up\t—\t\nDisable\nReset two-factor"
+  },
+  {
+    "name": "console-settings",
+    "url": "/settings",
+    "headings": [
+      "Platform settings",
+      "Settings (JSON)",
+      "Languages",
+      "Chimes"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nPlatform settings\nSettings (JSON)\ntenant.defaults\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\ntrial.days\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nbilling.retryDays\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nbilling.graceDays\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nbilling.suspendedToCancelDays\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nfairness.perTenantPerSecond\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nmaintenance\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nretention.ticketDays\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nretention.closedTenantDays\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nsupport.defaultMinutes\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nconsole.ipAllowList\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\ncustomer.supportedLanguages\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\npush.ttlSeconds\n\nChanged Oct 22, 2026, 7:44 PM\n\nRevert\nSave\nLanguages\nLanguages\nCode\tName\tDirection\tCustomer pages\tVoice language\nar\tالعربية\tRight to left\t\nEnable العربية\n\t\nVoice language for العربية\nSave\n\nen\tEnglish\tLeft to right\t\nEnable English\n\t\nVoice language for English\nSave\nChimes\nChimes\nCode\tName\tDuration\tLoudness\tActive\nclassic\tClassic\t2.0 s\t-14.0 LUFS\t✓ Yes"
+  },
+  {
+    "name": "console-audit",
+    "url": "/audit",
+    "headings": [
+      "Audit log"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nAudit log\nTenant ID\nActor ID\nAction\nAny\ntenant.created\ntenant.updated\ntenant.slug_changed\ntenant.status_changed\ntenant.suspended\ntenant.reactivated\ntenant.trial_extended\ntenant.complimentary_set\ntenant.plan_changed\ntenant.coupon_applied\ntenant.cancelled\ntenant.deletion_requested\ntenant.deletion_cancelled\ntenant.deleted\ntenant.ownership_transferred\ntenant.viewed\nmember.invited\nmember.role_changed\nmember.removed\nvenue.created\nvenue.updated\nvenue.settings_changed\nvenue.archived\nstaff.link_rotated\nstaff.pin_changed\ndevice.removed\ndisplay.created\ndisplay.paired\ndisplay.revoked\napikey.created\napikey.revoked\nwebhook.created\nwebhook.updated\nwebhook.deleted\nsupport.requested\nsupport.approved\nsupport.refused\nsupport.started\nsupport.ended\nsupport.emergency_opened\nplan.created\nplan.updated\nprice.created\nflag.overridden\nsetting.changed\nchime.created\nlegal.published\nannouncement.created\nplatform_user.invited\nplatform_user.role_changed\nplatform_user.mfa_reset\nplatform_user.removed\nexport.requested\nrating.deleted\nFrom\nTo\nApply\nAudit log\nWhen\tAction\tActor\tTenant\tEntity\tPurpose\nOct 22, 2026, 7:46 PM\ttenant.viewed\tPlatform user\n01a1647f-f5f9-7e03-b717-6a9a988b32aa\n\t01a1647f…\ttenant\n01a1647f-f654-7318-ae15-12beab11ec3e\n\tSupport\nOct 22, 2026, 7:44 PM\ttenant.suspended\tSystem\t01a1647f…\ttenant\n01a1647f-f793-70ac-b97a-0f562df49522\n\t—\nOct 22, 2026, 7:44 PM\tdisplay.created\tSystem\t01a1647f…\tdisplay\n01a1647f-f7c1-7bbf-a5d5-3ccd0a8cbcba\n\t—\nOct 22, 2026, 7:44 PM\tstaff.pin_changed\tSystem\t01a1647f…\tvenue\n01a1647f-f794-71d6-9441-0bc640b5e266\n\t—\nOct 22, 2026, 7:44 PM\ttenant.created\tTenant user\n01a1647f-f77f-7bba-8e03-5ca3f128278c\n\t01a1647f…\ttenant\n01a1647f-f793-70ac-b97a-0f562df49522\n\t—\nOct 22, 2026, 7:44 PM\ttenant.status_changed\tSystem\t01a1647f…\ttenant\n01a1647f-f6f9-7226-bdb5-e396cd28383c\n\t—\nOct 22, 2026, 7:44 PM\tdisplay.created\tSystem\t01a1647f…\tdisplay\n01a1647f-f72d-7db9-8001-0ebd9dd618f8\n\t—\nOct 22, 2026, 7:44 PM\tstaff.pin_changed\tSystem\t01a1647f…\tvenue\n01a1647f-f6fa-7ba7-8ceb-0b82cc4a9f3e\n\t—\nOct 22, 2026, 7:44 PM\ttenant.created\tTenant user\n01a1647f-f6e6-76a7-af7a-175452be9db1\n\t01a1647f…\ttenant\n01a1647f-f6f9-7226-bdb5-e396cd28383c\n\t—\nOct 22, 2026, 7:44 PM\tdisplay.created\tSystem\t01a1647f…\tdisplay\n01a1647f-f68b-7ea7-b84e-059775d44fb7\n\t—\nOct 22, 2026, 7:44 PM\tstaff.pin_changed\tSystem\t01a1647f…\tvenue\n01a1647f-f657-7a9e-931d-015f47574a5e\n\t—\nOct 22, 2026, 7:44 PM\ttenant.created\tTenant user\n01a1647f-f636-7f97-9c72-e29496b3eb51\n\t01a1647f…\ttenant\n01a1647f-f654-7318-ae15-12beab11ec3e\n\t—\nPrevious\nPage 1\nNext"
+  },
+  {
+    "name": "console-reports-pilot",
+    "url": "/reports/pilot",
+    "headings": [
+      "Pilot report"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nPilot report\nTenants selected: 0\nSearch by name or address\nFind\nFood Court 7 (food-court-7)\nCafé Aroma (cafe-aroma)\nBurger House (burger-house)\nFrom\nTo\nShow report"
+  },
+  {
+    "name": "console-reports-platform",
+    "url": "/reports/platform",
+    "headings": [
+      "Platform report"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nPlatform report\nFrom\nTo\nShow report\n\nNo data for these days."
+  },
+  {
+    "name": "console-plans",
+    "url": "/plans",
+    "headings": [
+      "Plans and prices",
+      "Trial (trial)",
+      "Limits",
+      "Features",
+      "Standard (standard)",
+      "Limits",
+      "Features",
+      "Pro (pro)",
+      "Limits",
+      "Features",
+      "Multi-site (multisite)",
+      "Limits",
+      "Features"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nPlans and prices\nCreate plan\nTrial (trial)\n\nHidden\n\nEdit\nAdd price\nLimits\nVenues\n1\nCounters per venue\n10\nLanguages\n10\nDisplays per venue\n20\nStaff devices per venue\n50\nAPI keys per venue\n0\nTrial tickets per day\n200\nFeatures\n\ndisplay_speech, ratings, reports_trends, counters, remove_powered_by\n\nPrices\nPeriod\tAmount\tProvider price ID\tState\t\nNo prices.\nStandard (standard)\n\nPublic\n\nEdit\nAdd price\nLimits\nVenues\n1\nCounters per venue\n1\nLanguages\n2\nDisplays per venue\n20\nStaff devices per venue\n50\nAPI keys per venue\n0\nTrial tickets per day\n200\nFeatures\n\ndisplay_speech, ratings, reports_trends\n\nPrices\nPeriod\tAmount\tProvider price ID\tState\t\nMonthly\tSAR 99.00\tprice_seed_standard_month_sar\tActive\tDeactivate\nQuarterly\tSAR 267.30\tprice_seed_standard_quarter_sar\tActive\tDeactivate\nYearly\tSAR 950.40\tprice_seed_standard_year_sar\tActive\tDeactivate\nPro (pro)\n\nPublic\n\nEdit\nAdd price\nLimits\nVenues\n1\nCounters per venue\n10\nLanguages\n10\nDisplays per venue\n20\nStaff devices per venue\n50\nAPI keys per venue\n5\nTrial tickets per day\n200\nFeatures\n\ndisplay_speech, ratings, reports_trends, counters, remove_powered_by, api_access, webhooks, pos_connectors, named_staff, csv_export\n\nPrices\nPeriod\tAmount\tProvider price ID\tState\t\nMonthly\tSAR 179.00\tprice_seed_pro_month_sar\tActive\tDeactivate\nQuarterly\tSAR 483.30\tprice_seed_pro_quarter_sar\tActive\tDeactivate\nYearly\tSAR 1,718.40\tprice_seed_pro_year_sar\tActive\tDeactivate\nMulti-site (multisite)\n\nPublic\n\nEdit\nAdd price\nLimits\nVenues\n100\nCounters per venue\n10\nLanguages\n10\nDisplays per venue\n20\nStaff devices per venue\n50\nAPI keys per venue\n5\nTrial tickets per day\n200\nFeatures\n\ndisplay_speech, ratings, reports_trends, counters, remove_powered_by, api_access, webhooks, pos_connectors, named_staff, csv_export, multi_venue, combined_reports\n\nPrices\nPeriod\tAmount\tProvider price ID\tState\t\nNo prices."
+  },
+  {
+    "name": "console-announcements",
+    "url": "/announcements",
+    "headings": [
+      "Announcements",
+      "New announcement"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nAnnouncements\nNew announcement\nMessage (Arabic)\nMessage (English)\nSeverity\nInformation\nWarning\nCritical\nShown to\nAll tenants\nSelected tenants\nTenants on plans\nStarts\nEnds\n\nTimes are in your browser's time zone.\n\nCreate announcement\nAnnouncements\nMessage\tSeverity\tShown to\tStarts\tEnds\t\nNo announcements."
+  },
+  {
+    "name": "console-content",
+    "url": "/content",
+    "headings": [
+      "Legal documents and emails",
+      "Legal documents",
+      "Email texts",
+      "Push keys"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nLegal documents and emails\nLegal documents\n\nCreate a draft, check it, then publish. Owners accept new terms, privacy and DPA versions at their next sign-in.\n\nDocument\nTerms of service\nPrivacy policy\nData processing agreement\nCustomer privacy notice\nVersion\nLanguage\nArabic\nEnglish\nContent (HTML)\nCreate draft\nEmail texts\n\nEdit the subject and paragraphs of each email. Placeholders in double curly braces are filled in when the email is sent; keep them unchanged.\n\nEmail\nverify_email\nwelcome\npassword_reset\ninvitation_manager\ninvitation_owner\nownership_transferred\ntrial_ending\ntrial_ended\npayment_failed\npayment_reminder\nsuspended_billing\nsuspended_platform\nreactivated\nsubscription_cancelled\nsubscription_reactivated\ndeletion_requested\ndeletion_completed\nstaff_pin_lock\nexport_ready\nplatform_user_invitation\nplatform_mfa_reset\nsupport_requested\nsupport_started\nemergency_access\nweekly_summary\nwebhook_disabled\nLanguage\nArabic\nEnglish\nNo custom text yet: the built-in text is used.\nSubject\nParagraphs\n\nSeparate paragraphs with an empty line (0 of up to 10).\n\nPlaceholders used: —\n\nSave\nPush keys\nConfigured\n✗ No\nPublic key fingerprint\n—\nActive subscriptions\n0\n\nView only. Keys are rotated through deployment configuration."
+  },
+  {
+    "name": "console-tenant-tabs",
+    "url": "/tenants/01a1647f-f654-7318-ae15-12beab11ec3e",
+    "headings": [
+      "Burger House",
+      "Profile",
+      "Members",
+      "Subscription",
+      "Lifecycle actions",
+      "Commercial and ownership"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\nProfile\nAddress (slug)\nburger-house\nStatus\n◐\nTrial\nPlan\nTrial\nTrial ends\nNov 5, 2026, 6:44 PM\nGrace period ends\n—\nDeletion requested\n—\nCountry\nSA\nDefault language\nar\nCreated via\nSelf sign-up\nCreated\nOct 22, 2026, 7:44 PM\nLast activity\nOct 22, 2026, 7:46 PM\nMembers\nBurger House Owner · Owner\nowner@burger-house.localhost\n✓ Email verified\nSubscription\n\nNo subscription.\n\nLifecycle actions\nSuspend\nExtend trial\nMake complimentary\nCancel account\nDelete\nCommercial and ownership\nChange plan\nApply coupon\nGrant free months\nTransfer ownership"
+  },
+  {
+    "name": "console-tab-Billing",
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\nLoading…"
+  },
+  {
+    "name": "console-tab-Notes",
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\n\nInternal notes are visible to the platform team only, never to the tenant.\n\nNew note\nAdd note\nLoading…"
+  },
+  {
+    "name": "console-tab-Feature flags",
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\nLoading…"
+  },
+  {
+    "name": "console-tab-Audit",
+    "text": "Environment: local\nTanbeeh Console\nTenants\nCreate tenant\nPlatform users\nSettings\nAudit log\nPilot report\nPlatform report\nPlans & prices\nAnnouncements\nLegal & emails\nSuper Admin · Super admin\nالعربية\nSign out\nBurger House\nPurpose: Support\nChange purpose\nOverview\nVenues & devices\nBilling\nNotes\nSupport access\nFeature flags\nAudit\nLoading…"
+  },
+  {
+    "name": "site-home",
+    "url": "/",
+    "headings": [
+      "Call your customers when their order is ready — on their own phone",
+      "How it works in 3 steps",
+      "1. Issue a digital ticket",
+      "2. Tap Ready",
+      "3. The customer collects",
+      "What you get",
+      "No app for customers",
+      "TV display",
+      "Arabic and English",
+      "Simple reports",
+      "Pricing",
+      "Standard",
+      "Pro",
+      "Contact us"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nCall your customers when their order is ready — on their own phone\n\nTanbeeh replaces plastic buzzers. The customer scans a QR code, and their phone and your TV screen alert them the moment staff tap Ready. No app to install.\n\nStart your 14-day free trial\nPricing\n\nNo card needed for the trial.\n\nHow it works in 3 steps\n1\n1. Issue a digital ticket\n\nAt the counter, staff tap New ticket. The customer scans the QR code and follows their order number.\n\n2\n2. Tap Ready\n\nWhen the order is ready, staff tap Ready. The customer's phone and the TV screen in the restaurant show the number with sound.\n\n3\n3. The customer collects\n\nThe customer comes to the counter and staff mark the order Collected. Reports show waiting and pickup times.\n\nWhat you get\nNo app for customers\n\nWorks in the phone browser with push notifications where supported and a live page everywhere else.\n\nTV display\n\nTurn any smart TV or tablet into a pickup screen showing preparing and ready numbers.\n\nArabic and English\n\nEvery screen works in Arabic (right to left) and English, with your own logo and colour.\n\nSimple reports\n\nTickets per day, preparation time from ticket creation, pickup time and alert reach.\n\nPricing\nStandard\n\nSAR 99.00 per venue / month\n\nVAT is added at checkout.\n\nUnlimited digital tickets\nCustomer phone alerts and live page\nTV display\nStaff board on any device\nArabic and English\nDaily reports\n\n14-day free trial, then subscribe from your admin page.\n\nStart free trial\nPro\n\nComing soon\n\nCounters, integrations with your POS and more reports. Coming soon.\n\nContact us\n\nQuestions about Tanbeeh or need help getting started? Email us and we will reply.\n\nsupport@tanbeeh.app\n\nWe reply within one business day (Sunday to Thursday).\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-pricing",
+    "url": "/pricing",
+    "headings": [
+      "Pricing",
+      "Standard",
+      "Pro"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nPricing\n\nOne simple price per venue. Start with a free trial.\n\nStandard\n\nSAR 99.00 per venue / month\n\nVAT is added at checkout.\n\nUnlimited digital tickets\nCustomer phone alerts and live page\nTV display\nStaff board on any device\nArabic and English\nDaily reports\n\n14-day free trial, then subscribe from your admin page.\n\nStart free trial\nPro\n\nComing soon\n\nCounters, integrations with your POS and more reports. Coming soon.\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-contact",
+    "url": "/contact",
+    "headings": [
+      "Contact us"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nContact us\n\nQuestions about Tanbeeh or need help getting started? Email us and we will reply.\n\nsupport@tanbeeh.app\n\nWe reply within one business day (Sunday to Thursday).\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-sign-up",
+    "url": "/sign-up",
+    "headings": [
+      "Create your account"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nCreate your account\nSet up your restaurant in a few minutes.\nYour name\nEmail\nPassword\n\nAt least 10 characters.\n\nRestaurant name\nYour web address\n\nLowercase English letters, numbers and dashes. Used in your staff and admin links.\n\nCountry\nSaudi Arabia\nUnited Arab Emirates\nKuwait\nBahrain\nQatar\nOman\nI accept the Terms of service and the Privacy policy\nCreate account\n\nAlready have an account? Sign in\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-sign-in",
+    "url": "/sign-in",
+    "headings": [
+      "Sign in"
+    ],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/auth/v1/me",
+        "status": 401
+      }
+    ],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nSign in\nEmail\nPassword\nSign in\nForgot password?\nNo account yet? Start free trial\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-forgot-password",
+    "url": "/forgot-password",
+    "headings": [
+      "Reset your password"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nReset your password\nEnter your email and we will send you a link to choose a new password.\nEmail\nSend reset link\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-reset-password",
+    "url": "/reset-password",
+    "headings": [
+      "Choose a new password"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nChoose a new password\n\n⚠ This link has expired or was already used.\n\nRequest a new link\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-verify-email",
+    "url": "/verify-email",
+    "headings": [
+      "Verify your email"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nVerify your email\n\n⚠ This verification link has expired or was already used.\n\nSign in and use “Resend” on your admin page to get a new link.\n\nSign in\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-legal-terms",
+    "url": "/legal/terms",
+    "headings": [
+      "Terms of service"
+    ],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/public/v1/legal/terms",
+        "status": 404
+      }
+    ],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nTerms of service\n\nThis document is not yet published.\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-legal-privacy",
+    "url": "/legal/privacy",
+    "headings": [
+      "Privacy policy"
+    ],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/public/v1/legal/privacy",
+        "status": 404
+      }
+    ],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nPrivacy policy\n\nThis document is not yet published.\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-legal-dpa",
+    "url": "/legal/dpa",
+    "headings": [
+      "Data processing agreement"
+    ],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/public/v1/legal/dpa",
+        "status": 404
+      }
+    ],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nData processing agreement\n\nThis document is not yet published.\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "site-unknown-page",
+    "url": "/unknown-page",
+    "headings": [
+      "Not found"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Skip to content\nTanbeeh\nHome\nPricing\nContact\nSign in\nStart free trial\nالعربية\nNot found\nHome\n\n© 2026 Tanbeeh. All rights reserved.\n\nTerms of service\nPrivacy policy\nData processing agreement\nContact"
+  },
+  {
+    "name": "staff-board",
+    "url": "/staff/",
+    "headings": [
+      "Burger House",
+      "Preparing1",
+      "Ready1"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Offline — actions disabled\nBurger House\nOffline\nPreparing: 1\nReady: 1\nCollected (30 min): 1\nNumber or receipt\nRecent\nالعربية\nNew ticket\nPreparing\n1\n1\nPreparing\n2 min\nNo alerts\nReady\nReady\n1\n2\nReady\n2 min\nNo alerts\nCollected"
+  },
+  {
+    "name": "staff-device",
+    "url": "/staff/device",
+    "headings": [
+      "This device"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "This device\nالعربية\nBack to board\nDevice name\nSave\nMode\nBoard\nAll columns and actions.\nKitchen\nLarge Preparing cards with one Ready button, dark screen.\nSign out"
+  },
+  {
+    "name": "staff-sign-in",
+    "url": "/staff/NmFneCuIbfWVZYW5BZEtsqlmgfp10wTK",
+    "headings": [
+      "Staff board"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "العربية\nStaff board\nDevice name\n\nFor example: Front counter tablet\n\nPIN\nEnter 4 to 6 digits\n0 digits entered\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\nOpen board"
+  },
+  {
+    "name": "display-pairing",
+    "url": "/display/",
+    "headings": [
+      "Connect this screen"
+    ],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/display/v1/board",
+        "status": 401
+      }
+    ],
+    "text": "Tanbeeh\n\nConnect this screen\nPairing code\nConnect\nIn the admin area, open Displays and choose Pair a display.\nType the 6-digit code shown there.\nThe order board appears here; keep this browser open in full screen."
+  },
+  {
+    "name": "display-board",
+    "url": "/display/",
+    "headings": [
+      "Burger House",
+      "قيد التحضير",
+      "جاهز"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nجارٍ إعادة الاتصال…\nلا يوجد صوت للغة العربية على هذا الجهاز\nالصوت متوقف\nامسح الرمز لمتابعة طلبك\nقيد التحضير\n1\nجاهز\n2\nاضغط لتفعيل الصوت\nتحتاج الإعلانات إلى ضغطة واحدة بعد تشغيل الشاشة."
+  },
+  {
+    "name": "customer-preparing-2f85d",
+    "url": "/7KXnZmgdvxruphrkVQxa6U",
+    "headings": [],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nYour order is being prepared\n\nYour order\n\n1\nYour order is being prepared\n\nAbout 8 min\n\n🔔 Turn on alerts\n\nKeep this page open for alerts\n\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-ready-29318",
+    "url": "/4NTqvw23e3vElGNTivm89Y",
+    "headings": [],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nYour order is ready!\n2\n🔊 Tap to hear your alert\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-expired-0d190",
+    "url": "/3mDODwVRpT7ayNVoUJ72SG",
+    "headings": [],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nThis ticket is closed\n\nYour order\n\n5\nThis ticket is closed\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-cancelled-c0430",
+    "url": "/4PyzfSnXfksIFNcYLC9krw",
+    "headings": [],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nThis order was cancelled\n\nYour order\n\n4\nThis order was cancelled\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-collected-638a6",
+    "url": "/75Hail2OY96SCtKSzIZ7yr",
+    "headings": [],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nEnjoy!\n\nYour order\n\n3\nEnjoy!\nHow was it?\n★\n★\n★\n★\n★\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-my-tickets",
+    "url": "/tickets",
+    "headings": [
+      "Orders on this phone"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Orders on this phone\nBurger House\nReady\n2\nBurger House\nPreparing\n1"
+  },
+  {
+    "name": "customer-privacy",
+    "url": "/privacy",
+    "headings": [
+      "Privacy"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Privacy\n\nThis page shows your order status. We do not ask for your name, phone number or email. A random ID stored in your browser links your phone to your orders; it is deleted when your orders close. If you allow notifications, your browser's push address is used only to alert you about these orders and is deleted 30 minutes after your last order closes. The restaurant is responsible for your order; Tanbeeh processes this data on its behalf."
+  },
+  {
+    "name": "customer-venue",
+    "url": "/v/8F4ZXW",
+    "headings": [
+      "Your orders here",
+      "Already ordered?"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Burger House\nالعربية\nYour orders here\n1\nPreparing\n2\nReady\nAlready ordered?\nOrder number\nClaim code (on your receipt)\nShow my order\nPrivacy\nPowered by Tanbeeh"
+  },
+  {
+    "name": "customer-invalid-token",
+    "url": "/invalid",
+    "headings": [
+      "Ticket not found"
+    ],
+    "errors": [],
+    "failures": [],
+    "text": "Ticket not found\n\nThis ticket link is no longer available."
+  },
+  {
+    "name": "asset-icon-192.png",
+    "status": 200,
+    "contentType": "text/html"
+  },
+  {
+    "name": "asset-icon-512.png",
+    "status": 200,
+    "contentType": "text/html"
+  },
+  {
+    "name": "asset-badge-72.png",
+    "status": 200,
+    "contentType": "text/html"
+  },
+  {
+    "name": "customer-initial-api-500",
+    "url": "/AAAAAAAAAAAAAAAAAAAAAA",
+    "headings": [],
+    "errors": [],
+    "failures": [
+      {
+        "path": "/api/public/v1/tickets/AAAAAAAAAAAAAAAAAAAAAA",
+        "status": 500
+      },
+      {
+        "path": "/api/public/v1/tickets/AAAAAAAAAAAAAAAAAAAAAA",
+        "status": 500
+      },
+      {
+        "path": "/api/public/v1/tickets/AAAAAAAAAAAAAAAAAAAAAA",
+        "status": 500
+      }
+    ],
+    "text": "Loading…"
+  }
+]

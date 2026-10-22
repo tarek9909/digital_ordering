@@ -1,0 +1,77 @@
+# Back-end CI (TRD §24.3, TR-CI-01 – TR-CI-05). Runs on every pull request and on main.
+name: backend
+on:
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend.yml']
+
+# Third-party actions are pinned to full commit SHAs (L-24); .github/dependabot.yml proposes updates.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dop_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -proot" --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    env:
+      TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/dop_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run check:contracts
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Integration tests incl. the cross-tenant suite (blocking, TR-TEN-08)
+        run: npm run test:integration
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run build
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions: { security-events: write, contents: read }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: github/codeql-action/init@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3.39.1
+        with: { languages: javascript-typescript }
+      - uses: github/codeql-action/analyze@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3.39.1
+
+  image:
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # Builds and scans only (no push, no OIDC), so it needs no package or token rights (L-26).
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: docker build -t dop-backend:${{ github.sha }} .
+      - name: Scan image (TR-SEC-11)
+        # v0.35.0 pre-dates the March 2026 tag hijack (CVE-2026-33634); Trivy v0.69.3 is the advisory's safe release.
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          version: v0.69.3
+          image-ref: dop-backend:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true

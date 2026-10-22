@@ -1,0 +1,46 @@
+{
+  "appName": "Tanbeeh",
+  "loading": "Loading…",
+  "save": "Save",
+  "saved": "Saved",
+  "cancel": "Cancel",
+  "close": "Close",
+  "back": "Back",
+  "retry": "Try again",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "email": "Email",
+  "password": "Password",
+  "language": "Language",
+  "reconnecting": "Reconnecting…",
+  "offline": "Offline — actions disabled",
+  "somethingWrong": "Something went wrong. Please reload the page.",
+  "notFound": "Not found",
+  "poweredBy": "Powered by Tanbeeh",
+  "status": {
+    "received": "Received",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "collected": "Collected",
+    "cancelled": "Cancelled",
+    "expired": "Closed"
+  },
+  "alertLevel": {
+    "push": "Push sent to phone",
+    "live": "Page open",
+    "closed": "Page closed",
+    "none": "No alerts"
+  },
+  "errors": {
+    "NETWORK": "No connection. Check the network.",
+    "RATE_LIMITED": "Too many requests. Wait a moment.",
+    "UNAUTHENTICATED": "Please sign in again.",
+    "FORBIDDEN": "You are not allowed to do that.",
+    "NOT_FOUND": "Not found.",
+    "TENANT_SUSPENDED": "This account is suspended.",
+    "TENANT_INACTIVE": "Subscription required.",
+    "VALIDATION_FAILED": "Please check the highlighted fields.",
+    "MAINTENANCE": "Planned maintenance. We will be back shortly.",
+    "default": "Something went wrong. Please try again."
+  }
+}

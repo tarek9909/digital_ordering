@@ -1,0 +1,172 @@
+[
+  {
+    "name": "anonymous-route-boundaries",
+    "count": 207,
+    "byStatus": {
+      "200": 3,
+      "204": 1,
+      "400": 24,
+      "401": 169,
+      "404": 8,
+      "410": 2
+    },
+    "unexpected": []
+  },
+  {
+    "name": "authenticated-get-sweep",
+    "count": 71,
+    "byStatus": {
+      "200": 56,
+      "400": 5,
+      "401": 1,
+      "404": 8,
+      "410": 1
+    },
+    "unexpected500": []
+  },
+  {
+    "name": "empty-patch-tenant",
+    "path": "/api/admin/v1/tenant",
+    "status": 204,
+    "code": null
+  },
+  {
+    "name": "empty-patch-venue",
+    "path": "/api/admin/v1/venues/01a164d6-7591-71c5-b3c5-cf2ad7fabc08",
+    "status": 200,
+    "code": null
+  },
+  {
+    "name": "empty-patch-counter",
+    "path": "/api/admin/v1/counters/01a164d6-77ef-7a05-b285-554a1c3992a5",
+    "status": 204,
+    "code": null
+  },
+  {
+    "name": "empty-patch-display",
+    "path": "/api/admin/v1/displays/01a164d6-75d2-797f-9b1a-3059cbc0239c",
+    "status": 204,
+    "code": null
+  },
+  {
+    "name": "empty-patch-profile",
+    "path": "/api/admin/v1/me",
+    "status": 204,
+    "code": null
+  },
+  {
+    "name": "empty-patch-webhook",
+    "path": "/api/admin/v1/webhooks/01a164d6-7821-72e1-91cb-9999197cb0ea",
+    "status": 500,
+    "code": "INTERNAL_ERROR"
+  },
+  {
+    "name": "empty-patch-plan",
+    "path": "/api/console/v1/plans/01a164d6-74ed-7257-86ab-a813f5b44b2f",
+    "status": 500,
+    "code": "INTERNAL_ERROR"
+  },
+  {
+    "name": "empty-patch-platform-user",
+    "path": "/api/console/v1/platform-users/01a164d6-7530-792d-ad66-71501437f8e7",
+    "status": 500,
+    "code": "INTERNAL_ERROR"
+  },
+  {
+    "name": "empty-patch-language",
+    "path": "/api/console/v1/languages/en",
+    "status": 500,
+    "code": "INTERNAL_ERROR"
+  },
+  {
+    "name": "totp-enrollment-current-ui-payload",
+    "path": "/api/auth/v1/mfa/totp/enroll",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "name": "totp-enrollment-valid-password",
+    "path": "/api/auth/v1/mfa/totp/enroll",
+    "status": 200,
+    "code": null
+  },
+  {
+    "name": "duplicate-named-staff-pin",
+    "first": 201,
+    "second": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "name": "query-probe",
+    "path": "/api/staff/v1/board?venueId=01a164d6-7591-71c5-b3c5-cf2ad7fabc08?q=A",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "name": "query-probe",
+    "path": "/api/staff/v1/tickets/search?venueId=01a164d6-7591-71c5-b3c5-cf2ad7fabc08?q=A",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "name": "query-probe",
+    "path": "/api/admin/v1/reports/today?venueId=00000000-0000-7000-8000-000000000001",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "query-probe",
+    "path": "/api/admin/v1/reports/trends?from=2026-10-01&to=2026-10-22&venueId=00000000-0000-7000-8000-000000000001",
+    "status": 200,
+    "code": null
+  },
+  {
+    "name": "duplicate-published-legal-asset",
+    "errorCode": "VALIDATION_FAILED",
+    "original": "<p>Original accepted terms</p>",
+    "after": "<p>Replacement rejected by API</p>",
+    "changed": true
+  },
+  {
+    "name": "missing-resource-get",
+    "path": "/api/admin/v1/venues/00000000-0000-7000-8000-000000000001",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-resource-get",
+    "path": "/api/admin/v1/venues/00000000-0000-7000-8000-000000000001/staff-access",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-resource-get",
+    "path": "/api/admin/v1/venues/00000000-0000-7000-8000-000000000001/displays",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-resource-get",
+    "path": "/api/admin/v1/venues/00000000-0000-7000-8000-000000000001/devices",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-resource-get",
+    "path": "/api/admin/v1/venues/00000000-0000-7000-8000-000000000001/counters",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-console-resource",
+    "path": "/api/console/v1/tenants/00000000-0000-7000-8000-000000000001",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "name": "missing-console-resource",
+    "path": "/api/console/v1/tenants/00000000-0000-7000-8000-000000000001/billing",
+    "status": 200,
+    "code": null
+  }
+]

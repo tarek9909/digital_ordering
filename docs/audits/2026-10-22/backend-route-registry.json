@@ -1,0 +1,1833 @@
+[
+  {
+    "prefix": "/api/public/v1",
+    "count": 16,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/config",
+        "surfaces": [
+          "customer",
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:token",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/follow",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/alerts-enabled",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "put",
+        "path": "/tickets/:token/push-subscription",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/tickets/:token/push-subscription",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/acknowledge",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:token/manifest",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:venueCode",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/venues/:venueCode/my-tickets",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/rating",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:venueCode/claims",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/claims/:claimId",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/legal/:kind",
+        "surfaces": [
+          "customer",
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/slugs/:slug/availability",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/signup",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/auth/v1",
+    "count": 19,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/sign-in",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-in/mfa",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-in/mfa/enroll",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-out",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/me",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/email/verify",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/email/resend",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/password/forgot",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/password/reset",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/invitations/:token",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/invitations/:token/accept",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tenants",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/handoff",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/handoff/exchange",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/totp/enroll",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/totp/confirm",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/mfa/totp",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/refresh",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/platform-invitations/:token/accept",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/auth/v1",
+    "count": 4,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/oauth/google/start",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/oauth/google/callback",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/me",
+        "surfaces": [
+          "tenant",
+          "www"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/support/exchange",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/staff/v1",
+    "count": 13,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/sessions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/sessions/current",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/device",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/board",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tickets",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/search",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:id/qr.svg",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/transitions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "patch",
+        "path": "/tickets/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/alerts",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/members/unlock",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/claims",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/claims/:id/decision",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      }
+    ]
+  },
+  {
+    "prefix": "/api/display/v1",
+    "count": 3,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/pair",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/board",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "display.view",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/session",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "display.view",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "count": 45,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenant",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/tenant",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenant/deletion",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/tenant/deletion",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/onboarding",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/activity",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/venues",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "patch",
+        "path": "/venues/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/messages",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/settings",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/logo",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/counters",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/counters",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "patch",
+        "path": "/counters/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/counters/:id/archive",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/ratings",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/ratings/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/staff-access",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/staff-access/rotate-link",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/staff-access/pin",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/devices",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/devices/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/displays",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/displays",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "patch",
+        "path": "/displays/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/displays/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/displays/:id/pairing-code",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/posters/:kind",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/invitations",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/invitations/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/members/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/ownership-transfer",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/today",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/pilot",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/exports",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.export",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/exports/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.export",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/billing",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/checkout",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/portal",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/cancel",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/resume",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/me",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/me/password",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "count": 12,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/support-sessions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/approve",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/refuse",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/end",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/support-codes",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/announcements",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "announcements.read",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/change-plan",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenant/slug",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/trends",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/heatmap",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/legal/pending",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/legal/accept",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "count": 17,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/venues",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/archive",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/api-keys",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/api-keys",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/api-keys/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/webhooks",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/webhooks",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/webhooks/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/webhooks/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/webhooks/:id/test",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/webhooks/:id/deliveries",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/webhook-deliveries/:deliveryId/redeliver",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/pos/connections",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/staff-members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/staff-members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "delete",
+        "path": "/staff-members/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/reports/export.csv",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/console/v1",
+    "count": 22,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenants",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/suspend",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/reactivate",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/extend-trial",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/complimentary",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/cancel",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id/billing",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.billing.read",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/pilot",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.reports",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/audit",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.audit",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/platform-users",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/platform-users",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/platform-users/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/platform-users/:id/reset-mfa",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/settings",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "put",
+        "path": "/settings/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/chimes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/languages",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/languages/:code",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/console/v1",
+    "count": 31,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenants/:id/notes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.notes",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/notes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.notes",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id/support-sessions",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/support-sessions",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/support-sessions/emergency",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support.emergency",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/verify-code",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/enter",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/end",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/plan",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/coupon",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/free-months",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/plans",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/plans",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "patch",
+        "path": "/plans/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/plans/:id/prices",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/prices/:id/deactivate",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/feature-flags",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "put",
+        "path": "/tenants/:id/feature-flags/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/tenants/:id/feature-flags/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/transfer-ownership",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.ownership",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/signout-devices",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.devices",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/announcements",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/announcements",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "tenantResource": false
+      },
+      {
+        "method": "delete",
+        "path": "/announcements/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/legal-documents",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/legal-documents",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "post",
+        "path": "/legal-documents/:id/publish",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/email-templates/:key/:locale",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "put",
+        "path": "/email-templates/:key/:locale",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/push-keys/status",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "tenantResource": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/platform",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.reports",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/v1",
+    "count": 9,
+    "routes": [
+      {
+        "method": "get",
+        "path": "/me",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:id",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/status",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/by-external-ref/:externalRef/status",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/alert",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:id/qr.png",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:id/qr.svg",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true
+      }
+    ]
+  },
+  {
+    "prefix": "/webhooks",
+    "count": 1,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/stripe",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      }
+    ]
+  },
+  {
+    "prefix": "/connectors",
+    "count": 1,
+    "routes": [
+      {
+        "method": "post",
+        "path": "/:provider/webhook",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "public",
+        "tenantResource": false
+      }
+    ]
+  }
+]

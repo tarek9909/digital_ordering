@@ -1,0 +1,22 @@
+﻿[
+    {
+        "exitCode":  0,
+        "log":  "backend-final-typecheck.log",
+        "check":  "typecheck"
+    },
+    {
+        "exitCode":  0,
+        "log":  "backend-final-lint.log",
+        "check":  "lint"
+    },
+    {
+        "exitCode":  1,
+        "log":  "backend-final-check-contracts.log",
+        "check":  "check:contracts"
+    },
+    {
+        "exitCode":  0,
+        "log":  "backend-final-build.log",
+        "check":  "build"
+    }
+]

@@ -1,0 +1,505 @@
+{
+  "nav": {
+    "skip": "Skip to content",
+    "main": "Main",
+    "home": "Home",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "getStarted": "Get started",
+    "switchLanguage": "Switch language",
+    "how": "How it works",
+    "faq": "FAQ"
+  },
+  "footer": {
+    "copyright": "© {{year}} Tanbeeh. All rights reserved.",
+    "legal": "Legal"
+  },
+  "home": {
+    "title": "Call your customers when their order is ready — on their own phone",
+    "subtitle": "Tanbeeh replaces plastic buzzers. The customer scans a QR code, and their phone and your TV screen alert them the moment staff tap Ready. No app to install.",
+    "cta": "Start your 14-day free trial",
+    "trialNote": "No card needed for the trial.",
+    "how": {
+      "title": "How it works in 3 steps",
+      "issue": {
+        "title": "Issue a digital ticket",
+        "body": "At the counter, staff tap New ticket. The customer scans the QR code and follows their order number."
+      },
+      "ready": {
+        "title": "Tap Ready",
+        "body": "When the order is ready, staff tap Ready. The customer's phone and the TV screen in the restaurant show the number with sound."
+      },
+      "collect": {
+        "title": "The customer collects",
+        "body": "The customer comes to the counter and staff mark the order Collected. Reports show waiting and pickup times."
+      }
+    },
+    "features": {
+      "title": "What you get",
+      "noApp": {
+        "title": "No app for customers",
+        "body": "Works in the phone browser with push notifications where supported and a live page everywhere else."
+      },
+      "tv": {
+        "title": "TV display",
+        "body": "Turn any smart TV or tablet into a pickup screen showing preparing and ready numbers."
+      },
+      "arabic": {
+        "title": "Arabic and English",
+        "body": "Every screen works in Arabic (right to left) and English, with your own logo and colour."
+      },
+      "reports": {
+        "title": "Simple reports",
+        "body": "Tickets per day, preparation time from ticket creation, pickup time and alert reach."
+      }
+    },
+    "demo": {
+      "venue": "Burger House",
+      "label": "Order",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "markReady": "Tap Ready, as staff would",
+      "reset": "Start again",
+      "sticker": "Ready!",
+      "waitLine": "Being prepared, about 5 minutes. The customer can put the phone away.",
+      "readyLine": "The phone rings and the TV calls 63. The customer comes to the counter.",
+      "caption": "Example of the customer's ticket page. Press the button to see the Ready alert."
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "intro": "One simple price per venue. Start with a free trial.",
+    "vatNote": "VAT is added where applicable.",
+    "perVenue": {
+      "month": "per venue / month",
+      "quarter": "per venue / quarter",
+      "year": "per venue / year"
+    },
+    "trialNoteDays": "{{days}}-day free trial. We set up your account; then pay monthly or yearly.",
+    "trialNoteGeneric": "Free trial. We set up your account; then pay monthly or yearly.",
+    "retry": "Try again",
+    "none": "Plans will be published soon. Contact us for a quote.",
+    "limitsLabel": "Included",
+    "featuresLabel": "Features",
+    "planNames": {
+      "standard": "Standard",
+      "pro": "Pro",
+      "multisite": "Multi-site"
+    },
+    "limits": {
+      "maxVenues": "Venues: up to {{n}}",
+      "maxCountersPerVenue": "Pickup counters per venue: up to {{n}}",
+      "maxLanguages": "Languages: up to {{n}}",
+      "maxApiKeysPerVenue": "API keys per venue: up to {{n}}"
+    },
+    "features": {
+      "display_speech": "Spoken announcements on the TV display",
+      "ratings": "Customer ratings",
+      "reports_trends": "Trend reports",
+      "counters": "Multiple pickup counters",
+      "remove_powered_by": "Remove “Powered by Tanbeeh”",
+      "api_access": "API access",
+      "webhooks": "Webhooks",
+      "pos_connectors": "POS integrations",
+      "named_staff": "Named staff members",
+      "csv_export": "CSV export",
+      "multi_venue": "Multiple venues",
+      "combined_reports": "Combined reports across venues"
+    },
+    "featured": "Most popular"
+  },
+  "contact": {
+    "title": "Contact us",
+    "body": "Questions about Tanbeeh or need help getting started? Email us and we will reply.",
+    "email": "support@tanbeeh.app",
+    "hours": "We reply within one business day (Sunday to Thursday).",
+    "setup": "To start your free trial, send us your restaurant name, city and phone number. We set up your account and email you an invitation to sign in.",
+    "setupFor": "Want Tanbeeh for {{name}}? Send us the restaurant name, your city and phone number. We set up your account and email you an invitation to sign in."
+  },
+  "signin": {
+    "linkTitle": "Connect your Google account",
+    "linkIntro": "An account with this email already exists. Enter its password to sign in with Google from now on. If you did not create it, or forgot the password, reset it first.",
+    "linkSubmit": "Connect and sign in",
+    "linkWrong": "That password is not right.",
+    "linkCancel": "Sign in another way",
+    "title": "Sign in",
+    "wrongCredentials": "Email or password is wrong.",
+    "forgot": "Forgot password?",
+    "noAccount": "No account yet? Contact us",
+    "mfaTitle": "Two-step verification",
+    "mfaIntro": "Enter the 6-digit code from your authenticator app.",
+    "code": "Verification code",
+    "codeFormat": "Enter the 6 digits.",
+    "verify": "Verify",
+    "wrongCode": "The code is wrong or expired.",
+    "chooseTitle": "Choose a restaurant",
+    "chooseIntro": "Welcome, {{name}}. Which restaurant do you want to manage?",
+    "noTenants": "This account has no restaurant yet.",
+    "opening": "Opening the admin page…"
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Manager"
+  },
+  "tenantStatus": {
+    "trial": "Trial",
+    "active": "Active",
+    "past_due": "Payment due",
+    "suspended": "Suspended",
+    "trial_expired": "Trial ended",
+    "cancelled": "Cancelled",
+    "unknown": "Unknown status"
+  },
+  "password": {
+    "forgotTitle": "Reset your password",
+    "forgotIntro": "Enter your email and we will send you a link to choose a new password.",
+    "forgotSent": "If an account exists for this email, we have sent a reset link. Check your inbox.",
+    "sendLink": "Send reset link",
+    "resetTitle": "Choose a new password",
+    "newPassword": "New password",
+    "resetSubmit": "Save new password",
+    "resetDone": "Your password has been changed. You can sign in now.",
+    "linkExpired": "This link has expired or was already used.",
+    "requestNew": "Request a new link",
+    "hint": "At least 10 characters."
+  },
+  "verify": {
+    "title": "Verify your email",
+    "checking": "Verifying your email…",
+    "done": "Your email is verified.",
+    "continue": "Continue to sign in",
+    "expired": "This verification link has expired or was already used.",
+    "expiredHelp": "Sign in and use “Resend” on your admin page to get a new link."
+  },
+  "legal": {
+    "kinds": {
+      "terms": "Terms of service",
+      "privacy": "Privacy policy",
+      "dpa": "Data processing agreement"
+    },
+    "notPublished": "This document is not yet published.",
+    "version": "Version {{version}}",
+    "published": "published {{date}}",
+    "openOriginal": "Open the original document",
+    "openOriginalHelp": "The document could not be shown here. Open the original below."
+  },
+  "errors": {
+    "EMAIL_TAKEN": "An account with this email already exists.",
+    "INVITATION_EXPIRED": "This link has expired or was already used.",
+    "ACCOUNT_LOCKED": "Too many failed sign-ins. Try again later.",
+    "MFA_REQUIRED": "Two-step verification is required.",
+    "CSRF_FAILED": "Your session changed. Reload the page and try again.",
+    "EMAIL_NOT_VERIFIED": "Please verify your email first.",
+    "SERVICE_UNAVAILABLE": "The service is temporarily unavailable. Try again shortly.",
+    "INTERNAL_ERROR": "Something went wrong on our side. Please try again."
+  },
+  "validation": {
+    "too_small": "This is too short or missing.",
+    "too_big": "This is too long.",
+    "invalid_string": "This format is not valid.",
+    "invalid_type": "This field is required.",
+    "invalid_literal": "Please accept to continue.",
+    "custom": "This value is not valid.",
+    "invalid": "This value is not valid."
+  },
+  "fieldErrors": {
+    "taken": "Already taken.",
+    "invalid": "Not valid.",
+    "emailTaken": "An account with this email already exists.",
+    "breached": "This password appeared in a data breach. Choose another.",
+    "too_short": "Too short.",
+    "required": "Required."
+  },
+  "confirmEmail": {
+    "title": "Confirm your new email",
+    "checking": "Confirming your new email…",
+    "done": "Your sign-in email is now {{email}}. Other devices were signed out.",
+    "doneLead": "Your sign-in email is now",
+    "signedOut": "For your security, your account was signed out on other devices.",
+    "continue": "Continue to sign in",
+    "expired": "This confirmation link has expired or was already used.",
+    "expiredHelp": "Sign in and request the email change again from your account page.",
+    "taken": "Another account already uses this email.",
+    "takenHelp": "Your sign-in email was not changed. Sign in and choose a different email.",
+    "retry": "Try again"
+  },
+  "landing": {
+    "hero": {
+      "kicker": "The pager for restaurants and cafés",
+      "title": "Your customer's phone is the buzzer now.",
+      "body": "They scan a code at the counter, and their phone rings the moment you tap Ready. No app, no buzzers to lose, nothing to charge.",
+      "cta": "Contact us to get started",
+      "secondary": "See how it works",
+      "ticks": [
+        "No devices to buy",
+        "Ready in 10 minutes",
+        "Priced in US dollars"
+      ]
+    },
+    "demo": {
+      "label": "Live demo",
+      "tablet": "Staff tablet",
+      "phone": "Customer's phone",
+      "tv": "Pickup screen",
+      "order": "Order",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "tapReady": "Ready",
+      "again": "Next order",
+      "phoneWait": "About 5 min",
+      "phoneReady": "Your order is ready. Come to the counter.",
+      "hint": "Tap Ready, as your staff would. Sound on.",
+      "tvReady": "Ready",
+      "tvPreparing": "Preparing",
+      "venue": "Burger House",
+      "coming": "I'm coming"
+    },
+    "trust": {
+      "title": "Restaurants and cafés using Tanbeeh",
+      "slot": "Partner logo",
+      "note": "Logos appear here once pilot venues agree to be listed."
+    },
+    "marquee": [
+      "Ready",
+      "No app",
+      "No buzzers",
+      "Nothing to charge",
+      "Arabic and English",
+      "Pickup TV",
+      "Reports"
+    ],
+    "steps": {
+      "title": "Same counter, no buzzers.",
+      "body": "Nothing new for your team to learn. The customer orders and pays as usual; the only difference is a code instead of a device.",
+      "items": [
+        {
+          "title": "Staff tap New ticket",
+          "body": "A number and a QR code appear on the counter screen or the receipt."
+        },
+        {
+          "title": "The customer scans",
+          "body": "Their order page opens in the phone browser. One tap turns on the alert."
+        },
+        {
+          "title": "Staff tap Ready",
+          "body": "The phone rings, even in a pocket, and the pickup screen calls the number."
+        },
+        {
+          "title": "The customer collects",
+          "body": "Staff mark it collected. Waiting and pickup times go into your reports."
+        }
+      ]
+    },
+    "statement": {
+      "text": "Plastic buzzers get lost, run flat and pass from hand to hand. Your customer already carries a phone, and never leaves it on the table.",
+      "scene": "Evening service at a busy counter"
+    },
+    "compare": {
+      "title": "Buzzers or Tanbeeh",
+      "buzzer": "Plastic buzzers",
+      "tanbeeh": "Tanbeeh",
+      "rows": [
+        {
+          "label": "To start",
+          "buzzer": "Buy a set of devices and a base",
+          "tanbeeh": "Print a QR poster"
+        },
+        {
+          "label": "Every day",
+          "buzzer": "Charge them, count them, chase the missing ones",
+          "tanbeeh": "Nothing to charge or collect"
+        },
+        {
+          "label": "Hygiene",
+          "buzzer": "Passed from hand to hand all day",
+          "tanbeeh": "Each customer uses their own phone"
+        },
+        {
+          "label": "Range",
+          "buzzer": "Stops working outside the door",
+          "tanbeeh": "Rings wherever the phone has internet"
+        },
+        {
+          "label": "Message",
+          "buzzer": "A beep",
+          "tanbeeh": "Your logo, the number and your words, in Arabic or English"
+        },
+        {
+          "label": "Reports",
+          "buzzer": "None",
+          "tanbeeh": "Preparation, waiting and pickup times"
+        }
+      ]
+    },
+    "brand": {
+      "title": "Your customers see your restaurant, not ours.",
+      "body": "Type your restaurant name, pick a colour and a language, and see the page your customers will get.",
+      "nameLabel": "Restaurant name",
+      "namePlaceholder": "e.g. Abu Ali Grill",
+      "colourLabel": "Brand colour",
+      "custom": "Custom colour",
+      "langLabel": "Customer language",
+      "cta": "Ask us to set it up",
+      "note": "You can change the name, colour, logo and languages at any time.",
+      "previewNumber": "Your order",
+      "previewStatus": "Being prepared",
+      "previewWait": "About 5 minutes",
+      "previewAlert": "Alerts are on",
+      "defaultName": "Your restaurant"
+    },
+    "cashier": {
+      "title": "One button for the cashier.",
+      "body": "The staff board runs in the browser of any tablet or phone at the counter.",
+      "items": [
+        "Orders sort themselves into Preparing and Ready.",
+        "A bell next to each number shows whether the customer turned alerts on.",
+        "Tapped Ready by mistake? Undo it with one tap.",
+        "Signed in with a link and a PIN. No special device, no installation."
+      ],
+      "scene": "Cashier at the counter",
+      "board": "Counter",
+      "open": "Open",
+      "ready": "Ready",
+      "collect": "Collected",
+      "onTheWay": "Coming"
+    },
+    "tv": {
+      "title": "Any TV becomes a pickup screen.",
+      "body": "Pair a smart TV or a tablet with a 6-digit code. New ready numbers light up and are announced out loud, in Arabic and English.",
+      "announce": "Order {{number}}, your order is ready.",
+      "announceAr": "الطلب رقم {{number}} جاهز",
+      "scan": "Scan to follow your order"
+    },
+    "reach": {
+      "title": "What if the phone is locked?",
+      "body": "The alert takes three routes, so it reaches the customer even when one of them cannot.",
+      "items": [
+        {
+          "title": "Notification",
+          "body": "Once the customer turns on alerts, the phone rings even when locked or in a pocket."
+        },
+        {
+          "title": "Live page",
+          "body": "While the order page is open, it plays a loud alarm and vibrates until the customer taps \"I'm coming\"."
+        },
+        {
+          "title": "Pickup screen",
+          "body": "The TV shows the number and announces it, for anyone whose phone is out of battery."
+        }
+      ],
+      "footnote": "Staff see which route each customer has, so they know who to call out by voice."
+    },
+    "pos": {
+      "title": "Works with your cashier system.",
+      "items": [
+        "Create tickets from your POS or ordering system with the API.",
+        "The receipt number from your system links to the customer number, and Ready rings the phone.",
+        "Webhooks tell your systems when an order is ready or collected.",
+        "Ready-made connections to popular POS systems are coming soon."
+      ],
+      "receipt": "Receipt",
+      "pos": "Cashier system",
+      "customer": "Customer number",
+      "ringing": "Ready, phone ringing",
+      "start": "No integration needed to start: a QR poster on the counter is enough."
+    },
+    "pricing": {
+      "title": "Pick a plan. Every plan has everything you need to start.",
+      "included": "In every plan",
+      "includedItems": [
+        "Unlimited numbers and alerts",
+        "Staff board on any device",
+        "Pickup screen with announcements",
+        "QR posters ready to print",
+        "Page in your colours and logo",
+        "Reports and ratings"
+      ],
+      "chains": "Several branches or a chain? Talk to us about a price.",
+      "period": {
+        "month": "Monthly",
+        "quarter": "Every 3 months",
+        "year": "Yearly"
+      },
+      "periodLabel": "Billing period"
+    },
+    "faq": {
+      "title": "Questions?",
+      "scene": "A customer checking their order",
+      "items": [
+        {
+          "q": "Does the customer pay anything?",
+          "a": "No. Tanbeeh is free for your customers. They only need their phone and its browser."
+        },
+        {
+          "q": "Do customers need to install an app?",
+          "a": "No. The order page opens in the phone browser after scanning. They can add it to the home screen if they like."
+        },
+        {
+          "q": "Does the phone ring when the screen is locked?",
+          "a": "Yes, once the customer turns on alerts. On iPhone this works after adding the page to the home screen (iOS 16.4 or later). If notifications are off, the open page sounds an alarm and the pickup screen calls the number."
+        },
+        {
+          "q": "What if the customer's battery dies?",
+          "a": "The pickup screen still shows and announces the number. Staff can also see that this customer has no active alert and call them out."
+        },
+        {
+          "q": "What if the internet drops?",
+          "a": "The staff board shows that it is offline and catches up as soon as the connection returns. Customer pages reconnect by themselves."
+        },
+        {
+          "q": "What if someone photographs the QR code?",
+          "a": "Each order has its own code. The code on the counter poster asks for the order number and a short claim code from the receipt, or for staff approval."
+        },
+        {
+          "q": "How do staff sign in?",
+          "a": "With the staff link and a 4-digit PIN. The device stays signed in, and you can give each person their own PIN."
+        },
+        {
+          "q": "Does Tanbeeh connect to my POS?",
+          "a": "Yes, through the API and webhooks today. Ready-made connections to popular POS systems are coming soon."
+        },
+        {
+          "q": "Which languages are supported?",
+          "a": "Arabic and English. You choose which languages each branch shows, and the pickup screen announces in both."
+        }
+      ]
+    },
+    "closing": {
+      "title": "Order's up? Make it ring.",
+      "body": "Tell us about your restaurant. We set up your account, you print your QR poster and take your first order.",
+      "cta": "Contact us to get started"
+    },
+    "footer": {
+      "tagline": "Your customer's phone is the buzzer.",
+      "product": "Product",
+      "company": "Company",
+      "contact": "Contact",
+      "payments": "Prices in US dollars.",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "whatsapp": "Message us on WhatsApp",
+    "photoSlot": "Photo placeholder",
+    "local": {
+      "title": "Made for restaurants in Lebanon.",
+      "items": [
+        {
+          "title": "Priced in US dollars",
+          "body": "Pay in dollars, monthly or yearly, with no contract."
+        },
+        {
+          "title": "Arabic and English",
+          "body": "Every screen in Arabic and English, and the pickup screen announces in both."
+        },
+        {
+          "title": "No customer data",
+          "body": "Customers never give a name, phone number or email. Tickets are deleted after 90 days."
+        },
+        {
+          "title": "Built for patchy internet",
+          "body": "Pages are light and reconnect by themselves when the connection returns, and the staff board catches up on every change."
+        }
+      ]
+    }
+  }
+}

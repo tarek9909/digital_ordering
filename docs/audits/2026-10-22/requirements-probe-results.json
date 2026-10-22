@@ -1,0 +1,55 @@
+[
+  {
+    "finding": "MFA proof kept through the www-to-tenant handoff",
+    "passwordLoginRequiresMfa": true,
+    "wwwMfaCompleted": true,
+    "directTenantManagement": 200,
+    "afterHandoffManagement": 200
+  },
+  {
+    "finding": "Google sign-in now requires the enrolled TOTP",
+    "passwordLoginRequiresMfa": true,
+    "googleCallback": 302,
+    "redirectsToCode": true,
+    "sessionBeforeCode": 401
+  },
+  {
+    "finding": "Kept API key stops working on a plan without the API",
+    "changeStatus": 409,
+    "retainedKeyWriteStatus": 403,
+    "retainedKeyWriteCode": "FEATURE_NOT_IN_PLAN"
+  },
+  {
+    "finding": "reports_trends override now disables trends",
+    "override": false,
+    "responseStatus": 403
+  },
+  {
+    "finding": "Console tenant search finds owner email",
+    "slugSearchCount": 1,
+    "ownerEmailSearchCount": 1
+  },
+  {
+    "finding": "Deleting a rating comment keeps the stars",
+    "before": {
+      "count": 1,
+      "average": 5
+    },
+    "after": {
+      "count": 1,
+      "average": 5
+    }
+  },
+  {
+    "finding": "Every old slug keeps its 180-day redirect",
+    "firstRedirectBefore": "audit-slug-second",
+    "firstRedirectAfter": "audit-slug-third",
+    "originalSlugAvailableAfterSecondRename": false
+  },
+  {
+    "finding": "MRR keeps the contracted price after a catalogue change",
+    "mrrBeforeMinor": 17900,
+    "mrrAfterMinor": 17900,
+    "providerCallsDuringPriceChange": 0
+  }
+]

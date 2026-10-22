@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-10-22T18:19:16.634Z",
+  "evidence": "real MySQL / real service and HTTP code; fake identity provider",
+  "results": [
+    {
+      "finding": "English signup/acceptance records a different locale and version than the English public document",
+      "publicLocale": "en",
+      "publicVersion": "english-v1",
+      "recordedAcceptance": [
+        {
+          "locale": "ar",
+          "version": "arabic-v2"
+        }
+      ],
+      "pendingPrivacyIdMatchesNewerArabic": true
+    },
+    {
+      "finding": "A rejected password consumes the reset link before the user can correct it",
+      "firstStatus": 400,
+      "firstCode": "VALIDATION_FAILED",
+      "retryStatus": 410,
+      "retryCode": "INVITATION_EXPIRED"
+    },
+    {
+      "finding": "A new Google sign-in creates an account with no tenant; suggested regular signup rejects that same account",
+      "callbackStatus": 302,
+      "redirect": "/sign-in?chooser=1",
+      "memberships": 0,
+      "signupStatus": 409,
+      "signupCode": "EMAIL_TAKEN"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "approved-support-http-vs-realtime",
+  "approvedSupportActorKind": "support",
+  "http": {
+    "unauthenticated": 401,
+    "approvedSupport": 200,
+    "owner": 200,
+    "supportBoardOpenTickets": 1
+  },
+  "realtime": {
+    "unauthenticated": {
+      "connected": false,
+      "error": "UNAUTHENTICATED"
+    },
+    "approvedSupport": {
+      "connected": false,
+      "error": "UNAUTHENTICATED"
+    },
+    "owner": {
+      "connected": true,
+      "error": null,
+      "receivedTicketUpdate": true
+    }
+  }
+}

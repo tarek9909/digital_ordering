@@ -1,0 +1,40 @@
+/* TV board details on top of ember.css. Sizes are viewport-relative: the board is read from across a room. */
+
+/* Count next to a column heading: a small mono figure, so it never competes with the order numbers. */
+.board-label {
+  font-family: var(--font-mono);
+  font-size: 2.4vmin;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one moment of motion: the number that just became ready settles into place once. */
+@keyframes ready-pop {
+  0% {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.ready-pop {
+  animation: ready-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+/* Keep the glow inside the small tile. */
+.ready-pop.ember-glow::before {
+  inset-inline-end: -40%;
+  top: -60%;
+  width: 120%;
+  height: 160%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ready-pop {
+    animation: none;
+  }
+}

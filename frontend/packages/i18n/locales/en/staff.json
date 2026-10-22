@@ -1,0 +1,188 @@
+{
+  "conflict": "Order {{number}} was already changed on another device. The card now shows the latest state.",
+  "conflictBy": "Order {{number}} was already changed by {{name}}. The card now shows the latest state.",
+  "markedReady": "Order {{number}} is ready",
+  "undo": "Undo",
+  "alertSent": "Alert sent again for order {{number}}",
+  "actions": {
+    "startPreparing": "Start preparing",
+    "ready": "Ready",
+    "collected": "Collected"
+  },
+  "menu": {
+    "open": "Options for order {{number}}",
+    "title": "Order {{number}}",
+    "showQr": "Show QR code",
+    "backToPreparing": "Back to preparing",
+    "alertAgain": "Alert again",
+    "waitMinus": "Wait −5 min",
+    "waitPlus": "Wait +5 min",
+    "edit": "Edit note or receipt",
+    "reopen": "Reopen",
+    "cancel": "Cancel order"
+  },
+  "ageMinutes_one": "{{count}} min",
+  "ageMinutes_other": "{{count}} min",
+  "waitMinutes_one": "Wait estimate: {{count}} min",
+  "waitMinutes_other": "Wait estimate: {{count}} min",
+  "receipt": "Receipt",
+  "note": "Note",
+  "counter": "Counter",
+  "coming": "Coming",
+  "takingLonger": "Taking longer",
+  "callOut": "Not collected — call out",
+  "cancelDialog": {
+    "title": "Cancel order {{number}}?",
+    "description": "The customer's page will show that the order was cancelled.",
+    "reason": "Reason",
+    "note": "Note (optional)",
+    "confirm": "Cancel order",
+    "keep": "Keep order"
+  },
+  "cancelReasons": {
+    "customer_left": "Customer left",
+    "refunded": "Refunded",
+    "out_of_stock": "Out of stock",
+    "duplicate": "Duplicate ticket",
+    "mistake": "Created by mistake",
+    "other": "Other"
+  },
+  "checkCode": {
+    "title": "Check code for order {{number}}",
+    "description": "Ask the customer for the 4-character code shown on their phone.",
+    "label": "Check code",
+    "invalid": "That code does not match. Ask the customer again."
+  },
+  "editDialog": {
+    "title": "Edit order {{number}}"
+  },
+  "newTicket": {
+    "button": "New ticket",
+    "title": "New ticket",
+    "description": "Receipt number and note are optional.",
+    "create": "Create ticket",
+    "openExisting": "Open ticket"
+  },
+  "qr": {
+    "label": "QR code for order {{number}}",
+    "scan": "Scan to follow your order",
+    "tapToClose": "Tap to close",
+    "claimCode": "Claim code"
+  },
+  "recent": {
+    "title": "Recent",
+    "description": "Collected, cancelled and closed orders from the last 30 minutes.",
+    "empty": "Nothing in the last 30 minutes."
+  },
+  "search": {
+    "title": "Search",
+    "label": "Number or receipt",
+    "placeholder": "Number or receipt",
+    "go": "Search",
+    "none": "No orders found."
+  },
+  "connection": {
+    "live": "Live",
+    "connecting": "Connecting…",
+    "offline": "Offline"
+  },
+  "collectedRecent": "Collected (30 min)",
+  "columns": "Order columns",
+  "emptyColumn": "No orders",
+  "signedOut": {
+    "title": "Open the staff link again",
+    "body": "This device is signed out. Open the staff link from your manager and enter the PIN."
+  },
+  "blocked": {
+    "title": "Subscription required",
+    "body": "This restaurant's subscription is not active. The owner can renew it in the admin area."
+  },
+  "suspended": "Account suspended — you can still finish open orders",
+  "signIn": {
+    "title": "Staff board",
+    "badLink": "This staff link is not valid",
+    "badLinkBody": "Check the link with your manager and open it again.",
+    "locked": "Too many wrong PINs. This device is temporarily locked.",
+    "wrongPin": "Wrong PIN. Try again.",
+    "deviceName": "Device name",
+    "deviceNameHint": "For example: Front counter tablet",
+    "device": "Device",
+    "changeName": "Change",
+    "pin": "PIN",
+    "pinHint": "Enter 4 to 6 digits",
+    "digitsEntered": "{{n}} digits entered",
+    "delete": "Delete last digit",
+    "open": "Open board",
+    "lockedFor": "You can try again in {{time}}."
+  },
+  "device": {
+    "title": "This device",
+    "backToBoard": "Back to board",
+    "personal": "You are using your own sign-in, not a staff device.",
+    "mode": "Mode",
+    "modeBoard": "Board",
+    "modeKitchen": "Kitchen",
+    "modeBoardHint": "All columns and actions.",
+    "modeKitchenHint": "Large Preparing cards with one Ready button, dark screen.",
+    "kitchenLink": "Kitchen mode is a device setting. On your own sign-in you can still",
+    "openKitchen": "open the kitchen view"
+  },
+  "errors": {
+    "TICKET_VERSION_CONFLICT": "This order was changed on another device.",
+    "INVALID_TRANSITION": "That status change is not allowed.",
+    "CHECK_CODE_REQUIRED": "Check code required.",
+    "CHECK_CODE_INVALID": "Check code does not match.",
+    "REOPEN_WINDOW_PASSED": "More than 30 minutes since collection; it cannot be reopened.",
+    "EXTERNAL_REF_IN_USE": "This receipt number is already on an open ticket.",
+    "NUMBERS_EXHAUSTED": "No free ticket number. Close some orders first.",
+    "TRIAL_DAILY_LIMIT": "Trial ticket limit reached for today.",
+    "PLAN_LIMIT": "Plan limit reached.",
+    "FEATURE_NOT_IN_PLAN": "Not included in your plan.",
+    "PIN_LOCKED": "Too many wrong PINs. Try again in 10 minutes.",
+    "CSRF_FAILED": "Session check failed. Reload the page.",
+    "INTERNAL_ERROR": "Unexpected error. Try again.",
+    "SERVICE_UNAVAILABLE": "Service unavailable. Try again shortly."
+  },
+  "member": {
+    "required": "Enter your personal PIN to continue.",
+    "title": "Enter your personal PIN",
+    "description": "Your name is saved with the changes you make. You stay signed in until 2 minutes without use.",
+    "continue": "Continue",
+    "signedInAs": "Signed in as {{name}}",
+    "nobody": "No one signed in",
+    "switch": "Switch",
+    "enterPin": "Enter PIN"
+  },
+  "claims": {
+    "title": "Claims",
+    "asks": "A customer asks to follow this order",
+    "age_one": "{{count}} min ago",
+    "age_other": "{{count}} min ago",
+    "approve": "Approve",
+    "refuse": "Refuse",
+    "approveFor": "Approve claim for order {{number}}",
+    "refuseFor": "Refuse claim for order {{number}}",
+    "approved": "Claim for order {{number}} approved",
+    "refused": "Claim for order {{number}} refused",
+    "badge_one": "{{count}} claim waiting",
+    "badge_other": "{{count}} claims waiting"
+  },
+  "keys": {
+    "hint": "Enter = Ready · C = Collected · Esc = clear",
+    "hintKitchen": "Enter = Ready · Esc = clear",
+    "notFound": "No open order {{number}}",
+    "ambiguous": "More than one open order {{number}}. Use the card.",
+    "alreadyReady": "Order {{number}} is already ready",
+    "notReady": "Order {{number}} is not ready yet"
+  },
+  "pos": {
+    "new": "New from POS",
+    "soundOn": "Sound on",
+    "enableSound": "Enable sound"
+  },
+  "kitchen": {
+    "title": "Kitchen",
+    "empty": "No orders being prepared"
+  },
+  "collectedToday": "Collected today"
+}

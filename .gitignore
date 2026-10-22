@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+.turbo/
+.vite/
+playwright-report/
+test-results/
+*.tfstate
+*.tfstate.*
+.terraform/
+**/e2e/.auth/
+deploy/.env
+deploy/secrets/
+deploy/backup/rclone.conf

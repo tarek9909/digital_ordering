@@ -1,0 +1,27 @@
+{
+  "name": "@dop/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./tokens.css": "./src/tokens.css",
+    "./ember.css": "./src/ember.css"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@fontsource/alexandria": "^5.3.0",
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@radix-ui/react-dialog": "^1.1.15"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

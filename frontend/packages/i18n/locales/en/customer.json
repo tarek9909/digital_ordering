@@ -1,0 +1,99 @@
+{
+  "order": "Order",
+  "yourOrder": "Your order",
+  "status": {
+    "received": "We have your order",
+    "preparing": "Your order is being prepared",
+    "ready": "Your order is ready!",
+    "readyAck": "See you at the counter",
+    "collected": "Enjoy!",
+    "cancelled": "This order was cancelled",
+    "expired": "This ticket is closed"
+  },
+  "wait": {
+    "about": "About {{count}} min",
+    "late": "Taking a little longer than usual"
+  },
+  "comingButton": "I'm coming",
+  "checkCode": "Show this code at the counter",
+  "turnOnAlerts": "Turn on alerts",
+  "alertsOn": "Alerts are on",
+  "keepOpen": "Keep this page open for alerts",
+  "keepOpenLive": "Alerts work while this page stays open",
+  "tapToHear": "Tap to hear your alert",
+  "allowNotifications": "Allow notifications",
+  "undoNotice": "The order went back to preparing",
+  "reconnecting": "Reconnecting…",
+  "notFoundTitle": "Ticket not found",
+  "notFoundBody": "This ticket link is no longer available.",
+  "suspended": "This restaurant's service is limited right now. Your order can still be completed.",
+  "activation": {
+    "title": "Turn on alerts",
+    "step1": "We will play a short sound.",
+    "heard": "Did you hear that?",
+    "yes": "Yes",
+    "no": "No",
+    "volumeTip": "Turn up the volume and switch off silent mode, then try again.",
+    "tryAgain": "Play again",
+    "pushIntro": "Allow notifications so we can alert you even when this page is closed.",
+    "allow": "Allow notifications",
+    "skip": "Skip, I'll keep this page open",
+    "done": "You're all set. Keep your phone nearby.",
+    "blocked": "Notifications are blocked for this site. Turn them on in your browser settings, or keep this page open."
+  },
+  "ios": {
+    "title": "Get alerts on iPhone",
+    "step1": "Tap the Share button",
+    "step2": "Choose \"Add to Home Screen\"",
+    "step3": "Open the new icon and tap \"Allow notifications\""
+  },
+  "inApp": {
+    "title": "Open in your browser for alerts",
+    "body": "This app's browser cannot send alerts when the page is closed. Copy the link and open it in Safari or Chrome.",
+    "copy": "Copy link",
+    "copied": "Link copied"
+  },
+  "venue": {
+    "yourTickets": "Your orders here",
+    "noTickets": "No open order on this phone",
+    "askStaff": "Ask staff for a ticket QR code when you order."
+  },
+  "tickets": {
+    "title": "Orders on this phone",
+    "empty": "No orders yet."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "body": "This page shows your order status. We do not ask for your name, phone number or email. A random ID stored in your browser links your phone to your orders; it is deleted when your orders close. If you allow notifications, your browser's push address is used only to alert you about these orders and is deleted 30 minutes after your last order closes. The restaurant is responsible for your order; Tanbeeh processes this data on its behalf.",
+    "versionLine": "Version {{version}} · published {{date}}",
+    "loadError": "The privacy notice could not be loaded. Check your connection and try again."
+  },
+  "language": "العربية",
+  "rating": {
+    "title": "How was it?",
+    "comment": "What could be better?",
+    "send": "Send",
+    "thanks": "Thank you for your feedback!",
+    "review": "Leave a review",
+    "star": "{{count}} star",
+    "star_other": "{{count}} stars",
+    "failed": "Your rating was not sent. Please try again."
+  },
+  "claim": {
+    "title": "Already ordered?",
+    "number": "Order number",
+    "code": "Claim code (on your receipt)",
+    "submit": "Show my order",
+    "invalid": "Number or code not recognised. Please check and try again.",
+    "pending": "Waiting for staff to confirm…",
+    "refused": "Staff could not confirm this order. Please ask at the counter.",
+    "expired": "The request expired. Please try again or ask staff."
+  },
+  "followFailed": "We could not connect this phone to your order yet. Retrying…",
+  "alertsLinkFailed": "Alerts could not be connected to this order. Tap below to try again.",
+  "backToVenue": "Back to {{venue}}",
+  "loadError": {
+    "title": "Could not load your order",
+    "body": "Check your connection and try again."
+  }
+}

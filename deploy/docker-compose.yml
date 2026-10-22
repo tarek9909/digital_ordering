@@ -1,0 +1,250 @@
+# Tanbeeh on one VPS (replaces TRD §24.1 AWS topology; see docs/adr/0007-self-hosted-vps.md).
+#
+#   cp .env.example .env && edit .env          # domain, passwords, keys
+#   ./scripts/init-secrets.sh                   # data key + pepper
+#   docker compose build                        # or pull images built by CI (IMAGE_TAG)
+#   docker compose run --rm migrate             # migrations + reference data
+#   docker compose up -d
+#
+# Everything except Caddy (80/443) is on the private `internal` network.
+#
+# Credentials (least privilege, M-11 / L-30 / L-27): MySQL root and MinIO root stay in mysql/minio/minio-init (and
+# the backup/migrate tools that need them); the app containers get the MinIO *application* identity created by
+# minio-init, and the backup container a read-only MinIO identity. Redis requires REDIS_PASSWORD.
+
+name: tanbeeh
+
+x-app: &app
+  image: ${REGISTRY:-tanbeeh}/api:${IMAGE_TAG:-latest}
+  build: { context: ../backend, dockerfile: Dockerfile }
+  restart: unless-stopped
+  # Only what the services need: the MySQL root password and the MinIO root credentials are NOT in this block.
+  # S3_* is the bucket-scoped application identity that minio-init provisions (no admin rights).
+  environment: &app-env
+    NODE_ENV: production
+    APP_ENV: ${APP_ENV:-production}
+    PLATFORM_DOMAIN: ${DOMAIN}
+    DATABASE_URL: mysql://app_rw:${MYSQL_APP_PASSWORD}@mysql:3306/tanbeeh
+    DATABASE_REPLICA_URL: mysql://app_rw:${MYSQL_APP_PASSWORD}@mysql:3306/tanbeeh
+    # REDIS_PASSWORD must be URL-safe (scripts/init-secrets.sh prints letters and digits only).
+    REDIS_CACHE_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}@redis:6379/0
+    REDIS_QUEUE_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}@redis:6379/1
+    S3_ENDPOINT: http://minio:9000
+    S3_PUBLIC_ENDPOINT: https://files.${DOMAIN}
+    S3_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:?set MINIO_APP_ACCESS_KEY in .env}
+    S3_SECRET_KEY: ${MINIO_APP_SECRET_KEY:?set MINIO_APP_SECRET_KEY in .env}
+    S3_BUCKET_ASSETS: tanbeeh-assets
+    S3_BUCKET_EXPORTS: tanbeeh-exports
+    CDN_BASE_URL: https://files.${DOMAIN}/tanbeeh-assets
+    DATA_KEY_FILE: /run/secrets/data_key
+    # M-7: trust X-Forwarded-For only from Caddy's fixed address on the internal network (see `networks` below).
+    # IPv4 only, on purpose: the internal network has no IPv6, so Caddy always reaches the API from this address.
+    TRUST_PROXY: 172.30.0.10
+    EMAIL_FROM: ${EMAIL_FROM}
+    SMTP_URL: ${SMTP_URL}
+    SESSION_PEPPER: ${SESSION_PEPPER}
+    VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+    VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+    VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:push@localhost}
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    FOODICS_CLIENT_ID: ${FOODICS_CLIENT_ID:-}
+    FOODICS_CLIENT_SECRET: ${FOODICS_CLIENT_SECRET:-}
+    FOODICS_WEBHOOK_SECRET: ${FOODICS_WEBHOOK_SECRET:-}
+    SENTRY_DSN: ${SENTRY_DSN:-}
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+    # M-18 recovery switch: `off` ignores the console IP allow-list until the list is fixed; leave at enforce.
+    CONSOLE_IP_POLICY: ${CONSOLE_IP_POLICY:-enforce}
+  secrets: [data_key]
+  networks: [internal]
+  depends_on:
+    mysql: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    minio: { condition: service_healthy }
+    # The bucket-scoped app identity must exist before the app uses it.
+    minio-init: { condition: service_completed_successfully }
+  logging: &logging
+    driver: json-file
+    options: { max-size: '20m', max-file: '7' } # ~14 days of logs at pilot volume (TR-PRV-05)
+
+services:
+  caddy:
+    image: ${REGISTRY:-tanbeeh}/web:${IMAGE_TAG:-latest}
+    build: { context: .., dockerfile: deploy/web.Dockerfile }
+    restart: unless-stopped
+    ports: ['80:80', '443:443', '443:443/udp']
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      internal:
+        # Fixed so the API can trust exactly this proxy (TRUST_PROXY above). Keep the two in sync.
+        ipv4_address: 172.30.0.10
+    depends_on: [api, realtime]
+    logging: *logging
+
+  api:
+    <<: *app
+    environment:
+      <<: *app-env
+      SERVICE_ROLE: api
+      PORT: '4000'
+    healthcheck:
+      test: ['CMD', '/nodejs/bin/node', '-e', "fetch('http://127.0.0.1:4000/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  realtime:
+    <<: *app
+    environment:
+      <<: *app-env
+      SERVICE_ROLE: realtime
+      PORT: '4001'
+
+  worker:
+    <<: *app
+    environment:
+      <<: *app-env
+      SERVICE_ROLE: worker
+
+  # One-shot: migrations (expand-then-contract, TR-DB-07) and idempotent reference data.
+  migrate:
+    <<: *app
+    restart: 'no'
+    profiles: [tools]
+    environment:
+      <<: *app-env
+      SERVICE_ROLE: migrate
+      DATABASE_MIGRATE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/tanbeeh
+      APP_DB_USER: app_rw
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: tanbeeh
+      MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/tanbeeh.cnf:ro
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # No password needed (L-29): `mysqladmin ping` exits 0 whenever the server answers, even with "Access denied".
+      # TCP to 127.0.0.1 so the entrypoint's temporary init server (socket only) does not count as healthy.
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '--silent']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks: [internal]
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Keyspace notifications for presence expiry (TR-ALG-13); BullMQ needs noeviction; AOF so queued
+    # repeat alerts survive a restart (the reconcile job covers the rest, TR-JOB-05).
+    # L-27: password required. It goes into a 0600 config file at start (not into redis-server's arguments), and
+    # redis-cli reads REDISCLI_AUTH, so `docker compose exec redis redis-cli ...` keeps working.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >
+        umask 077 &&
+        printf 'requirepass %s\n' "$$REDIS_PASSWORD" > /tmp/redis-auth.conf &&
+        chown redis:redis /tmp/redis-auth.conf &&
+        unset REDIS_PASSWORD &&
+        exec docker-entrypoint.sh redis-server /tmp/redis-auth.conf --notify-keyspace-events Ex --maxmemory-policy noeviction --appendonly yes --appendfsync everysec
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping | grep -q PONG']
+      interval: 10s
+      retries: 10
+    networks: [internal]
+    logging: *logging
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes: [minio_data:/data]
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      retries: 10
+    networks: [internal]
+    logging: *logging
+
+  # Idempotent provisioning (runs on every `up`): buckets (assets publicly readable for logos, exports private for
+  # signed links, TR-PRV-07), the bucket-scoped application identity and the read-only backup identity (M-11, L-30).
+  # Re-run by hand after changing keys: docker compose run --rm minio-init
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    restart: 'no'
+    depends_on: { minio: { condition: service_healthy } }
+    entrypoint: ['/bin/sh', '/init/minio-init.sh']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_APP_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:?set MINIO_APP_ACCESS_KEY in .env}
+      MINIO_APP_SECRET_KEY: ${MINIO_APP_SECRET_KEY:?set MINIO_APP_SECRET_KEY in .env}
+      MINIO_BACKUP_ACCESS_KEY: ${MINIO_BACKUP_ACCESS_KEY:?set MINIO_BACKUP_ACCESS_KEY in .env}
+      MINIO_BACKUP_SECRET_KEY: ${MINIO_BACKUP_SECRET_KEY:?set MINIO_BACKUP_SECRET_KEY in .env}
+    volumes:
+      - ./minio:/init:ro
+    networks: [internal]
+
+  # Nightly dumps + binlogs every 5 minutes to an off-site rclone remote (NFR-REC-01).
+  backup:
+    build: { context: ./backup }
+    image: ${REGISTRY:-tanbeeh}/backup:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      # The dump/binlog tools read this from a 0600 option file the scripts generate, never from -p (L-29).
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      BACKUP_REMOTE: ${BACKUP_REMOTE}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      # M-14: off by default. The VPS key should be upload-only; prune from a separate trusted machine instead.
+      BACKUP_PRUNE_ON_VPS: ${BACKUP_PRUNE_ON_VPS:-false}
+      # Read-only MinIO identity (GetObject/ListBucket on tanbeeh-assets), not root (L-30).
+      MINIO_BACKUP_ACCESS_KEY: ${MINIO_BACKUP_ACCESS_KEY:?set MINIO_BACKUP_ACCESS_KEY in .env}
+      MINIO_BACKUP_SECRET_KEY: ${MINIO_BACKUP_SECRET_KEY:?set MINIO_BACKUP_SECRET_KEY in .env}
+    volumes:
+      - mysql_data:/var/lib/mysql:ro
+      - backup_local:/backups
+      - ./backup/rclone.conf:/config/rclone/rclone.conf:ro
+    depends_on:
+      mysql: { condition: service_healthy }
+      minio-init: { condition: service_completed_successfully }
+    networks: [internal]
+    logging: *logging
+
+secrets:
+  data_key:
+    file: ./secrets/data_key
+
+volumes:
+  mysql_data: {}
+  redis_data: {}
+  minio_data: {}
+  caddy_data: {}
+  caddy_config: {}
+  backup_local: {}
+
+networks:
+  internal:
+    # Fixed IPv4 subnet so Caddy has a stable address (172.30.0.10) for TRUST_PROXY. Pick another /24 if this one
+    # clashes with a network on the host or provider. No IPv6 on this network: IPv6 clients still reach Caddy through
+    # the published ports, and the API only ever sees Caddy's IPv4 address.
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

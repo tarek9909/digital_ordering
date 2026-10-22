@@ -1,0 +1,156 @@
+# Front door for every host (replaces CloudFront + ALB, TRD §5.1). HTTP redirects to HTTPS automatically. Certificates are issued on demand for each
+# host the API confirms (platform hosts and existing tenant slugs), so tenants need no manual TLS step.
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		ask http://api:4000/internal/tls-allowed
+	}
+	# M-7: Caddy is the internet edge (nothing in front of it), so it trusts no client-supplied X-Forwarded-For /
+	# X-Forwarded-Host. With no `trusted_proxies`, reverse_proxy replaces those headers with the real peer address,
+	# and the API trusts only Caddy's fixed address (TRUST_PROXY in docker-compose.yml). Only if you ever put a CDN or
+	# load balancer in front of Caddy, add here:  servers { trusted_proxies static <that proxy's exact CIDRs> }
+	# Never `private_ranges`: Docker's userland proxy (e.g. IPv6 clients) makes outside traffic look private.
+}
+
+(security) {
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://files.{$DOMAIN} data:; connect-src 'self' wss://{host} https://files.{$DOMAIN}; media-src 'self' https://files.{$DOMAIN}; worker-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+		-Server
+	}
+}
+
+# Same-origin API and sockets on every app host (TR-API-01). lb_try_duration holds requests for up to 15 s
+# while a container restarts during a deploy, so none are dropped (TR-NFR-07).
+(backend) {
+	@internal path /internal/*
+	respond @internal 404
+	handle /api/* {
+		reverse_proxy api:4000 {
+			lb_try_duration 15s
+		}
+	}
+	handle /m/* {
+		reverse_proxy api:4000 {
+			lb_try_duration 15s
+		}
+	}
+	# Every realtime container (`--scale realtime=N`) is found through Docker DNS. The cookie keeps a
+	# long-polling client on one container; WebSocket clients do not need it.
+	handle /rt/* {
+		reverse_proxy {
+			dynamic a realtime 4001 {
+				refresh 10s
+			}
+			lb_policy cookie rt_lb
+			lb_try_duration 15s
+		}
+	}
+}
+
+# A single-page app from /srv/<app>: index.html no-cache, hashed assets immutable (TR-FE-02).
+# Wrapped in `handle` so it never runs for /api, /m or /rt: try_files is a rewrite and Caddy orders rewrites
+# before sibling `handle` blocks.
+(spa) {
+	handle {
+		# L-21: source maps are not shipped (web.Dockerfile deletes them); never serve one even if it slips in.
+		@sourcemaps path *.map
+		respond @sourcemaps 404
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header ?Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+https:// {
+	tls {
+		on_demand
+	}
+	import security
+	encode zstd gzip
+
+	# Customer app: one origin for all tenants (TRD §5.1); ticket pages never send a referrer.
+	@customer host t.{$DOMAIN}
+	handle @customer {
+		import backend
+		header Referrer-Policy "no-referrer"
+		header /sw.js Cache-Control "no-cache"
+		root * /srv/web-customer
+		import spa
+	}
+
+	@site host {$DOMAIN} www.{$DOMAIN}
+	handle @site {
+		import backend
+		root * /srv/web-site
+		import spa
+	}
+
+	@console host admin.{$DOMAIN}
+	handle @console {
+		import backend
+		root * /srv/web-console
+		import spa
+	}
+
+	# Integration API and POS webhooks.
+	@api host api.{$DOMAIN}
+	handle @api {
+		@internal path /internal/*
+		respond @internal 404
+		reverse_proxy api:4000 {
+			lb_try_duration 15s
+		}
+	}
+
+	# Public files (logos) and signed export links, served by MinIO; the Host header is kept so signatures match.
+	# H-3 containment: this MinIO release has unpatched object-write authentication bypasses (GHSA-hv4r-mvr4-25vw,
+	# GHSA-9c4q-hq6p-c237), so the public host is read-only. The app writes over the private network
+	# (http://minio:9000), which these rules do not touch. See docs/runbooks/storage-migration.md.
+	@files host files.{$DOMAIN}
+	handle @files {
+		# `route` keeps these rules in the written order (Caddy would otherwise sort `respond` after reverse_proxy-bearing blocks).
+		route {
+			# Only reads: anonymous logo GETs and presigned export GETs. PUT/POST/DELETE (uploads, multipart, STS,
+			# admin) never reach MinIO from the internet.
+			@files_write not method GET HEAD
+			header @files_write Allow "GET, HEAD"
+			respond @files_write 405
+			# The advisory's workaround: refuse unsigned-trailer streaming payloads outright (any case). No read sends one.
+			@files_unsigned_trailer header_regexp X-Amz-Content-Sha256 (?i)STREAMING-UNSIGNED-PAYLOAD-TRAILER
+			respond @files_unsigned_trailer 403
+			# Only objects in the two buckets: MinIO's admin, health, metrics and console paths (/minio/...) and the
+			# service root / bucket listings are not exposed.
+			@files_other not path /tanbeeh-assets/* /tanbeeh-exports/*
+			respond @files_other 404
+			reverse_proxy minio:9000
+		}
+	}
+
+	# Tenant hosts: /staff, /display, /admin apps (built with those base paths; the prefix is stripped here).
+	handle {
+		import backend
+		redir /staff /staff/ 308
+		redir /display /display/ 308
+		redir /admin /admin/ 308
+		handle_path /staff/* {
+			root * /srv/web-staff
+			import spa
+		}
+		handle_path /display/* {
+			root * /srv/web-display
+			import spa
+		}
+		handle_path /admin/* {
+			root * /srv/web-admin
+			import spa
+		}
+		redir / /admin/ 302
+	}
+}

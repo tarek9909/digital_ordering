@@ -1,0 +1,499 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/public/v1/config",
+    "surface": "customer",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/plans",
+    "surface": "www",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/tickets/:token",
+    "surface": "customer",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/tickets/:token/manifest",
+    "surface": "customer",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/venues/:venueCode",
+    "surface": "customer",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/claims/:claimId",
+    "surface": "customer",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/legal/:kind",
+    "surface": "customer",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/slugs/:slug/availability",
+    "surface": "www",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/me",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/invitations/:token",
+    "surface": "tenant",
+    "status": 410,
+    "code": "INVITATION_EXPIRED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/tenants",
+    "surface": "www",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/oauth/google/start",
+    "surface": "www",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/oauth/google/callback",
+    "surface": "www",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/board",
+    "surface": "tenant",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/tickets/search",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/tickets/:id/qr.svg",
+    "surface": "tenant",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/claims",
+    "surface": "tenant",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/display/v1/board",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/tenant",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/onboarding",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/activity",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/counters",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/ratings",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/staff-access",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/devices",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/displays",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/posters/:kind",
+    "surface": "tenant",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/members",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/today",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/pilot",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/exports/:id",
+    "surface": "tenant",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/billing",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/chimes",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/support-sessions",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/announcements",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/trends",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/heatmap",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/legal/pending",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/api-keys",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/webhooks",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/webhooks/:id/deliveries",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/pos/connections",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/pos/providers",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/staff-members",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/export.csv",
+    "surface": "tenant",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/billing",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/reports/pilot",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/audit",
+    "surface": "console",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/platform-users",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/settings",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/chimes",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/languages",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/notes",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/support-sessions",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/plans",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/feature-flags",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/announcements",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/legal-documents",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/email-templates/:key/:locale",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/push-keys/status",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/reports/platform",
+    "surface": "console",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/v1/me",
+    "surface": "integration",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id",
+    "surface": "integration",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets",
+    "surface": "integration",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id/qr.png",
+    "surface": "integration",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id/qr.svg",
+    "surface": "integration",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/connectors/:provider/callback",
+    "surface": "integration",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  }
+]

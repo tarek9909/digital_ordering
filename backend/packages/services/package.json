@@ -1,0 +1,38 @@
+{
+  "name": "@dop/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./testing": {
+      "types": "./src/testing.ts",
+      "default": "./src/testing.ts"
+    }
+  },
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.1155.0",
+    "@aws-sdk/client-s3": "^3.1155.0",
+    "@aws-sdk/s3-request-presigner": "^3.1155.0",
+    "@dop/auth": "0.1.0",
+    "@dop/config": "0.1.0",
+    "@dop/contracts": "0.1.0",
+    "@dop/db": "0.1.0",
+    "@dop/domain": "0.1.0",
+    "@dop/jobs": "0.1.0",
+    "ioredis": "^5.6.0",
+    "openid-client": "^6.8.0",
+    "pdf-lib": "^1.17.1",
+    "pino": "^9.7.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.5",
+    "undici": "^7.16.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5"
+  }
+}

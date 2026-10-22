@@ -1,0 +1,43 @@
+# Local environment (TRD §24.2): MySQL 8.4, Redis 7, Mailpit, MinIO.
+#
+# LOCAL DEVELOPMENT ONLY (M-22). Every published port is bound to IPv4 loopback (127.0.0.1), so other machines on
+# the network cannot reach these services or their well-known development credentials. backend/.env.example already
+# connects via 127.0.0.1. IPv6: these bindings do not listen on ::1, so use 127.0.0.1 rather than `localhost` if
+# your OS resolves localhost to ::1 first; if you really need IPv6 loopback, add a second mapping such as
+# '[::1]:3306:3306' (never '[::]:' or a bare port, which listen on every interface).
+# A shared environment (staging, a team server, CI runners reachable by others) must NOT reuse this file as is:
+# give it its own strong credentials, Redis authentication, and network access control.
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dop
+      MYSQL_USER: app_rw
+      MYSQL_PASSWORD: app_rw
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+      - --transaction-isolation=READ-COMMITTED
+      - --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ONLY_FULL_GROUP_BY
+    ports: ['127.0.0.1:3306:3306']
+    volumes: ['mysql:/var/lib/mysql']
+  redis:
+    image: redis:7-alpine
+    # Keyspace notifications for presence expiry (TR-ALG-13). No password locally; loopback-only.
+    command: ['redis-server', '--notify-keyspace-events', 'Ex']
+    ports: ['127.0.0.1:6379:6379']
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports: ['127.0.0.1:1025:1025', '127.0.0.1:8025:8025']
+  minio:
+    # Same release as deploy/docker-compose.yml (see docs/runbooks/storage-migration.md for its known issues).
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports: ['127.0.0.1:9000:9000', '127.0.0.1:9001:9001']
+volumes:
+  mysql: {}

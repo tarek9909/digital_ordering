@@ -1,0 +1,41 @@
+{
+  "name": "dop-backend",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "dev:api": "tsx watch --env-file=.env apps/api/src/main.ts",
+    "dev:realtime": "tsx watch --env-file=.env apps/realtime/src/main.ts",
+    "dev:worker": "tsx watch --env-file=.env apps/worker/src/main.ts",
+    "db:migrate": "tsx --env-file=.env packages/db/src/cli/migrate.ts",
+    "db:seed": "tsx --env-file=.env tools/seed.ts",
+    "build": "node tools/build.mjs",
+    "sync:contracts": "node tools/sync-contracts.mjs",
+    "check:contracts": "node tools/sync-contracts.mjs --check",
+    "openapi": "tsx tools/openapi.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.39.0",
+    "mysql-memory-server": "^1.17.0",
+    "prettier": "^3.6.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.40.0",
+    "vitest": "^4.1.12"
+  }
+}

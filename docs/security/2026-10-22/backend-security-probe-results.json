@@ -1,0 +1,70 @@
+[
+  {
+    "probe": "s3-delete-errors-ignored",
+    "confirmed": true,
+    "returnedDeletedCount": 1,
+    "actualDeleted": 0,
+    "objectError": "AccessDenied"
+  },
+  {
+    "probe": "webhook-special-ip-classification",
+    "address": "::ffff:7f00:1",
+    "accepted": "::ffff:7f00:1",
+    "canonicalLookup": {
+      "address": "::ffff:7f00:1",
+      "family": 6
+    },
+    "caveat": "Injected resolver only; does not establish route reachability or production DNS formatting."
+  },
+  {
+    "probe": "webhook-special-ip-classification",
+    "address": "::ffff:a9fe:a9fe",
+    "accepted": "::ffff:a9fe:a9fe",
+    "canonicalLookup": {
+      "address": "::ffff:a9fe:a9fe",
+      "family": 6
+    },
+    "caveat": "Injected resolver only; does not establish route reachability or production DNS formatting."
+  },
+  {
+    "probe": "webhook-special-ip-classification",
+    "address": "fe81::1",
+    "accepted": "fe81::1",
+    "canonicalLookup": {
+      "address": "fe81::1",
+      "family": 6
+    },
+    "caveat": "Injected resolver only; does not establish route reachability or production DNS formatting."
+  },
+  {
+    "probe": "webhook-special-ip-classification",
+    "address": "febf::1",
+    "accepted": "febf::1",
+    "canonicalLookup": {
+      "address": "febf::1",
+      "family": 6
+    },
+    "caveat": "Injected resolver only; does not establish route reachability or production DNS formatting."
+  },
+  {
+    "probe": "report-csv-formula",
+    "confirmed": true,
+    "formulaPreservedAsCell": true,
+    "csv": "﻿venue,business_date,number,status,receipt,created (Asia/Riyadh),ready (Asia/Riyadh),collected (Asia/Riyadh),alert_level_at_ready,acknowledged,cancel_reason\nCSV fixture,2026-10-22,1,collected,=1+1,2026-10-22 12:00:00,2026-10-22 12:00:00,2026-10-22 12:00:00,none,no,\n"
+  },
+  {
+    "probe": "anonymous-rating-export-formula",
+    "confirmed": true,
+    "formulaPreservedAsCell": true,
+    "ratingsCsv": "﻿ticket_id,stars,comment,created_at\n01a162d6-b280-7d9b-ade2-74188fc16124,5,=1+1,2026-10-22T17:24:27.543Z\n",
+    "noRealMessagesSent": true
+  },
+  {
+    "probe": "provider-deletion-error-loses-retry",
+    "confirmed": true,
+    "handlerResolvedAfterProviderError": true,
+    "tenantRemoved": true,
+    "providerCallsAfterTwoJobRuns": 1,
+    "noRealMessagesSent": true
+  }
+]

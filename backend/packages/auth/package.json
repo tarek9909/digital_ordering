@@ -1,0 +1,14 @@
+{
+  "name": "@dop/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" }
+  },
+  "dependencies": {
+    "@dop/contracts": "0.1.0",
+    "argon2": "^0.45.1",
+    "otplib": "^12.0.1"
+  }
+}

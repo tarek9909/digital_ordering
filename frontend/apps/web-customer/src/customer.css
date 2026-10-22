@@ -1,0 +1,7 @@
+/* On customer pages the venue's colour leads: primary buttons and focus rings follow the brand band that
+   applyBrand() sets on <html>, so a venue never shows the platform's ember next to its own colour. */
+:root {
+  --color-primary: var(--brand-band);
+  --color-primary-hover: var(--brand-band);
+  --color-on-primary: var(--on-band);
+}

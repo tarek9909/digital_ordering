@@ -1,0 +1,42 @@
+{
+  "name": "dop-frontend",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:customer": "npm run dev -w @dop/web-customer",
+    "dev:staff": "npm run dev -w @dop/web-staff",
+    "dev:display": "npm run dev -w @dop/web-display",
+    "dev:admin": "npm run dev -w @dop/web-admin",
+    "dev:console": "npm run dev -w @dop/web-console",
+    "dev:site": "npm run dev -w @dop/web-site",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "e2e": "playwright test -c e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/vite": "^4.1.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "jsdom": "^25.0.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.40.0",
+    "vite": "^6.4.0",
+    "vitest": "^4.1.12"
+  }
+}

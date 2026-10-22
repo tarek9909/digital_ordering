@@ -1,0 +1,17 @@
+﻿[
+    {
+        "exitCode":  0,
+        "log":  "frontend-typecheck.log",
+        "check":  "typecheck"
+    },
+    {
+        "exitCode":  0,
+        "log":  "frontend-build.log",
+        "check":  "build"
+    },
+    {
+        "exitCode":  0,
+        "log":  "frontend-budgets.log",
+        "check":  "budgets"
+    }
+]

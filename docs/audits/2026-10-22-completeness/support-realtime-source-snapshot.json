@@ -1,0 +1,27 @@
+﻿{
+    "outcome":  "HTTP approved support 200; support socket UNAUTHENTICATED; owner control connected and received Ready",
+    "capturedAtUtc":  "2026-10-22T18:23:59.5962816Z",
+    "probe":  "support-realtime-probe.mts",
+    "sourceFiles":  [
+                        {
+                            "path":  "backend/apps/realtime/src/server.ts",
+                            "sha256":  "058ef71d4ada76cc013e63896c8de7188eded8eb33c77f52605014d1dae51884",
+                            "lastWriteUtc":  "2026-10-22T18:22:06.8364337Z"
+                        },
+                        {
+                            "path":  "backend/apps/api/src/http/middleware.ts",
+                            "sha256":  "5bd982ed4b55890e0c85557cb78ad1271b841285e59a7f29e16b7a19238352b3",
+                            "lastWriteUtc":  "2026-10-22T18:16:00.4548249Z"
+                        },
+                        {
+                            "path":  "backend/packages/services/src/support.ts",
+                            "sha256":  "dbb2a89036f0e3e158b11d6a03b360c29abdef4d983dd3e5e61694eebe11ec20",
+                            "lastWriteUtc":  "2026-10-22T18:14:50.8951241Z"
+                        },
+                        {
+                            "path":  "backend/packages/services/src/auth.ts",
+                            "sha256":  "e173ada663d10ef1b90193f38db35e0712f64d81fbfccbfea7e8be7447eadf25",
+                            "lastWriteUtc":  "2026-10-22T18:19:56.6643453Z"
+                        }
+                    ]
+}

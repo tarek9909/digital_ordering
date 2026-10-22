@@ -1,0 +1,164 @@
+[
+  {
+    "name": "failed-creates-spend-trial-quota",
+    "failures": [
+      "NOT_FOUND",
+      "NOT_FOUND",
+      "NOT_FOUND"
+    ],
+    "persistedTickets": 0,
+    "quotaCounter": "3"
+  },
+  {
+    "name": "webhook-fanout-replay-duplicates",
+    "first": [
+      1
+    ],
+    "replay": [
+      2
+    ],
+    "deliveries": [
+      {
+        "id": 1,
+        "event_id": "01a164d1-3505-7762-a1dd-4da8c67ef101"
+      },
+      {
+        "id": 2,
+        "event_id": "01a164d1-3505-7762-a1dd-4da8c67ef101"
+      }
+    ]
+  },
+  {
+    "name": "webhook-pending-counts-as-failures",
+    "first": {
+      "status": "failed",
+      "nextAttemptAt": "2026-10-22T18:14:14.483Z"
+    },
+    "epAfterFirst": {
+      "status": "disabled",
+      "failure_streak": 1,
+      "disabled_reason": "failing"
+    },
+    "postCalls": 1,
+    "deliveries": [
+      {
+        "status": "failed",
+        "attempt": 1
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      },
+      {
+        "status": "abandoned",
+        "attempt": 0
+      }
+    ]
+  },
+  {
+    "name": "processed-billing-event-reapplied",
+    "afterFailure": "past_due",
+    "afterPayment": "active",
+    "afterOldProcessedJobReplay": "past_due"
+  },
+  {
+    "name": "processed-payment-reactivates-cancelled",
+    "afterOldPaidJobReplay": "active"
+  },
+  {
+    "name": "purge-billing-cleanup-recheck",
+    "findingId": "BW03",
+    "firstError": "Injected temporary billing outage",
+    "tenantPreservedAfterFailure": true,
+    "tenantRemovedAfterRecovery": true,
+    "deleteCustomerCallsAfterTwoRuns": 2,
+    "resolved": true
+  },
+  {
+    "name": "late-rating-never-rolls-up",
+    "ratingAccepted": true,
+    "ticketBusinessDate": "2026-10-01",
+    "scheduledBusinessDates": [
+      "2026-10-10",
+      "2026-10-09"
+    ],
+    "persistedRatingCount": 1,
+    "report": {
+      "ratings_count": 0,
+      "ratings_sum": 0
+    }
+  },
+  {
+    "name": "changed-autoclose-misses-first-effective-day",
+    "advertisedEffectiveBusinessDate": "2026-10-23",
+    "observedNow": "2026-10-23T09:00:00.000Z",
+    "ticketBusinessDate": "2026-10-23",
+    "due": false,
+    "schedule": {
+      "auto_close_time": "22:00:00",
+      "pending_auto_close_time": "10:00:00",
+      "pending_from_date": "2026-10-23",
+      "next_auto_close_at": "2026-10-23T19:00:00.000Z"
+    }
+  },
+  {
+    "name": "venue-create-provider-outage-partial-commit",
+    "createError": "Injected temporary billing outage",
+    "activeVenuesAfterFailedCreate": 2,
+    "subscriptionAfterFailedCreate": {
+      "venue_quantity": 1
+    },
+    "activeVenuesAfterRetry": 3,
+    "namesAfterRetry": [
+      "Workflow cafe",
+      "New branch",
+      "New branch"
+    ],
+    "providerCalls": 2
+  },
+  {
+    "name": "venue-archive-provider-outage-no-retry",
+    "archiveError": "Injected temporary billing outage",
+    "archiveRetryCode": "NOT_FOUND",
+    "activeVenues": 2,
+    "subscription": {
+      "venue_quantity": 3
+    }
+  },
+  {
+    "name": "dst-overlap-chooses-earlier-instant",
+    "localTime": "2026-11-01 01:30 America/New_York",
+    "actual": "2026-11-01T05:30:00.000Z",
+    "requiredLater": "2026-11-01T06:30:00.000Z",
+    "afterFirstOccurrence": "2026-11-01T05:45:00.000Z",
+    "next": "2026-11-02T06:30:00.000Z"
+  }
+]

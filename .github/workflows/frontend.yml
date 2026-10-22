@@ -1,0 +1,33 @@
+# Front-end CI: typecheck, unit tests, builds and the initial-route JS budgets (TR-FE-05).
+name: frontend
+on:
+  pull_request:
+    paths: ['frontend/**', 'backend/packages/contracts/**', '.github/workflows/frontend.yml']
+  push:
+    branches: [main]
+    paths: ['frontend/**', '.github/workflows/frontend.yml']
+
+# Third-party actions are pinned to full commit SHAs (L-24); .github/dependabot.yml proposes updates.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - name: Contracts copy matches the back end
+        working-directory: backend
+        run: node tools/sync-contracts.mjs --check
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Bundle budgets (gzipped initial route)
+        run: node tools/check-budgets.mjs

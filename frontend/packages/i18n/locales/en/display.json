@@ -1,0 +1,39 @@
+{
+  "pairing": {
+    "title": "Connect this screen",
+    "code": "Pairing code",
+    "submit": "Connect",
+    "step1": "In the admin area, open Displays and choose Pair a display.",
+    "step2": "Type the 6-digit code shown there.",
+    "step3": "The order board appears here; keep this browser open in full screen."
+  },
+  "sound": {
+    "enable": "Tap to enable sound",
+    "hint": "Announcements need one tap after the screen starts.",
+    "off": "Sound off",
+    "noVoice": "No voice for {{language}} on this device"
+  },
+  "languages": {
+    "ar": "Arabic",
+    "en": "English"
+  },
+  "blocked": {
+    "title": "Subscription required",
+    "body": "This restaurant's subscription is not active. The owner can renew it in the admin area."
+  },
+  "scanToFollow": "Scan to follow your order",
+  "emptyReady": "Ready orders appear here",
+  "more": "+{{n}} more",
+  "announce": {
+    "one": "Order {{number}} is ready",
+    "many": "Orders {{list}} are ready",
+    "separator": ", "
+  },
+  "errors": {
+    "PAIRING_CODE_INVALID": "That code is wrong or has expired. Create a new code in the admin area.",
+    "UNAUTHENTICATED": "This screen is not paired."
+  },
+  "promo": {
+    "label": "Offer"
+  }
+}

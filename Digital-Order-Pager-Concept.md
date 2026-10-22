@@ -121,6 +121,8 @@ Any open ticket can be cancelled by staff or expired at the daily reset; Ready c
 | Display number | A27 | What people see and hear |
 | Internal ID | random UUID | Never shown |
 | Access token | 22 random characters | In the ticket's URL; the only way to open the customer page |
+| Claim code | K7PX | 4 characters; shown under the number on the cashier's QR screen or printed on the receipt; lets a phone join the ticket through the venue QR (section 5) |
+| Check code | 3MQ9 | 4 characters; shown only on the customer's phone once Ready; the customer shows it to staff at handover (section 6) |
 | Counter | Food | Optional |
 | External reference | POS invoice 1042 | Optional, from staff or integration |
 | Note | "2 burgers, no onion" | Optional, staff only, never shown to customer |
@@ -219,9 +221,9 @@ The customer page is one mobile web page that changes its whole look with each s
 | Status | Main message | Extra content |
 | --- | --- | --- |
 | Received / Preparing | "Order 27 · Preparing" | Wait estimate, "Turn on alerts" button until done, venue message or promo, "Keep this page open" hint |
-| Ready | Full-screen, high-contrast "Your order is ready — please collect 27 from the counter" | Big "I'm coming" button, sound and vibration loop until tapped or 60 s pass |
+| Ready | Full-screen, high-contrast "Your order is ready — please collect 27 from the counter" | Big "I'm coming" button, sound and vibration loop until tapped or 60 s pass; check code next to the number (when the venue uses check codes) |
 | Ready, acknowledged | "See you at the counter" | Ticket number + 4-character check code to show staff |
-| Collected | "Enjoy your order" | 1–5 star rating + optional comment, link to venue website or menu |
+| Collected | "Enjoy your order" | 1–5 star rating (optional comment asked when 3 stars or fewer, section 16), link to venue website or menu |
 | Cancelled | "This order was cancelled" | Venue's cancellation message, e.g. "Please speak to staff" |
 | Expired | "This ticket has closed" | Link to the venue page |
 | Not ready after undo | "Sorry — not ready yet" for 10 s, then back to Preparing | Brief explanation so the customer doesn't walk up |
@@ -241,6 +243,15 @@ The "I'm coming" button gives staff proof that the customer saw the alert, which
 ### Check code at collection
 
 The Ready screen shows a 4-character code next to the number. When busy, staff can ask for it before handing over the order, so someone who only overheard "27" cannot claim it. The venue can make this mandatory, optional, or off.
+
+The check code is not the claim code. They do different jobs at different moments:
+
+| Code | Where the customer sees it | When | Used to |
+| --- | --- | --- | --- |
+| Claim code | Cashier screen or receipt, under the number | At ordering | Join the ticket from the venue QR |
+| Check code | Only on their own phone | From Ready onwards | Prove at the counter that the order is theirs |
+
+Because the check code exists only on the phone holding the ticket, a receipt photo or an overheard number is never enough to collect an order.
 
 ### Accessibility
 
@@ -566,7 +577,7 @@ The real-time hub updates every open page (displays, customer pages, and staff b
 | Job queue + workers | Push sending, repeat alerts, webhooks, daily reset and expiry | BullMQ on Redis |
 | Push gateway | Delivers notifications to phones | Standard Web Push (VAPID) to Google, Apple and Mozilla push services; no paid SMS |
 | Billing | Subscriptions, invoices, taxes | Stripe Billing + Stripe Tax |
-| Hosting | Run everything, region near customers | AWS `me-central-1` (UAE), nearest to the Saudi launch market |
+| Hosting | Run everything, region near customers | AWS `me-central-1` (UAE), nearest mature region to the Saudi launch market; the region is a deployment setting, so the platform can move to an in-Kingdom region if Saudi data-protection law (PDPL) requires it |
 
 ### Multi-tenancy
 
@@ -619,7 +630,7 @@ The service collects almost no personal data from customers, but it still holds 
 | Brute-forcing the PIN | 5 wrong tries → 10-minute lock for that device; owner notified after repeated locks |
 | API key leaked | Keys are scoped per venue, revocable, shown once on creation |
 | Forged webhooks | HMAC signature on every call |
-| Account takeover of the owner | Optional two-factor sign-in, required for accounts with several venues |
+| Account takeover of the owner | Two-factor sign-in available to all tenant users from the MVP (optional); mandatory for owners and managers of multi-venue tenants once the Multi-site plan launches (version 2) |
 | One restaurant sees another's data | `tenant_id` on every record, tenant-scoped data layer, tenant included in database keys, tenant taken only from the authenticated session, automated cross-tenant access tests on every release |
 | Misuse of platform access | Two-factor sign-in mandatory for platform users, least-privilege roles, support access only with tenant approval and time limit, full audit log visible to the tenant |
 | Data in transit | HTTPS everywhere, HSTS |
@@ -764,7 +775,7 @@ The first version targets **item-ready** venues only. "Your turn" features are a
 
 ## 19. MVP scope, roadmap and decisions
 
-The first version is a standalone, single-venue product built around ticket QR codes, live page alerts plus Web Push, a staff board and a display screen; everything else waits until real venues have used it.
+The first version is a multi-tenant platform where each tenant has a single venue, standalone (no POS connection), built around ticket QR codes, live page alerts plus Web Push, a staff board and a display screen; everything else waits until real venues have used it.
 
 ### Phases
 
@@ -810,7 +821,7 @@ All earlier open points are decided; the full reasoning is in the BRD decisions 
 - **Launch market:** Saudi Arabia first, then other Gulf countries. Customer pages in Arabic (primary, right-to-left) and English.
 - **Product name:** "Tanbeeh" (Arabic for "alert"), domain `tanbeeh.app` — availability and trademark to be checked.
 - **Prices per venue:** Standard SAR 99/month, Pro SAR 179/month, Multi-site 15% off per venue from the 3rd venue; −10% quarterly, −20% yearly. Pilot venues free during the pilot, then 50% off for 6 months.
-- **Legal position:** no cookie banner, no partial refunds except where law requires, audit log kept 2 years, hosting in the AWS UAE region — all to be confirmed by Saudi counsel before the pilot.
+- **Legal position:** no cookie banner, no partial refunds except where law requires, audit log kept 2 years, hosting in the AWS UAE region — all to be confirmed by Saudi counsel before the pilot. Data residency under the PDPL is the point most likely to change the plan: if counsel requires in-Kingdom hosting, the platform moves to a Saudi region before the pilot (the region is a deployment setting, TRD TR-INF-01).
 - **POS connectors:** Foodics first.
 - **Payment grace:** 7 days of retries plus 7 days of grace.
 - **Real-phone alert test:** the first task of the build (Phase 0), using the device list in the technical requirements document.

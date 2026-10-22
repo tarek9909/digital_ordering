@@ -1,0 +1,9 @@
+{"name":"real-queue-signup","status":201,"body":{"tenantSlug":"queue-audit","verificationSent":true}}
+{"name":"signup-after-500","tenantPersisted":true,"userPersisted":true}
+{"name":"real-queue-signin","status":200}
+{"name":"real-queue-ticket-create","status":201,"ticketStatus":"preparing","publishedBusEvents":1}
+{"name":"real-queue-ticket-ready","status":200,"ticketStatus":"ready","publishedBusEvents":2}
+{"name":"real-queue-export","status":202,"body":{"id":"01a164b8-2818-7752-bf7c-1c9d6a285b22"},"exports":[{"status":"queued"}]}
+{"name":"real-queue-billing-first","result":{"duplicate":false}}
+{"name":"real-queue-billing-retry","result":{"duplicate":false},"event":{"id":"evt_queue_audit","processed_at":null}}
+{"name":"real-queue-outbox","rows":[{"topic":"ticket.created","published_at":"2026-10-22T17:45:52.896Z"},{"topic":"ticket.updated","published_at":"2026-10-22T17:45:52.913Z"},{"topic":"jobs","published_at":"2026-10-22T17:45:52.925Z"}]}

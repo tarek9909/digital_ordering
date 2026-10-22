@@ -1,0 +1,142 @@
+/* Ember theme (Tanbeeh platform brand): white base, warm ink partner, burnt-orange accent.
+   Import after tokens.css. It only redefines tokens, so components keep working unchanged; fonts are
+   self-hosted because the CSP allows fonts from 'self' only (deploy/Caddyfile). See .claude/skills/brand-console. */
+@import '@fontsource/alexandria/600.css';
+@import '@fontsource/alexandria/700.css';
+@import '@fontsource/alexandria/800.css';
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+/* Unlayered, so these win over the @layer theme defaults from tokens.css. */
+:root {
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Alexandria', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --color-ink: #1c1917;
+  --color-ink-2: #44403c;
+  --color-muted: #6f6863;
+  --color-line: #eeebe8;
+  --color-surface: #ffffff;
+  --color-canvas: #faf9f7;
+
+  --color-primary: #c2410c;
+  --color-primary-hover: #9a3412;
+  --color-primary-soft: #ffedd5;
+  --color-primary-wash: #fff7ed;
+  --color-glow: #fb923c;
+  --color-on-primary: #ffffff;
+
+  --color-ok: #15803d;
+  --color-ok-bg: #dcfce7;
+  --color-warn: #a16207;
+  --color-warn-bg: #fef9c3;
+  --color-danger: #be123c;
+  --color-danger-bg: #ffe4e6;
+  --color-info: #1d4ed8;
+  --color-info-bg: #dbeafe;
+
+  --radius-card: 1.375rem;
+  --radius-control: 999px;
+  --radius-input: 0.75rem;
+  --radius-dialog: 1.375rem;
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 12px 32px -12px rgb(28 25 23 / 0.12);
+
+  /* Default brand before a venue's own colour is applied. */
+  --brand: #c2410c;
+  --brand-band: #c2410c;
+  --on-brand: #ffffff;
+  --on-band: #ffffff;
+}
+
+@layer base {
+  html {
+    background: var(--color-surface);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: var(--color-primary-soft);
+    color: var(--color-ink);
+  }
+  input:not([type='checkbox'], [type='radio']),
+  select,
+  textarea {
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  input:not([type='checkbox'], [type='radio']):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px var(--color-primary-soft);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-primary);
+  }
+}
+
+/* Components layer, so utilities such as text-* still override these. */
+@layer components {
+  /* Small uppercase label used for table heads, eyebrows and metadata. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  /* Arabic has no letter case and breaks with tracking. */
+  :lang(ar) .eyebrow {
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Ember glow used once per screen (sign-in panel, hero tiles). */
+  .ember-glow {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .ember-glow::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset-inline-end: -8rem;
+    top: -9rem;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(251 146 60 / 0.55), rgb(194 65 12 / 0.25) 45%, transparent 70%);
+    animation: ember-breathe 7s ease-in-out infinite;
+  }
+  @keyframes ember-breathe {
+    50% {
+      transform: scale(1.12) translate(-0.875rem, 0.625rem);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ember-glow::before {
+    animation: none;
+  }
+  input,
+  select,
+  textarea {
+    transition: none;
+  }
+}

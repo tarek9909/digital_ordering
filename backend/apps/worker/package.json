@@ -1,0 +1,23 @@
+{
+  "name": "@dop/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@dop/auth": "0.1.0",
+    "@dop/config": "0.1.0",
+    "@dop/contracts": "0.1.0",
+    "@dop/db": "0.1.0",
+    "@dop/domain": "0.1.0",
+    "@dop/jobs": "0.1.0",
+    "@dop/services": "0.1.0",
+    "bullmq": "^5.81.0",
+    "ioredis": "^5.6.0",
+    "nodemailer": "^10.2.1",
+    "pino": "^9.7.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@types/web-push": "^3.6.4"
+  }
+}

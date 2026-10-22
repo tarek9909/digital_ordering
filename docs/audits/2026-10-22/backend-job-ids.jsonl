@@ -1,0 +1,10 @@
+{"bullmqVersion":"5.81.5","redisVersion":"7.4.11","validation":"real BullJobs.add; isolated audit queue; version check skipped only to reach job validation on this local Redis"}
+{"job":"email.send","jobId":"email.abc","added":true}
+{"job":"push.send","jobId":"push.ticket.1.1","added":true}
+{"job":"alert.repeat","jobId":"repeat.ticket.1.2","added":true}
+{"job":"alert.overdue-flag","jobId":"overdue.ticket.1","added":true}
+{"job":"tenant.export","jobId":"export.abc","added":true}
+{"job":"tenant.purge","jobId":"purge.tenant.1","added":true}
+{"job":"billing.stripe-event","jobId":"stripe.evt.1","added":true}
+{"job":"webhook.fanout","jobId":"whf.1","added":true}
+{"job":"webhook.deliver","jobId":"whd.1.1","added":true}

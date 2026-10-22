@@ -1,0 +1,1658 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/public/v1/config",
+    "surface": "customer",
+    "permission": "public",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/plans",
+    "surface": "www",
+    "permission": "public",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/tickets/:token",
+    "surface": "customer",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/tickets/:token/follow",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/tickets/:token/alerts-enabled",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/public/v1/tickets/:token/push-subscription",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/public/v1/tickets/:token/push-subscription",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/tickets/:token/acknowledge",
+    "surface": "customer",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/tickets/:token/manifest",
+    "surface": "customer",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/venues/:venueCode",
+    "surface": "customer",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/venues/:venueCode/my-tickets",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/tickets/:token/rating",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/venues/:venueCode/claims",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/claims/:claimId",
+    "surface": "customer",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/legal/:kind",
+    "surface": "customer",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/v1/slugs/:slug/availability",
+    "surface": "www",
+    "permission": "public",
+    "status": 200,
+    "code": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/v1/signup",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/sign-in",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/sign-in/mfa",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/sign-in/mfa/enroll",
+    "surface": "console",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/sign-out",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 204,
+    "code": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/support/leave",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/me",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/email/verify",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/email/change/confirm",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/email/resend",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/password/forgot",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/password/reset",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/invitations/:token",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 410,
+    "code": "INVITATION_EXPIRED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/invitations/:token/accept",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 410,
+    "code": "INVITATION_EXPIRED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/tenants",
+    "surface": "www",
+    "permission": "public",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/handoff",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/handoff/exchange",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/mfa/totp/enroll",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/mfa/totp/confirm",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/mfa/verify",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/auth/v1/mfa/totp",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/mfa/refresh",
+    "surface": "console",
+    "permission": "console.tenants.read",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/platform-invitations/:token/accept",
+    "surface": "console",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/oauth/google/start",
+    "surface": "www",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/v1/oauth/google/callback",
+    "surface": "www",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/oauth/google/link",
+    "surface": "www",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/auth/v1/me",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/v1/support/exchange",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/sessions",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/staff/v1/sessions/current",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/staff/v1/device",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/board",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/tickets",
+    "surface": "tenant",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/tickets/search",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/tickets/:id/qr.svg",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/tickets/:id/transitions",
+    "surface": "tenant",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/staff/v1/tickets/:id",
+    "surface": "tenant",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/tickets/:id/alerts",
+    "surface": "tenant",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/members/unlock",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/staff/v1/claims",
+    "surface": "tenant",
+    "permission": "board.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/staff/v1/claims/:id/decision",
+    "surface": "tenant",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/display/v1/pair",
+    "surface": "tenant",
+    "permission": "public",
+    "status": 400,
+    "code": "VALIDATION_FAILED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/display/v1/board",
+    "surface": "tenant",
+    "permission": "display.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/display/v1/session",
+    "surface": "tenant",
+    "permission": "display.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/tenant",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/tenant",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/tenant/deletion",
+    "surface": "tenant",
+    "permission": "tenant.delete",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/tenant/deletion",
+    "surface": "tenant",
+    "permission": "tenant.delete",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/onboarding",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/activity",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/venues/:id",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/v1/venues/:id/messages",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/v1/venues/:id/settings",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/logo",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/counters",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/counters",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/counters/:id",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/counters/:id/archive",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/ratings",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/ratings/:id",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/staff-access",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/staff-access/rotate-link",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/v1/venues/:id/staff-access/pin",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/devices",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/devices/:id",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/displays",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/displays",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/displays/:id",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/displays/:id",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/displays/:id/pairing-code",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/posters/:kind",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/members",
+    "surface": "tenant",
+    "permission": "team.invite_managers",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/invitations",
+    "surface": "tenant",
+    "permission": "team.invite_managers",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/invitations/:id",
+    "surface": "tenant",
+    "permission": "team.invite_managers",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/members/:id",
+    "surface": "tenant",
+    "permission": "team.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/ownership-transfer",
+    "surface": "tenant",
+    "permission": "team.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/today",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/pilot",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/exports",
+    "surface": "tenant",
+    "permission": "tenant.export",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/exports/:id",
+    "surface": "tenant",
+    "permission": "tenant.export",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/billing",
+    "surface": "tenant",
+    "permission": "billing.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/billing/checkout",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/billing/portal",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/billing/cancel",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/billing/resume",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/chimes",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/me",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/me/email",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/v1/me/preferences",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/me/password",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/support-sessions",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/support-sessions/:id/approve",
+    "surface": "tenant",
+    "permission": "support.decide",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/support-sessions/:id/refuse",
+    "surface": "tenant",
+    "permission": "support.decide",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/support-sessions/:id/end",
+    "surface": "tenant",
+    "permission": "support.decide",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/support-codes",
+    "surface": "tenant",
+    "permission": "support.decide",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/announcements",
+    "surface": "tenant",
+    "permission": "announcements.read",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/billing/change-plan",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/tenant/slug",
+    "surface": "tenant",
+    "permission": "tenant.delete",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/trends",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/heatmap",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/legal/pending",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/legal/accept",
+    "surface": "tenant",
+    "permission": "account.self",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues",
+    "surface": "tenant",
+    "permission": "venue.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/archive",
+    "surface": "tenant",
+    "permission": "billing.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/api-keys",
+    "surface": "tenant",
+    "permission": "integrations.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/api-keys",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/api-keys/:id",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/webhooks",
+    "surface": "tenant",
+    "permission": "integrations.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/webhooks",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/v1/webhooks/:id",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/webhooks/:id",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/webhooks/:id/test",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/webhooks/:id/deliveries",
+    "surface": "tenant",
+    "permission": "integrations.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/webhook-deliveries/:deliveryId/redeliver",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/pos/connections",
+    "surface": "tenant",
+    "permission": "integrations.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/pos/providers",
+    "surface": "tenant",
+    "permission": "integrations.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/pos/:provider/connect",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/pos/connections/:id",
+    "surface": "tenant",
+    "permission": "integrations.manage",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/venues/:id/staff-members",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/v1/venues/:id/staff-members",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/v1/staff-members/:id",
+    "surface": "tenant",
+    "permission": "venue.staff_access",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/v1/reports/export.csv",
+    "surface": "tenant",
+    "permission": "reports.view",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants",
+    "surface": "console",
+    "permission": "console.tenants.read",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id",
+    "surface": "console",
+    "permission": "console.tenants.read",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/console/v1/tenants/:id",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/suspend",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/reactivate",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/extend-trial",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/complimentary",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/cancel",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/console/v1/tenants/:id",
+    "surface": "console",
+    "permission": "console.tenants.lifecycle",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/billing",
+    "surface": "console",
+    "permission": "console.billing.read",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/reports/pilot",
+    "surface": "console",
+    "permission": "console.reports",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/audit",
+    "surface": "console",
+    "permission": "console.audit",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/platform-users",
+    "surface": "console",
+    "permission": "console.platform_users",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/platform-users",
+    "surface": "console",
+    "permission": "console.platform_users",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/console/v1/platform-users/:id",
+    "surface": "console",
+    "permission": "console.platform_users",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/platform-users/:id/reset-mfa",
+    "surface": "console",
+    "permission": "console.platform_users",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/settings",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/console/v1/settings/:key",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/chimes",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/console/v1/chimes/:code",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/console/v1/chimes/:id",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/languages",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/console/v1/languages/:code",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/notes",
+    "surface": "console",
+    "permission": "console.notes",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/notes",
+    "surface": "console",
+    "permission": "console.notes",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/tenants/:id/support-sessions",
+    "surface": "console",
+    "permission": "console.support",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/support-sessions",
+    "surface": "console",
+    "permission": "console.support",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/support-sessions/emergency",
+    "surface": "console",
+    "permission": "console.support.emergency",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/support-sessions/:id/verify-code",
+    "surface": "console",
+    "permission": "console.support",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/support-sessions/:id/enter",
+    "surface": "console",
+    "permission": "console.support",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/support-sessions/:id/end",
+    "surface": "console",
+    "permission": "console.support",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/plan",
+    "surface": "console",
+    "permission": "console.commercial",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/coupon",
+    "surface": "console",
+    "permission": "console.commercial",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/free-months",
+    "surface": "console",
+    "permission": "console.commercial",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/plans",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/plans",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/console/v1/plans/:id",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/plans/:id/prices",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/prices/:id/deactivate",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/feature-flags",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/console/v1/tenants/:id/feature-flags/:key",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/console/v1/tenants/:id/feature-flags/:key",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/tenants/:id/transfer-ownership",
+    "surface": "console",
+    "permission": "console.ownership",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/venues/:id/signout-devices",
+    "surface": "console",
+    "permission": "console.devices",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/announcements",
+    "surface": "console",
+    "permission": "console.announcements",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/announcements",
+    "surface": "console",
+    "permission": "console.announcements",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/console/v1/announcements/:id",
+    "surface": "console",
+    "permission": "console.announcements",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/legal-documents",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/legal-documents",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/api/console/v1/legal-documents/:id/publish",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/email-templates/:key/:locale",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/console/v1/email-templates/:key/:locale",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/push-keys/status",
+    "surface": "console",
+    "permission": "console.settings",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/api/console/v1/reports/platform",
+    "surface": "console",
+    "permission": "console.reports",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/me",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tickets",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tickets/:id/status",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tickets/by-external-ref/:externalRef/status",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/tickets/:id/alert",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id/qr.png",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/tickets/:id/qr.svg",
+    "surface": "integration",
+    "permission": "tickets.write",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/webhooks/stripe",
+    "surface": "integration",
+    "permission": "public",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  },
+  {
+    "method": "POST",
+    "path": "/connectors/:provider/webhook",
+    "surface": "integration",
+    "permission": "public",
+    "status": 404,
+    "code": "NOT_FOUND"
+  },
+  {
+    "method": "GET",
+    "path": "/connectors/:provider/callback",
+    "surface": "integration",
+    "permission": "public",
+    "status": 401,
+    "code": "UNAUTHENTICATED"
+  }
+]

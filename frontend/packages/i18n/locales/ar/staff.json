@@ -1,0 +1,204 @@
+{
+  "conflict": "تم تغيير الطلب {{number}} من جهاز آخر. تعرض البطاقة الآن أحدث حالة.",
+  "conflictBy": "غيّر {{name}} الطلب {{number}} مسبقًا. تعرض البطاقة الآن أحدث حالة.",
+  "markedReady": "الطلب {{number}} جاهز",
+  "undo": "تراجع",
+  "alertSent": "أُرسل التنبيه مرة أخرى للطلب {{number}}",
+  "actions": {
+    "startPreparing": "بدء التحضير",
+    "ready": "جاهز",
+    "collected": "تم الاستلام"
+  },
+  "menu": {
+    "open": "خيارات الطلب {{number}}",
+    "title": "الطلب {{number}}",
+    "showQr": "عرض رمز QR",
+    "backToPreparing": "إرجاع إلى التحضير",
+    "alertAgain": "تنبيه مرة أخرى",
+    "waitMinus": "الانتظار −5 د",
+    "waitPlus": "الانتظار +5 د",
+    "edit": "تعديل الملاحظة أو الإيصال",
+    "reopen": "إعادة فتح",
+    "cancel": "إلغاء الطلب"
+  },
+  "ageMinutes_zero": "{{count}} د",
+  "ageMinutes_one": "{{count}} د",
+  "ageMinutes_two": "{{count}} د",
+  "ageMinutes_few": "{{count}} د",
+  "ageMinutes_many": "{{count}} د",
+  "ageMinutes_other": "{{count}} د",
+  "waitMinutes_zero": "الانتظار المتوقع: {{count}} د",
+  "waitMinutes_one": "الانتظار المتوقع: {{count}} د",
+  "waitMinutes_two": "الانتظار المتوقع: {{count}} د",
+  "waitMinutes_few": "الانتظار المتوقع: {{count}} د",
+  "waitMinutes_many": "الانتظار المتوقع: {{count}} د",
+  "waitMinutes_other": "الانتظار المتوقع: {{count}} د",
+  "receipt": "الإيصال",
+  "note": "ملاحظة",
+  "counter": "الكاونتر",
+  "coming": "في الطريق",
+  "takingLonger": "يتأخر أكثر من المتوقع",
+  "callOut": "لم يُستلم — نادِ على العميل",
+  "cancelDialog": {
+    "title": "إلغاء الطلب {{number}}؟",
+    "description": "ستعرض صفحة العميل أن الطلب أُلغي.",
+    "reason": "السبب",
+    "note": "ملاحظة (اختياري)",
+    "confirm": "إلغاء الطلب",
+    "keep": "إبقاء الطلب"
+  },
+  "cancelReasons": {
+    "customer_left": "غادر العميل",
+    "refunded": "تم الاسترداد",
+    "out_of_stock": "نفد من المخزون",
+    "duplicate": "تذكرة مكررة",
+    "mistake": "أُنشئت بالخطأ",
+    "other": "سبب آخر"
+  },
+  "checkCode": {
+    "title": "رمز التحقق للطلب {{number}}",
+    "description": "اطلب من العميل الرمز المكوّن من 4 خانات الظاهر على هاتفه.",
+    "label": "رمز التحقق",
+    "invalid": "الرمز غير مطابق. اسأل العميل مرة أخرى."
+  },
+  "editDialog": {
+    "title": "تعديل الطلب {{number}}"
+  },
+  "newTicket": {
+    "button": "تذكرة جديدة",
+    "title": "تذكرة جديدة",
+    "description": "رقم الإيصال والملاحظة اختياريان.",
+    "create": "إنشاء التذكرة",
+    "openExisting": "فتح التذكرة"
+  },
+  "qr": {
+    "label": "رمز QR للطلب {{number}}",
+    "scan": "امسح الرمز لمتابعة طلبك",
+    "tapToClose": "اضغط للإغلاق",
+    "claimCode": "رمز الربط"
+  },
+  "recent": {
+    "title": "الأخيرة",
+    "description": "الطلبات المستلمة والملغاة والمغلقة خلال آخر 30 دقيقة.",
+    "empty": "لا شيء خلال آخر 30 دقيقة."
+  },
+  "search": {
+    "title": "بحث",
+    "label": "الرقم أو الإيصال",
+    "placeholder": "الرقم أو الإيصال",
+    "go": "بحث",
+    "none": "لم يُعثر على طلبات."
+  },
+  "connection": {
+    "live": "متصل",
+    "connecting": "جارٍ الاتصال…",
+    "offline": "غير متصل"
+  },
+  "collectedRecent": "مستلمة (30 د)",
+  "columns": "أعمدة الطلبات",
+  "emptyColumn": "لا توجد طلبات",
+  "signedOut": {
+    "title": "افتح رابط الموظفين مرة أخرى",
+    "body": "تم تسجيل خروج هذا الجهاز. افتح رابط الموظفين من المدير وأدخل الرمز السري."
+  },
+  "blocked": {
+    "title": "الاشتراك مطلوب",
+    "body": "اشتراك هذا المطعم غير نشط. يمكن للمالك تجديده من لوحة الإدارة."
+  },
+  "suspended": "الحساب موقوف — يمكنك إكمال الطلبات المفتوحة",
+  "signIn": {
+    "title": "لوحة الموظفين",
+    "badLink": "رابط الموظفين غير صالح",
+    "badLinkBody": "تحقق من الرابط مع المدير وافتحه مرة أخرى.",
+    "locked": "محاولات خاطئة كثيرة. هذا الجهاز مقفل مؤقتًا.",
+    "wrongPin": "الرمز السري غير صحيح. حاول مرة أخرى.",
+    "deviceName": "اسم الجهاز",
+    "deviceNameHint": "مثال: جهاز الكاونتر الأمامي",
+    "device": "الجهاز",
+    "changeName": "تغيير",
+    "pin": "الرمز السري",
+    "pinHint": "أدخل من 4 إلى 6 أرقام",
+    "digitsEntered": "عدد الأرقام المدخلة: {{n}}",
+    "delete": "حذف آخر رقم",
+    "open": "فتح اللوحة",
+    "lockedFor": "يمكنك المحاولة مرة أخرى بعد {{time}}."
+  },
+  "device": {
+    "title": "هذا الجهاز",
+    "backToBoard": "العودة إلى اللوحة",
+    "personal": "أنت تستخدم حسابك الخاص، وليس جهاز موظفين.",
+    "mode": "الوضع",
+    "modeBoard": "اللوحة",
+    "modeKitchen": "المطبخ",
+    "modeBoardHint": "كل الأعمدة والإجراءات.",
+    "modeKitchenHint": "بطاقات كبيرة لقيد التحضير مع زر جاهز واحد، وشاشة داكنة.",
+    "kitchenLink": "وضع المطبخ إعداد للجهاز. بتسجيل دخولك الشخصي يمكنك",
+    "openKitchen": "فتح عرض المطبخ"
+  },
+  "errors": {
+    "TICKET_VERSION_CONFLICT": "تم تغيير هذا الطلب من جهاز آخر.",
+    "INVALID_TRANSITION": "تغيير الحالة هذا غير مسموح.",
+    "CHECK_CODE_REQUIRED": "رمز التحقق مطلوب.",
+    "CHECK_CODE_INVALID": "رمز التحقق غير مطابق.",
+    "REOPEN_WINDOW_PASSED": "مرّ أكثر من 30 دقيقة على الاستلام؛ لا يمكن إعادة الفتح.",
+    "EXTERNAL_REF_IN_USE": "رقم الإيصال هذا مستخدم في تذكرة مفتوحة.",
+    "NUMBERS_EXHAUSTED": "لا يوجد رقم تذكرة متاح. أغلق بعض الطلبات أولًا.",
+    "TRIAL_DAILY_LIMIT": "تم بلوغ حد تذاكر الفترة التجريبية لهذا اليوم.",
+    "PLAN_LIMIT": "تم بلوغ حد الباقة.",
+    "FEATURE_NOT_IN_PLAN": "غير متاح في باقتك.",
+    "PIN_LOCKED": "محاولات خاطئة كثيرة. حاول بعد 10 دقائق.",
+    "CSRF_FAILED": "فشل التحقق من الجلسة. أعد تحميل الصفحة.",
+    "INTERNAL_ERROR": "خطأ غير متوقع. حاول مرة أخرى.",
+    "SERVICE_UNAVAILABLE": "الخدمة غير متاحة. حاول بعد قليل."
+  },
+  "member": {
+    "required": "أدخل رمزك الشخصي للمتابعة.",
+    "title": "أدخل رمزك الشخصي",
+    "description": "يُحفظ اسمك مع التغييرات التي تجريها. تبقى مسجّلًا حتى دقيقتين دون استخدام.",
+    "continue": "متابعة",
+    "signedInAs": "مسجّل باسم {{name}}",
+    "nobody": "لا أحد مسجّل",
+    "switch": "تبديل",
+    "enterPin": "أدخل الرمز"
+  },
+  "claims": {
+    "title": "طلبات الربط",
+    "asks": "عميل يطلب متابعة هذا الطلب",
+    "age_zero": "قبل {{count}} د",
+    "age_one": "قبل {{count}} د",
+    "age_two": "قبل {{count}} د",
+    "age_few": "قبل {{count}} د",
+    "age_many": "قبل {{count}} د",
+    "age_other": "قبل {{count}} د",
+    "approve": "موافقة",
+    "refuse": "رفض",
+    "approveFor": "الموافقة على ربط الطلب {{number}}",
+    "refuseFor": "رفض ربط الطلب {{number}}",
+    "approved": "تمت الموافقة على ربط الطلب {{number}}",
+    "refused": "تم رفض ربط الطلب {{number}}",
+    "badge_zero": "لا طلبات ربط",
+    "badge_one": "طلب ربط واحد بالانتظار",
+    "badge_two": "طلبا ربط بالانتظار",
+    "badge_few": "{{count}} طلبات ربط بالانتظار",
+    "badge_many": "{{count}} طلب ربط بالانتظار",
+    "badge_other": "{{count}} طلب ربط بالانتظار"
+  },
+  "keys": {
+    "hint": "Enter = جاهز · C = تم الاستلام · Esc = مسح",
+    "hintKitchen": "Enter = جاهز · Esc = مسح",
+    "notFound": "لا يوجد طلب مفتوح برقم {{number}}",
+    "ambiguous": "يوجد أكثر من طلب مفتوح برقم {{number}}. استخدم البطاقة.",
+    "alreadyReady": "الطلب {{number}} جاهز بالفعل",
+    "notReady": "الطلب {{number}} ليس جاهزًا بعد"
+  },
+  "pos": {
+    "new": "جديد من نقطة البيع",
+    "soundOn": "الصوت مفعّل",
+    "enableSound": "تفعيل الصوت"
+  },
+  "kitchen": {
+    "title": "المطبخ",
+    "empty": "لا طلبات قيد التحضير"
+  },
+  "collectedToday": "مستلمة اليوم"
+}

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#c2410c" />
+    <link rel="icon" href="/icon-192.png" />
+    <title>Tanbeeh</title>
+    <!-- Ticket data is fetched in parallel with the JS chunk (TR-FE-10); boot.js (public/, served as-is) adds the
+         preload and the per-ticket manifest link before the app boots. External, not inline: CSP script-src 'self'. -->
+    <script src="/boot.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,111 @@
+{
+  "context": "Local, synthetic inputs; no external services used",
+  "checks": [
+    {
+      "name": "logo rejects svg",
+      "passed": true,
+      "detail": {
+        "resultCode": "UPLOAD_INVALID"
+      }
+    },
+    {
+      "name": "logo rejects gif",
+      "passed": true,
+      "detail": {
+        "resultCode": "UPLOAD_INVALID"
+      }
+    },
+    {
+      "name": "logo rejects tiff",
+      "passed": true,
+      "detail": {
+        "resultCode": "UPLOAD_INVALID"
+      }
+    },
+    {
+      "name": "logo rejects avif",
+      "passed": true,
+      "detail": {
+        "resultCode": "UPLOAD_INVALID"
+      }
+    },
+    {
+      "name": "logo rejects malformedPng",
+      "passed": true,
+      "detail": {
+        "resultCode": "UPLOAD_INVALID"
+      }
+    },
+    {
+      "name": "presigned export reveals configured access ID",
+      "passed": true,
+      "detail": {
+        "scope": "Access identifier only; query signature and synthetic secret are not recorded"
+      }
+    },
+    {
+      "name": "API email validation rejects longAddressParserPayload",
+      "passed": true,
+      "detail": {
+        "result": "rejected"
+      }
+    },
+    {
+      "name": "API email validation rejects rawObject",
+      "passed": true,
+      "detail": {
+        "result": "rejected"
+      }
+    },
+    {
+      "name": "API email validation rejects nestedRecipientArray",
+      "passed": true,
+      "detail": {
+        "result": "rejected"
+      }
+    },
+    {
+      "name": "API email validation rejects commentRecipient",
+      "passed": true,
+      "detail": {
+        "result": "rejected"
+      }
+    }
+  ],
+  "backendAuditedPackages": {
+    "node_modules/@vitest/mocker": {
+      "version": "3.2.7",
+      "developmentOnly": true
+    },
+    "node_modules/nodemailer": {
+      "version": "7.0.13",
+      "developmentOnly": false
+    },
+    "node_modules/sharp": {
+      "version": "0.34.5",
+      "developmentOnly": false
+    },
+    "node_modules/tinypool": {
+      "version": "1.1.1",
+      "developmentOnly": true
+    },
+    "node_modules/vitest": {
+      "version": "3.2.7",
+      "developmentOnly": true
+    }
+  },
+  "frontendAuditedPackages": {
+    "node_modules/@vitest/mocker": {
+      "version": "3.2.7",
+      "developmentOnly": true
+    },
+    "node_modules/tinypool": {
+      "version": "1.1.1",
+      "developmentOnly": true
+    },
+    "node_modules/vitest": {
+      "version": "3.2.7",
+      "developmentOnly": true
+    }
+  }
+}

@@ -1,0 +1,2821 @@
+[
+  {
+    "prefix": "/api/public/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/config",
+        "surfaces": [
+          "customer",
+          "www"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/plans",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:token",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/follow",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/alerts-enabled",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "put",
+        "path": "/tickets/:token/push-subscription",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/tickets/:token/push-subscription",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/acknowledge",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:token/manifest",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:venueCode",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:venueCode/my-tickets",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:token/rating",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-write",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip+param"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:venueCode/claims",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "claims",
+          "points": 10,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/claims/:claimId",
+        "surfaces": [
+          "customer"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "public-read",
+          "points": 120,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/legal/:kind",
+        "surfaces": [
+          "customer",
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/slugs/:slug/availability",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "slug",
+          "points": 30,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/signup",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "status": 201,
+        "rateLimit": {
+          "name": "signup",
+          "points": 5,
+          "durationSec": 3600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/auth/v1",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/sign-in",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-in/mfa",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-in/mfa/enroll",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/sign-out",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/support/leave",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/me",
+        "surfaces": [
+          "tenant",
+          "www",
+          "console"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/email/verify",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/email/change/confirm",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "email-confirm",
+          "points": 20,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/email/resend",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "rateLimit": {
+          "name": "verify-resend",
+          "points": 3,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/password/forgot",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "status": 202,
+        "rateLimit": {
+          "name": "forgot",
+          "points": 5,
+          "durationSec": 3600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/password/reset",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "reset",
+          "points": 10,
+          "durationSec": 3600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/invitations/:token",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/invitations/:token/accept",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/tenants",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/handoff",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/handoff/exchange",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/totp/enroll",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "rateLimit": {
+          "name": "mfa-manage",
+          "points": 10,
+          "durationSec": 900,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/totp/confirm",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "rateLimit": {
+          "name": "mfa-manage",
+          "points": 10,
+          "durationSec": 900,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/verify",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/mfa/totp",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "rateLimit": {
+          "name": "mfa-manage",
+          "points": 10,
+          "durationSec": 900,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/mfa/refresh",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "rateLimit": {
+          "name": "mfa-refresh",
+          "points": 10,
+          "durationSec": 900,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/platform-invitations/:token/accept",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      }
+    ]
+  },
+  {
+    "prefix": "/api/auth/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/oauth/google/start",
+        "surfaces": [
+          "www",
+          "tenant"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "oauth",
+          "points": 30,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/oauth/google/callback",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "oauth",
+          "points": 30,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/oauth/google/link",
+        "surfaces": [
+          "www"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "signin",
+          "points": 30,
+          "durationSec": 900,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/me",
+        "surfaces": [
+          "tenant",
+          "www"
+        ],
+        "permission": "public",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/support/exchange",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/staff/v1",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/sessions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "status": 201,
+        "rateLimit": {
+          "name": "staff-signin",
+          "points": 20,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/sessions/current",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/device",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/board",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/tickets",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "status": 201,
+        "rateLimit": {
+          "name": "staff",
+          "points": 30,
+          "durationSec": 1,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/search",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/tickets/:id/qr.svg",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/transitions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "rateLimit": {
+          "name": "staff",
+          "points": 30,
+          "durationSec": 1,
+          "key": "actor"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "patch",
+        "path": "/tickets/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "rateLimit": {
+          "name": "staff",
+          "points": 30,
+          "durationSec": 1,
+          "key": "actor"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tickets/:id/alerts",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "status": 202,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/members/unlock",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "rateLimit": {
+          "name": "member-pin",
+          "points": 20,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/claims",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "board.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/claims/:id/decision",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tickets.write",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      }
+    ]
+  },
+  {
+    "prefix": "/api/display/v1",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/pair",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "pair",
+          "points": 5,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/board",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "display.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/session",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "display.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenant",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/tenant",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/tenant/deletion",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/tenant/deletion",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/onboarding",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/activity",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/venues",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "patch",
+        "path": "/venues/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "rateLimit": {
+          "name": "admin",
+          "points": 20,
+          "durationSec": 1,
+          "key": "actor"
+        },
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/messages",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/settings",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/logo",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "rateLimit": {
+          "name": "logo",
+          "points": 10,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/counters",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/counters",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "status": 201,
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "patch",
+        "path": "/counters/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/counters/:id/archive",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/ratings",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/ratings/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/staff-access",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/staff-access/rotate-link",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "put",
+        "path": "/venues/:id/staff-access/pin",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/devices",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/devices/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/displays",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/displays",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "status": 201,
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "patch",
+        "path": "/displays/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/displays/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/displays/:id/pairing-code",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/posters/:kind",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/invitations",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "status": 201,
+        "limitedAccessOk": true,
+        "rateLimit": {
+          "name": "invite",
+          "points": 20,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/invitations/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.invite_managers",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/members/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.manage",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/ownership-transfer",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "team.manage",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/today",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/pilot",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/exports",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.export",
+        "status": 202,
+        "limitedAccessOk": true,
+        "rateLimit": {
+          "name": "export",
+          "points": 3,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/exports/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.export",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/billing",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.view",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/checkout",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/portal",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/cancel",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/resume",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/chimes",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/me",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/me/email",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "rateLimit": {
+          "name": "email-change",
+          "points": 5,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "status": 202,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "put",
+        "path": "/me/preferences",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/me/password",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "rateLimit": {
+          "name": "pw",
+          "points": 10,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/support-sessions",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/approve",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/refuse",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/end",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "limitedAccessOk": true,
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-codes",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "support.decide",
+        "limitedAccessOk": true,
+        "rateLimit": {
+          "name": "supcode",
+          "points": 10,
+          "durationSec": 3600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/announcements",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "announcements.read",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/billing/change-plan",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/tenant/slug",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "tenant.delete",
+        "rateLimit": {
+          "name": "slug-change",
+          "points": 3,
+          "durationSec": 86400,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/trends",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/heatmap",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/legal/pending",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/legal/accept",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "account.self",
+        "limitedAccessOk": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/admin/v1",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/venues",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.settings",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/archive",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "billing.manage",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/api-keys",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/api-keys",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "status": 201,
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/api-keys/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/webhooks",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/webhooks",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/webhooks/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/webhooks/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/webhooks/:id/test",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "status": 202,
+        "tenantResource": true,
+        "rateLimit": {
+          "name": "webhook-test",
+          "points": 10,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/webhooks/:id/deliveries",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/webhook-deliveries/:deliveryId/redeliver",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "status": 202,
+        "rateLimit": {
+          "name": "webhook-redeliver",
+          "points": 30,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/pos/connections",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/pos/providers",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.view",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/pos/:provider/connect",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/pos/connections/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "integrations.manage",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/venues/:id/staff-members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/staff-members",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "status": 201,
+        "tenantResource": true,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/staff-members/:id",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "venue.staff_access",
+        "tenantResource": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/reports/export.csv",
+        "surfaces": [
+          "tenant"
+        ],
+        "permission": "reports.view",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/api/console/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenants",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "rateLimit": {
+          "name": "console",
+          "points": 20,
+          "durationSec": 1,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.read",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/suspend",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/reactivate",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/extend-trial",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/complimentary",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/cancel",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/tenants/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.tenants.lifecycle",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id/billing",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.billing.read",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/reports/pilot",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.reports",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/audit",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.audit",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/platform-users",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/platform-users",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/platform-users/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/platform-users/:id/reset-mfa",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.platform_users",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/settings",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "put",
+        "path": "/settings/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/chimes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "put",
+        "path": "/chimes/:code",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "rateLimit": {
+          "name": "chime",
+          "points": 20,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      },
+      {
+        "method": "patch",
+        "path": "/chimes/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/languages",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/languages/:code",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      }
+    ]
+  },
+  {
+    "prefix": "/api/console/v1",
+    "routes": [
+      {
+        "method": "get",
+        "path": "/tenants/:id/notes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.notes",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/notes",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.notes",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/tenants/:id/support-sessions",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/support-sessions",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/support-sessions/emergency",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support.emergency",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/verify-code",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "rateLimit": {
+          "name": "supcode-verify",
+          "points": 5,
+          "durationSec": 600,
+          "key": "actor"
+        },
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/enter",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/support-sessions/:id/end",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.support",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/plan",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/coupon",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/free-months",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.commercial",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/plans",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/plans",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "patch",
+        "path": "/plans/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/plans/:id/prices",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/prices/:id/deactivate",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/feature-flags",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "method": "put",
+        "path": "/tenants/:id/feature-flags/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "delete",
+        "path": "/tenants/:id/feature-flags/:key",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/tenants/:id/transfer-ownership",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.ownership",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "post",
+        "path": "/venues/:id/signout-devices",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.devices",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/announcements",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/announcements",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "delete",
+        "path": "/announcements/:id",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.announcements",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/legal-documents",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/legal-documents",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "status": 201,
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "post",
+        "path": "/legal-documents/:id/publish",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/email-templates/:key/:locale",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "put",
+        "path": "/email-templates/:key/:locale",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/push-keys/status",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.settings",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "method": "get",
+        "path": "/reports/platform",
+        "surfaces": [
+          "console"
+        ],
+        "permission": "console.reports",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/v1",
+    "routes": [
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "get",
+        "path": "/me",
+        "permission": "tickets.write",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "post",
+        "path": "/tickets",
+        "permission": "tickets.write",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": false
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "get",
+        "path": "/tickets/:id",
+        "permission": "tickets.write",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "get",
+        "path": "/tickets",
+        "permission": "tickets.write",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": false
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "post",
+        "path": "/tickets/:id/status",
+        "permission": "tickets.write",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "post",
+        "path": "/tickets/by-external-ref/:externalRef/status",
+        "permission": "tickets.write",
+        "hasBody": true,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "post",
+        "path": "/tickets/:id/alert",
+        "permission": "tickets.write",
+        "status": 202,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "get",
+        "path": "/tickets/:id/qr.png",
+        "permission": "tickets.write",
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      },
+      {
+        "surfaces": [
+          "integration"
+        ],
+        "csrfExempt": true,
+        "tenantResource": true,
+        "method": "get",
+        "path": "/tickets/:id/qr.svg",
+        "permission": "tickets.write",
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      }
+    ]
+  },
+  {
+    "prefix": "/webhooks",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/stripe",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": false
+      }
+    ]
+  },
+  {
+    "prefix": "/connectors",
+    "routes": [
+      {
+        "method": "post",
+        "path": "/:provider/webhook",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "public",
+        "csrfExempt": true,
+        "rateLimit": {
+          "name": "pos-webhook",
+          "points": 600,
+          "durationSec": 60,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": false,
+        "hasParams": true
+      },
+      {
+        "method": "get",
+        "path": "/:provider/callback",
+        "surfaces": [
+          "integration"
+        ],
+        "permission": "public",
+        "rateLimit": {
+          "name": "pos-callback",
+          "points": 30,
+          "durationSec": 600,
+          "key": "ip"
+        },
+        "hasBody": false,
+        "hasQuery": true,
+        "hasParams": true
+      }
+    ]
+  }
+]

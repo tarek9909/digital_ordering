@@ -1,0 +1,50 @@
+# Copy to rclone.conf and fill in one off-site target. Keep backups with a different provider and location from the VPS.
+# Backups hold personal data, so they are encrypted before upload: [offsite] is an rclone "crypt" remote over the
+# storage remote [offsite-store]. BACKUP_REMOTE in .env is then offsite:tanbeeh
+#
+# Set the two passwords with:   docker run --rm rclone/rclone obscure 'a-long-random-passphrase'
+# Store the plain passphrases somewhere safe outside the server. Without them the backups cannot be read.
+#
+# M-14 — a compromised VPS must not be able to destroy the off-site copies. Encryption does NOT protect against
+# deletion. Set up the destination like this:
+#   1. Bucket with versioning AND object lock / retention (S3 Object Lock in compliance or governance mode, Backblaze
+#      B2 Object Lock, Cloudflare R2 bucket lock rules, Wasabi object lock), retention >= BACKUP_RETENTION_DAYS.
+#   2. The key below (the one that lives on the VPS) can list, read and write but NOT delete:
+#        - AWS S3 / Wasabi: an IAM policy with s3:ListBucket, s3:GetObject, s3:PutObject only (no s3:DeleteObject*,
+#          no s3:PutBucket*, no s3:PutObjectRetention / s3:BypassGovernanceRetention).
+#        - Backblaze B2: an application key restricted to this bucket with listBuckets, listFiles, readFiles,
+#          writeFiles, and without deleteFiles / writeBucketRetentions / bypassGovernance.
+#        - Cloudflare R2: API tokens cannot exclude delete, so rely on a bucket lock rule for the retention period.
+#      Read and list are needed for restore.sh and so rclone can skip files already uploaded.
+#   3. Keep BACKUP_PRUNE_ON_VPS=false (default). Prune old backups from a separate trusted machine with a
+#      different, delete-capable key that never touches the VPS (deploy/README.md §5). With object lock, deletes
+#      only succeed once retention has expired.
+#   4. Test it from the VPS: upload a throwaway object, then try to remove it. The provider must refuse the delete:
+#        docker compose run --rm --entrypoint sh backup -c 'echo test > /tmp/t && rclone copy /tmp/t offsite-store:tanbeeh-backups/lock-test/ && rclone deletefile offsite-store:tanbeeh-backups/lock-test/t'
+#      (with versioning, a "successful" delete that only adds a delete marker is acceptable only if object lock keeps
+#      the version). Then rehearse restore.sh, which must still work with this key.
+
+[offsite]
+type = crypt
+remote = offsite-store:tanbeeh-backups
+password = CHANGE_ME_OBSCURED
+password2 = CHANGE_ME_OBSCURED_SALT
+
+# Storage. Backblaze B2, Cloudflare R2 and Wasabi are all S3-compatible:
+[offsite-store]
+type = s3
+provider = Cloudflare
+access_key_id = CHANGE_ME
+secret_access_key = CHANGE_ME
+endpoint = https://<account-id>.r2.cloudflarestorage.com
+acl = private
+# The upload-only key usually cannot create or inspect buckets; the bucket already exists.
+no_check_bucket = true
+
+# Or another server over SFTP (make it append-only on that server, e.g. a chrooted account whose uploaded files are
+# made immutable or snapshotted there, so this key cannot remove history):
+# [offsite-store]
+# type = sftp
+# host = backup.example.com
+# user = backup
+# key_file = /config/rclone/id_ed25519

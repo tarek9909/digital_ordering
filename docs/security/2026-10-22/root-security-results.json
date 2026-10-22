@@ -1,0 +1,24 @@
+[
+  {
+    "finding": "Ticket credential leaked in manifest request log",
+    "status": 200,
+    "fullCredentialInLog": true,
+    "credentialAuthorizesTicket": true
+  },
+  {
+    "finding": "Invitation credential leaked in API request log",
+    "status": 200,
+    "fullCredentialInLog": true,
+    "responseExposesInviteEmail": true
+  },
+  {
+    "finding": "OAuth query parameters leaked in request log",
+    "authorizationCodeInLog": true,
+    "stateInLog": true,
+    "note": "Provider intentionally unconfigured; verifies request serialization before provider logic."
+  },
+  {
+    "control": "Normal ticket API path masks token in request log",
+    "fullCredentialInLog": false
+  }
+]
