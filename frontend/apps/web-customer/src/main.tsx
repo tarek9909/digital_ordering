@@ -1,6 +1,7 @@
 import '@dop/ui/tokens.css';
 import '@dop/ui/ember.css';
 import './customer.css';
+import { preloadMotion } from '@dop/ui';
 import { pickLocale } from '@dop/client-sdk';
 import { initI18n } from '@dop/i18n';
 import ar from '@dop/i18n/locales/ar/customer.json';
@@ -45,6 +46,9 @@ const routes = [
 ];
 
 void registerWorker();
+
+// GSAP motion: loaded after first render, never for reduced motion (packages/ui/src/motion.ts).
+preloadMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

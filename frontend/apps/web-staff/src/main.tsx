@@ -1,4 +1,6 @@
 import '@dop/ui/tokens.css';
+import '@dop/ui/ember.css';
+import { preloadMotion } from '@dop/ui';
 import { initI18n } from '@dop/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
@@ -14,6 +16,9 @@ initI18n('staff', { ar, en }, storedLang());
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnReconnect: true, retry: 2 } },
 });
+
+// GSAP motion: loaded after first render, never for reduced motion (packages/ui/src/motion.ts).
+preloadMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
