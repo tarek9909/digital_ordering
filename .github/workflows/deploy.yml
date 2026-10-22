@@ -88,8 +88,8 @@ jobs:
         env:
           IMAGES: >-
             ${{ env.REGISTRY }}/backup:${{ steps.tag.outputs.tag }}
-            minio/minio:RELEASE.2025-04-22T22-12-26Z
-            minio/mc:RELEASE.2025-04-16T18-13-26Z
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+            pgsty/mc:RELEASE.2026-09-16T00-00-00Z
             mysql:8.4
             redis:7-alpine
         run: |

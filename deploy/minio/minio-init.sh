@@ -91,7 +91,13 @@ mc admin policy create local tanbeeh-backup-ro "$POLICIES/tanbeeh-backup-ro.json
 
 # ensure_user <access-key> <secret-key> <policy>: creates the user or resets its secret, then attaches the policy.
 has_policy() { # has_policy <access-key> <policy>
-  case "$(mc admin user info local "$1" 2>/dev/null)" in *"$2"*) return 0 ;; *) return 1 ;; esac
+  # Match the exact name in the JSON policyName list ("a,b"). A substring match on the text output was wrong: the
+  # access key tanbeeh-app-… contains the policy name tanbeeh-app, so the policy was never attached.
+  info=$(mc admin user info local "$1" --json 2>/dev/null) || return 1
+  case "$info" in *'"policyName":"'*) ;; *) return 1 ;; esac
+  list=${info#*\"policyName\":\"}
+  list=${list%%\"*}
+  case ",$list," in *",$2,"*) return 0 ;; *) return 1 ;; esac
 }
 ensure_user() {
   # `mc admin user add` takes the secret as an argument; it runs only inside this one-shot container.

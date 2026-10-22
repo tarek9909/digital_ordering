@@ -1,5 +1,12 @@
 # Storage: H-3 containment, residual risk and migration off the affected MinIO release
 
+**Update (2026-10-22, later): fixed.** The upstream `minio/minio` and `minio/mc` images were withdrawn, so
+`deploy/docker-compose.yml` now runs Pigsty's community fork, `pgsty/minio:RELEASE.2026-08-04T00-00-00Z` and
+`pgsty/mc:RELEASE.2026-09-16T00-00-00Z`. The fork fixes both advisories from `RELEASE.2026-04-17T00-00-00Z`. Verified
+on the server: an unsigned-trailer PUT with only a key ID is rejected, and `minio-init.sh` and the app's
+identities behave as before. The Caddy containment below stays as defence in depth. The rest of this page is the
+earlier record.
+
 Status (2026-10-22): **contained, not fixed.** The decision is containment now and a storage swap later. This
 runbook records what is in place, what risk remains, and a reversible migration plan. Commands run in
 `/opt/tanbeeh` on the server. Rehearse the migration on staging first.

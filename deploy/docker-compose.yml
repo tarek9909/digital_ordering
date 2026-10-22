@@ -175,7 +175,9 @@ services:
     logging: *logging
 
   minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    # Pigsty's community MinIO fork: upstream community images were withdrawn from Docker Hub and Quay, and the fork
+    # fixes the H-3 advisories from RELEASE.2026-04-17 (docs/runbooks/storage-migration.md). Same S3/mc admin APIs.
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     restart: unless-stopped
     command: server /data
     environment:
@@ -193,7 +195,7 @@ services:
   # signed links, TR-PRV-07), the bucket-scoped application identity and the read-only backup identity (M-11, L-30).
   # Re-run by hand after changing keys: docker compose run --rm minio-init
   minio-init:
-    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
     restart: 'no'
     depends_on: { minio: { condition: service_healthy } }
     entrypoint: ['/bin/sh', '/init/minio-init.sh']
