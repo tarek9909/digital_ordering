@@ -39,7 +39,9 @@
     "allow": "Allow notifications",
     "skip": "Skip, I'll keep this page open",
     "done": "You're all set. Keep your phone nearby.",
-    "blocked": "Notifications are blocked for this site. Turn them on in your browser settings, or keep this page open."
+    "blocked": "Notifications are blocked for this site. Turn them on in your browser settings, or keep this page open.",
+    "failed": "Notifications could not be set up. Check your connection and try again, or keep this page open.",
+    "retry": "Try again"
   },
   "ios": {
     "title": "Get alerts on iPhone",

@@ -1,0 +1,46 @@
+# Tanbeeh behind an existing nginx (deploy/README.md §8). Copy to /etc/nginx/sites-available/<DOMAIN>, replace
+# tanbeeh.example with DOMAIN, link it into sites-enabled, `nginx -t && systemctl reload nginx`.
+# nginx terminates TLS for DOMAIN and *.DOMAIN and forwards everything to Tanbeeh's Caddy on 127.0.0.1:8480
+# (CADDY_HTTP_PORT in .env), which routes hosts and paths exactly as it does when it is the edge.
+
+# WebSocket upgrade for /rt/ (realtime); a unique name so it cannot clash with other sites' maps.
+map $http_upgrade $tanbeeh_connection_upgrade {
+    default upgrade;
+    ''      '';
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name tanbeeh.example *.tanbeeh.example;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name tanbeeh.example *.tanbeeh.example;
+
+    # One certificate for the platform hosts (apex, www, t, admin, api, files) by HTTP-01, plus a wildcard for
+    # tenant hosts, which needs DNS-01; see §8. A single wildcard + apex certificate also works here.
+    ssl_certificate     /etc/letsencrypt/live/tanbeeh.example/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tanbeeh.example/privkey.pem;
+
+    # Logo uploads are capped at 2 MB and chimes at 512 KB by the API; this only has to be larger.
+    client_max_body_size 12M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8480;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # Overwrite (never append) so a client cannot forge its address; Caddy trusts only this hop (M-7).
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $tanbeeh_connection_upgrade;
+        # Long-polling and WebSocket connections stay open between heartbeats.
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+}

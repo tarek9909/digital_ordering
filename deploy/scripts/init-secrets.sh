@@ -7,7 +7,9 @@ cd "$(dirname "$0")/.."
 mkdir -p secrets && chmod 700 secrets
 if [ ! -f secrets/data_key ]; then
   head -c 32 /dev/urandom | base64 > secrets/data_key
-  chmod 600 secrets/data_key
+  # 644 inside the 700 secrets/ directory: the API image runs as distroless `nonroot` (uid 65532) and reads the
+  # bind-mounted file, while other host users cannot reach it through the directory.
+  chmod 644 secrets/data_key
   echo "created secrets/data_key"
 else
   echo "secrets/data_key exists, kept"

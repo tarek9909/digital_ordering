@@ -141,3 +141,25 @@ The pinned MinIO community release is affected by GHSA-hv4r-mvr4-25vw and GHSA-9
 community fix. Until storage is migrated, Caddy makes `files.DOMAIN` read-only (GET/HEAD on the two buckets only,
 unsigned-trailer streaming requests refused, `/minio/*` not exposed); the app writes over the private network.
 The residual risk and the migration plan are in [docs/runbooks/storage-migration.md](../docs/runbooks/storage-migration.md).
+
+## 8. Sharing a server with an existing reverse proxy
+
+When nginx (or another proxy) already owns ports 80 and 443 for other sites, run Tanbeeh behind it instead of
+letting Caddy take those ports. Caddy keeps all host and path routing; only TLS moves to the existing proxy.
+
+1. **Skip `scripts/server-setup.sh`** if Docker and a firewall that allows 22/80/443 are already in place: its `ufw`
+   reset would not touch other apps' rules, but review it before running it on a shared server. Create the
+   `deploy` user and `/opt/tanbeeh` by hand (the last lines of that script).
+2. **`.env`:** uncomment the six `CADDY_*` / `TRUST_PROXY` lines from `.env.example`. Caddy then listens on
+   `127.0.0.1:8480` over plain HTTP, issues no certificates, and trusts `X-Forwarded-For` only from `172.30.0.1`
+   (the `internal` network's gateway, which traffic to the published port arrives from). The API trusts Caddy
+   and that gateway (`TRUST_PROXY`), so rate limits and audit logs see the real client address.
+3. **nginx:** install [nginx/tanbeeh.conf.example](nginx/tanbeeh.conf.example) for `DOMAIN` and `*.DOMAIN`. It
+   overwrites `X-Forwarded-For` with the peer address, so a client cannot forge it.
+4. **Certificates** (nginx's, not Caddy's):
+   - Platform hosts by HTTP-01, through the `/.well-known/acme-challenge/` location:
+     `certbot certonly --webroot -w /var/www/certbot --cert-name DOMAIN -d DOMAIN -d www.DOMAIN -d t.DOMAIN -d admin.DOMAIN -d api.DOMAIN -d files.DOMAIN`
+   - Tenant hosts (`<slug>.DOMAIN`) need a wildcard certificate, which Let's Encrypt only issues by DNS-01: use your
+     DNS provider's certbot plugin or a `--manual-auth-hook`, then point the 443 server block at it (or serve
+     tenant hosts from a second server block that uses the wildcard certificate).
+5. `/internal/tls-allowed` is unused in this mode (no on-demand certificates).

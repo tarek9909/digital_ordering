@@ -10,6 +10,20 @@
 	# and the API trusts only Caddy's fixed address (TRUST_PROXY in docker-compose.yml). Only if you ever put a CDN or
 	# load balancer in front of Caddy, add here:  servers { trusted_proxies static <that proxy's exact CIDRs> }
 	# Never `private_ranges`: Docker's userland proxy (e.g. IPv6 clients) makes outside traffic look private.
+	# Behind an existing reverse proxy (CADDY_* in .env, deploy/README.md §8) CADDY_TRUSTED_PROXIES is the Docker
+	# gateway that proxy connects through. The default, loopback inside this container, trusts nobody outside.
+	servers {
+		trusted_proxies static {$TRUSTED_PROXIES:127.0.0.1/32}
+	}
+}
+
+# TLS mode: `on_demand` when Caddy is the internet edge; `off` when another proxy terminates TLS (§8).
+(tls_on_demand) {
+	tls {
+		on_demand
+	}
+}
+(tls_off) {
 }
 
 (security) {
@@ -68,10 +82,8 @@
 	}
 }
 
-https:// {
-	tls {
-		on_demand
-	}
+{$SITE_ADDRESS:https://} {
+	import tls_{$TLS_MODE:on_demand}
 	import security
 	encode zstd gzip
 

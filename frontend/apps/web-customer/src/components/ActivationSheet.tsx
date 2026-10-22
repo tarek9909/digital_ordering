@@ -12,7 +12,7 @@ import { clientId } from '../lib/storage';
 // "Turn on alerts" flow (TRD §11.2, FR-ALR-01/02, TR-ALR-03 – TR-ALR-05): test chime → "Did you hear that?" →
 // wake lock → notification permission, or the iOS Home Screen guide, or the in-app browser warning.
 
-type Step = 'intro' | 'heard' | 'volume' | 'push' | 'ios' | 'inapp' | 'blocked' | 'done';
+type Step = 'intro' | 'heard' | 'volume' | 'push' | 'ios' | 'inapp' | 'blocked' | 'failed' | 'done';
 
 export function ActivationSheet({
   token,
@@ -51,7 +51,13 @@ export function ActivationSheet({
   const allow = async () => {
     setBusy(true);
     await unlockAudio();
-    const r = await enablePush(token).catch(() => 'unsupported' as const);
+    // A setup error (config, worker, subscribe or saving the subscription) is not "unsupported": the ticket has no
+    // background alerts, so say so and offer a retry instead of reporting success (CSD01).
+    const r = await enablePush(token).catch(() => 'failed' as const);
+    if (r === 'failed') {
+      setBusy(false);
+      return setStep('failed');
+    }
     await recordEnabled();
     setBusy(false);
     if (r === 'granted') {
@@ -145,6 +151,19 @@ export function ActivationSheet({
           <>
             <p>{t('activation.blocked')}</p>
             <Button onClick={() => onClose(false)}>{t('common:close')}</Button>
+          </>
+        )}
+        {step === 'failed' && (
+          <>
+            <p role="alert" className="text-danger">
+              {t('activation.failed')}
+            </p>
+            <Button size="lg" busy={busy} onClick={allow}>
+              {t('activation.retry')}
+            </Button>
+            <Button variant="ghost" onClick={skip}>
+              {t('activation.skip')}
+            </Button>
           </>
         )}
         {step === 'done' && (

@@ -39,7 +39,8 @@ x-app: &app
     DATA_KEY_FILE: /run/secrets/data_key
     # M-7: trust X-Forwarded-For only from Caddy's fixed address on the internal network (see `networks` below).
     # IPv4 only, on purpose: the internal network has no IPv6, so Caddy always reaches the API from this address.
-    TRUST_PROXY: 172.30.0.10
+    # Behind an existing reverse proxy, TRUST_PROXY in .env adds the Docker gateway it connects through (§8).
+    TRUST_PROXY: ${TRUST_PROXY:-172.30.0.10}
     EMAIL_FROM: ${EMAIL_FROM}
     SMTP_URL: ${SMTP_URL}
     SESSION_PEPPER: ${SESSION_PEPPER}
@@ -72,10 +73,14 @@ services:
     image: ${REGISTRY:-tanbeeh}/web:${IMAGE_TAG:-latest}
     build: { context: .., dockerfile: deploy/web.Dockerfile }
     restart: unless-stopped
-    ports: ['80:80', '443:443', '443:443/udp']
+    # Defaults: Caddy is the internet edge. Behind an existing reverse proxy, .env binds these to loopback (§8).
+    ports: ['${CADDY_HTTP_PORT:-80}:80', '${CADDY_HTTPS_PORT:-443}:443', '${CADDY_HTTPS_PORT:-443}:443/udp']
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
+      SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-https://}
+      TLS_MODE: ${CADDY_TLS_MODE:-on_demand}
+      TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-127.0.0.1/32}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
