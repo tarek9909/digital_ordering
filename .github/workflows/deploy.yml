@@ -147,4 +147,6 @@ jobs:
             docker compose up -d --remove-orphans
             sleep 10
             docker compose ps
-            curl -fsS --resolve "api.$(grep ^DOMAIN= .env | cut -d= -f2):443:127.0.0.1" "https://api.$(grep ^DOMAIN= .env | cut -d= -f2)/readyz"
+            # tr: a .env saved on Windows ends lines with CRLF; \015 strips the carriage return from the domain.
+            D=$(grep ^DOMAIN= .env | cut -d= -f2 | tr -d '\015')
+            curl -fsS --resolve "api.$D:443:127.0.0.1" "https://api.$D/readyz"
