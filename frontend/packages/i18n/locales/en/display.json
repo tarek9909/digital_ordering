@@ -35,5 +35,6 @@
   },
   "promo": {
     "label": "Offer"
-  }
+  },
+  "page": "Page {{x}} of {{y}}"
 }

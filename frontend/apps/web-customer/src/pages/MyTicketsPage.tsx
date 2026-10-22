@@ -1,7 +1,7 @@
 import type { PublicTicket } from '@dop/contracts';
 import { ApiError, brandTokens } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Card } from '@dop/ui';
+import { Button, Card, Spinner } from '@dop/ui';
 import { useQueries } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Link } from '../lib/router';
@@ -18,6 +18,15 @@ export function MyTicketsPage() {
     queries: stored.map((s) => ({ queryKey: ['ticket', s.token], queryFn: () => publicApi.get<PublicTicket>(`/tickets/${s.token}`), retry: false })),
   });
   const tickets = results.map((r) => r.data).filter((x): x is PublicTicket => Boolean(x));
+  // Loading, empty, partial failure and unavailable are distinct (CSD08): a failed fetch is never "no orders".
+  // A ticket the server no longer knows (404) is genuinely gone; any other error keeps the entry and offers a retry.
+  const isGone = (e: unknown) => e instanceof ApiError && e.status === 404;
+  const failed = results.filter((r) => r.isError && !r.data && !isGone(r.error));
+  const loading = results.some((r) => r.isPending);
+  const retrying = failed.some((r) => r.isFetching);
+  const retryFailed = () => {
+    for (const r of failed) void r.refetch();
+  };
 
   // A ticket seen closed here starts its 24-hour prune clock, even if its own page was never reopened (TR-FE-09);
   // a ticket the server no longer knows is dropped.
@@ -26,7 +35,7 @@ export function MyTicketsPage() {
     .map((tk) => tk.token)
     .join(',');
   const goneKey = stored
-    .filter((_, i) => results[i]?.error instanceof ApiError && (results[i]!.error as ApiError).status === 404)
+    .filter((_, i) => isGone(results[i]?.error))
     .map((s) => s.token)
     .join(',');
   useEffect(() => {
@@ -39,7 +48,16 @@ export function MyTicketsPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-4 px-4 py-6">
       <h1 className="text-2xl font-bold">{t('tickets.title')}</h1>
-      {tickets.length === 0 && <p className="text-muted">{t('tickets.empty')}</p>}
+      {failed.length > 0 && (
+        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4">
+          <p className="text-danger">{t(tickets.length > 0 ? 'tickets.partialFailed' : 'tickets.loadFailed')}</p>
+          <Button busy={retrying} onClick={retryFailed}>
+            {t('common:retry')}
+          </Button>
+        </div>
+      )}
+      {loading && tickets.length === 0 && failed.length === 0 && <Spinner label={t('common:loading')} />}
+      {!loading && tickets.length === 0 && failed.length === 0 && <p className="text-muted">{t('tickets.empty')}</p>}
       {tickets.map((tk) => {
         const b = brandTokens(tk.venue.brandColor);
         return (

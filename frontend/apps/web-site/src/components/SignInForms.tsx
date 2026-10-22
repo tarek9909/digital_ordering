@@ -51,6 +51,13 @@ export function CredentialsForm({ onDone }: { onDone: (n: Next) => void }) {
       <Button type="submit" size="lg" busy={m.isPending}>
         {t('common:signIn')}
       </Button>
+      {/* Google sign-in for existing accounts (AS02); the API answers 404 when it is not configured. */}
+      <a className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 font-semibold" href="/api/auth/v1/oauth/google/start">
+        <span aria-hidden="true" className="font-black text-[#4285f4]">
+          G
+        </span>
+        {t('signin.google')}
+      </a>
       <div className="flex flex-wrap justify-between gap-2 text-sm">
         <Link to="/forgot-password" className="inline-flex min-h-12 items-center underline">
           {t('signin.forgot')}

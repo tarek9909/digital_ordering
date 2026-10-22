@@ -184,5 +184,6 @@
     "title": "Kitchen",
     "empty": "No orders being prepared"
   },
-  "collectedToday": "Collected today"
+  "collectedToday": "Collected today",
+  "liveRefused": "Live updates are refused for this board — actions disabled. Reload the page or open the staff link again."
 }

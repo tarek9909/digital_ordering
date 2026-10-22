@@ -167,6 +167,61 @@ export const sitePricingSchema = z
   .strict();
 export type SitePricing = z.infer<typeof sitePricingSchema>;
 
+/** Landing page sections a super admin can hide (the hero always shows). */
+export const SITE_LANDING_SECTIONS = ['trust', 'marquee', 'steps', 'statement', 'compare', 'brand', 'cashier', 'tv', 'reach', 'pos', 'local', 'pricing', 'faq', 'closing', 'whatsapp'] as const;
+export type SiteLandingSection = (typeof SITE_LANDING_SECTIONS)[number];
+
+/** Text overrides keep the shape of the site's translation tree: strings, lists and objects of them. */
+export type SiteCopyValue = string | SiteCopyValue[] | { [key: string]: SiteCopyValue };
+const copyKey = z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/);
+const copyValue: z.ZodType<SiteCopyValue> = z.lazy(() => z.union([z.string().max(1000), z.array(copyValue).max(24), z.record(copyKey, copyValue)]));
+const depth = (v: unknown): number => (v && typeof v === 'object' ? 1 + Math.max(0, ...Object.values(v).map(depth)) : 0);
+const copyTree = z
+  .object({ landing: z.record(copyKey, copyValue).optional(), nav: z.record(copyKey, z.string().max(60)).optional() })
+  .strict()
+  .refine((v) => depth(v) <= 6, 'Too deeply nested');
+
+/**
+ * Landing page content edited by super admins: per-language text overrides over the site's built-in copy (only what
+ * changed is stored) and the sections to hide. The packages wording lives in `site.pricing`.
+ */
+export const siteLandingSchema = z
+  .object({
+    hidden: z
+      .array(z.enum(SITE_LANDING_SECTIONS))
+      .refine((a) => new Set(a).size === a.length, 'Each section once'),
+    copy: z.object({ ar: copyTree, en: copyTree }).strict(),
+  })
+  .strict()
+  .refine((v) => JSON.stringify(v).length <= 200_000, 'Too much text');
+export type SiteLanding = z.infer<typeof siteLandingSchema>;
+
+const isCopyObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+/** The same shape with every text empty: the template for an item added to a list. */
+const blankCopy = (v: unknown): unknown =>
+  typeof v === 'string' ? '' : Array.isArray(v) ? [] : isCopyObject(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blankCopy(x)])) : v;
+
+/**
+ * Built-in site text with a `site.landing` override laid over it. Only keys of the built-in text with the same kind
+ * of value are taken, so a stale override never breaks the page; blank text keeps the built-in text; lists are
+ * replaced whole (an added item gets missing fields empty); objects are merged key by key.
+ */
+export function overlaySiteCopy(base: unknown, over: unknown): unknown {
+  if (over === undefined) return base;
+  if (typeof base === 'string') return typeof over === 'string' && over.trim() ? over : base;
+  if (Array.isArray(base)) {
+    if (!Array.isArray(over)) return base;
+    const sample: unknown = base[0];
+    const fits = over.every((x) => (typeof sample === 'string' ? typeof x === 'string' : isCopyObject(sample) && isCopyObject(x)));
+    return fits ? over.map((x) => (isCopyObject(sample) ? overlaySiteCopy(blankCopy(sample), x) : x)) : base;
+  }
+  if (isCopyObject(base)) {
+    if (!isCopyObject(over)) return base;
+    return Object.fromEntries(Object.keys(base).map((k) => [k, overlaySiteCopy(base[k], over[k])]));
+  }
+  return base;
+}
+
 export const PLATFORM_SETTING_DEFAULTS = {
   'tenant.defaults': {
     timeZone: 'Asia/Riyadh',
@@ -203,5 +258,7 @@ export const PLATFORM_SETTING_DEFAULTS = {
     periods: ['month', 'quarter', 'year'],
     plans: {},
   } as SitePricing,
+  /** Landing page text overrides and hidden sections; edited in the console. */
+  'site.landing': { hidden: [], copy: { ar: {}, en: {} } } as SiteLanding,
 } as const;
 export type PlatformSettingKey = keyof typeof PLATFORM_SETTING_DEFAULTS;

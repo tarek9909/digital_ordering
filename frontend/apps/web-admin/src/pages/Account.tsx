@@ -190,8 +190,18 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
     return (
       <div className="flex flex-col gap-3">
         <p>{t('account.mfaIntro')}</p>
-        <Field className="max-w-xs" label={t('account.mfaPassword')} type="password" autoComplete="current-password" hint={t('account.mfaPasswordHint')} value={password} onChange={(e) => setPassword(e.target.value)} />
-        <ErrorNote error={enroll.error} />
+        <Field
+          className="max-w-xs"
+          label={t('account.mfaPassword')}
+          type="password"
+          autoComplete="current-password"
+          hint={t('account.mfaPasswordHint')}
+          value={password}
+          // A wrong password is shown on the field; a fresh sign-in requirement or other refusal below (AS11).
+          error={isCode(enroll.error, 'UNAUTHENTICATED') ? t('account.wrongPassword') : undefined}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {isCode(enroll.error, 'FORBIDDEN') ? <Banner tone="warn">{t('account.mfaSignInAgain')}</Banner> : enroll.error && !isCode(enroll.error, 'UNAUTHENTICATED') && <ErrorNote error={enroll.error} />}
         <div>
           <Button busy={enroll.isPending} onClick={() => enroll.mutate()}>
             {t('account.mfaStart')}
@@ -255,10 +265,11 @@ function TwoFactor({ me }: { me: Me }) {
           autoComplete="one-time-code"
           maxLength={6}
           dir="ltr"
-          error={form.formState.errors.code ? t('signIn.codeInvalid') : undefined}
+          error={form.formState.errors.code || isCode(remove.error, 'UNAUTHENTICATED') ? t('signIn.codeInvalid') : undefined}
           {...form.register('code')}
         />
-        <ErrorNote error={remove.error} />
+        {/* A wrong code is shown on the field; the multi-venue policy refusal (FORBIDDEN) or a lock-out below. */}
+        {isCode(remove.error, 'FORBIDDEN') ? <Banner tone="warn">{t('account.mfaRequiredByVenues')}</Banner> : remove.error && !isCode(remove.error, 'UNAUTHENTICATED') && <ErrorNote error={remove.error} />}
         <div>
           <ConfirmButton
             label={t('account.mfaRemove')}

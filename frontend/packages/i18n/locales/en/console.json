@@ -18,7 +18,8 @@
     "platformReport": "Platform report",
     "plans": "Plans & prices",
     "announcements": "Announcements",
-    "content": "Legal & emails"
+    "content": "Legal & emails",
+    "website": "Website"
   },
   "role": {
     "super_admin": "Super admin",
@@ -76,7 +77,8 @@
     "lastActivity": "Last activity",
     "created": "Created",
     "empty": "No tenants match.",
-    "complimentary": "complimentary"
+    "complimentary": "complimentary",
+    "planArchived": "{{name}} (archived)"
   },
   "tenantStatus": {
     "trial": "Trial",
@@ -388,7 +390,8 @@
     "undoPct": "Ready undone",
     "prepNote": "Preparation time is measured from ticket creation. Alert reach shows what the system could deliver; it does not tell whether a customer noticed it.",
     "reachChart": "Alert reach when ready",
-    "reachChartNote": "Number of tickets by the best alert channel at the moment they were marked ready."
+    "reachChartNote": "Number of tickets by the best alert channel at the moment they were marked ready.",
+    "pickupP90": "90th percentile pickup after ready"
   },
   "reach": {
     "push": "Push sent",
@@ -718,7 +721,29 @@
     "pushSent": "Push notifications sent",
     "pushFailures": "Push failures",
     "pushFailurePct": "Push failure rate",
-    "webhookFailures": "Webhook failures"
+    "webhookFailures": "Webhook failures",
+    "reachByUa": "Alert reach by phone type",
+    "reachByUaCaption": "Alert level when marked Ready, by phone operating system and browser",
+    "reachByUaEmpty": "No Ready tickets in this range.",
+    "reachByUaNote": "Counts tickets by the alert level reached when staff marked them Ready, grouped by the first following phone. Push sent means the notification was sent, not that it was heard.",
+    "phoneType": "Phone and browser",
+    "reachPct": "Push sent or page open",
+    "ua": {
+      "ios-safari": "iPhone – Safari",
+      "ios-webapp": "iPhone – home screen app",
+      "ios-other": "iPhone – other browser",
+      "android-chrome": "Android – Chrome",
+      "android-samsung": "Android – Samsung Internet",
+      "android-firefox": "Android – Firefox",
+      "android-other": "Android – other browser",
+      "desktop": "Computer",
+      "inapp-instagram": "Instagram in-app browser",
+      "inapp-facebook": "Facebook in-app browser",
+      "inapp-whatsapp": "WhatsApp in-app browser",
+      "inapp-tiktok": "TikTok in-app browser",
+      "other": "Other",
+      "none": "No phone following"
+    }
   },
   "layout": {
     "groups": {
@@ -786,6 +811,56 @@
       "note": "The line under the plans can have up to 160 characters.",
       "periods": "Pick at least one period.",
       "plans": "Check the plans: names up to 40 characters, descriptions up to 140, one highlighted plan."
+    }
+  },
+  "website": {
+    "title": "Website",
+    "intro": "What visitors see on the public website. Changes show there within a minute."
+  },
+  "siteLanding": {
+    "title": "Landing page",
+    "intro": "Choose which sections show and change any text in Arabic and English. Each field starts with the website's own text; leave a field empty to go back to it.",
+    "sections": "Sections shown",
+    "sectionsHint": "The top of the page always shows. Hiding How it works or Questions also removes their menu links.",
+    "part": "Part of the page",
+    "pricingNote": "The packages heading, the \"In every plan\" list and the line under the plans are set in Website packages below.",
+    "edited": "Changed from the website's text.",
+    "reset": "Use the website's text for {{field}}",
+    "lang": {
+      "ar": "Arabic",
+      "en": "English"
+    },
+    "item": "Item {{n}}",
+    "addItem": "Add to {{list}} ({{lang}})",
+    "removeItem": "Remove {{list}} item {{n}} ({{lang}})",
+    "resetList": "Use the website's {{list}} ({{lang}})",
+    "save": "Save landing page",
+    "saved": "Saved. The website shows it within a minute.",
+    "invalid": {
+      "placeholders": "Keep the parts in double curly brackets (they become the order number and similar) in: {{fields}}.",
+      "general": "Some text is too long or a list has too many items. Shorten it and save again."
+    },
+    "groups": {
+      "nav": "Header menu",
+      "hero": "Top of the page",
+      "demo": "Live demo",
+      "trust": "Partner logos",
+      "marquee": "Word band",
+      "steps": "How it works",
+      "statement": "Statement over the photo",
+      "compare": "Buzzers or Tanbeeh",
+      "brand": "Make it yours",
+      "cashier": "Cashier",
+      "tv": "Pickup TV",
+      "reach": "Locked phone",
+      "pos": "Cashier systems (POS)",
+      "pricing": "Packages",
+      "faq": "Questions",
+      "closing": "Closing",
+      "footer": "Footer",
+      "whatsapp": "WhatsApp button",
+      "photoSlot": "Photo placeholders",
+      "local": "Made for Lebanon"
     }
   }
 }

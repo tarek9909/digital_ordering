@@ -44,15 +44,26 @@ export const setCsrfToken = (t: string) => {
 
 export type Query = Record<string, string | number | boolean | undefined | null>;
 
+/**
+ * Adds query parameters to a path that may already carry some (e.g. `?venueId=`), through one URLSearchParams
+ * path so the result never contains a second `?` (CSD02). Empty values are skipped; a key in `query` replaces the
+ * same key already in the path. Without `query` the path is returned unchanged.
+ */
+export function withQuery(path: string, query?: Query): string {
+  if (!query) return path;
+  const hashAt = path.indexOf('#');
+  const hash = hashAt < 0 ? '' : path.slice(hashAt);
+  const noHash = hashAt < 0 ? path : path.slice(0, hashAt);
+  const qAt = noHash.indexOf('?');
+  const pathname = qAt < 0 ? noHash : noHash.slice(0, qAt);
+  const params = new URLSearchParams(qAt < 0 ? '' : noHash.slice(qAt + 1));
+  for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
+  const qs = params.toString();
+  return `${pathname}${qs ? `?${qs}` : ''}${hash}`;
+}
+
 export function createApi(o: ApiClientOptions) {
   async function call<T>(method: string, path: string, opts: { body?: unknown; query?: Query; raw?: BodyInit; headers?: Record<string, string> } = {}): Promise<T> {
-    const qs = opts.query
-      ? '?' +
-        Object.entries(opts.query)
-          .filter(([, v]) => v !== undefined && v !== null && v !== '')
-          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-          .join('&')
-      : '';
     const headers: Record<string, string> = { Accept: 'application/json', 'X-Request-Id': uuid(), ...opts.headers };
     if (method !== 'GET' && csrfToken) headers['X-CSRF-Token'] = csrfToken;
     let body: BodyInit | undefined;
@@ -66,7 +77,7 @@ export function createApi(o: ApiClientOptions) {
     }
     let res: Response;
     try {
-      res = await fetch(`${o.base}${path}${qs === '?' ? '' : qs}`, { method, headers, body, credentials: 'same-origin' });
+      res = await fetch(`${o.base}${withQuery(path, opts.query)}`, { method, headers, body, credentials: 'same-origin' });
     } catch (e) {
       o.onNetworkError?.(e);
       throw new ApiError(0, 'NETWORK', null, 'Network unavailable');

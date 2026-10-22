@@ -38,7 +38,9 @@ describe('promoLayout', () => {
 
   it('hides the promo rather than shrink a full Ready list', () => {
     expect(promoLayout(input({ readyShown: 24, readyMore: true })).placement).toBe('hidden');
-    expect(promoLayout(input({ readyShown: 9, viewportW: 1080, viewportH: 1920 })).placement).toBe('hidden');
+    // Portrait tiles are sized in vmin (CSD03): two columns, so 9 numbers still fit above the strip but 16 do not.
+    expect(promoLayout(input({ readyShown: 9, viewportW: 1080, viewportH: 1920 })).placement).toBe('strip');
+    expect(promoLayout(input({ readyShown: 16, viewportW: 1080, viewportH: 1920 })).placement).toBe('hidden');
   });
 
   it('needs more height for more rows', () => {

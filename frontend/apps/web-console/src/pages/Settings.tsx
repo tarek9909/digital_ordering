@@ -3,10 +3,7 @@ import { useTranslation } from '@dop/i18n';
 import { Button, Card, Field, LiveRegion, PageShell, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import type { SiteContact as SiteContactValue, SitePricing as SitePricingValue } from '@dop/contracts';
 import { ChimeLibrary } from '../components/ChimeLibrary';
-import { SiteContact } from '../components/SiteContact';
-import { SitePricing } from '../components/SitePricing';
 import { Checkbox, ErrorNote, Table, Td } from '../components/common';
 import { TextArea } from '../components/common';
 import { MfaCancelled, useFreshMfa } from '../components/FreshMfa';
@@ -36,10 +33,7 @@ export function SettingsPage() {
 function PlatformSettings({ onSaved }: { onSaved: (key: string) => void }) {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ['settings'], queryFn: () => api.get<{ items: SettingRow[] }>('/settings') });
-  // The website contact and packages have their own forms; the other settings use the JSON editor.
-  const contact = q.data?.items.find((s) => s.key === 'site.contact');
-  const pricing = q.data?.items.find((s) => s.key === 'site.pricing');
-  const ownForm = new Set(['site.contact', 'site.pricing']);
+  // Website settings (`site.*`) are edited on the Website page; the others use the JSON editor.
   return (
     <section aria-labelledby="ps-h">
       <h2 id="ps-h" className="mb-3 text-xl font-bold">
@@ -50,9 +44,7 @@ function PlatformSettings({ onSaved }: { onSaved: (key: string) => void }) {
         <Spinner label={t('common:loading')} />
       ) : (
         <div className="flex flex-col gap-6">
-          {contact && <SiteContact key={JSON.stringify(contact.value)} value={contact.value as SiteContactValue} onSaved={() => onSaved(contact.key)} />}
-          {pricing && <SitePricing key={JSON.stringify(pricing.value)} value={pricing.value as SitePricingValue} onSaved={() => onSaved(pricing.key)} />}
-          <div className="grid gap-4 lg:grid-cols-2">{q.data?.items.filter((s) => !ownForm.has(s.key)).map((s) => <SettingEditor key={s.key} row={s} onSaved={onSaved} />)}</div>
+          <div className="grid gap-4 lg:grid-cols-2">{q.data?.items.filter((s) => !s.key.startsWith('site.')).map((s) => <SettingEditor key={s.key} row={s} onSaved={onSaved} />)}</div>
         </div>
       )}
     </section>

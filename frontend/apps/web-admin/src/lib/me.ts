@@ -29,12 +29,40 @@ async function supportMe(): Promise<Me> {
   };
 }
 
+/** What GET /me returns for a platform agent inside an approved support session (no user account). */
+interface SupportMeResponse {
+  support: { agentName: string; supportSessionId: string };
+  currentTenantId: string;
+  currentRole: 'support';
+  csrfToken: string;
+}
+
+const isSupportResponse = (r: unknown): r is SupportMeResponse => typeof (r as SupportMeResponse | null)?.support === 'object' && (r as SupportMeResponse).support !== null;
+
+/**
+ * One client identity for both response kinds (AS01): a support response becomes a `Me` with `support: true`, a
+ * placeholder user and no member role, so every screen treats it as a support agent and never as a user.
+ */
+export function normalizeMe(r: Me | SupportMeResponse): Me {
+  if (!isSupportResponse(r)) return r;
+  return {
+    user: { id: '', email: '', name: r.support.agentName, locale: 'ar', emailVerified: true, mfaEnrolled: true },
+    memberships: [],
+    currentTenantId: r.currentTenantId,
+    currentRole: null,
+    csrfToken: r.csrfToken,
+    support: true,
+    agentName: r.support.agentName,
+    supportSessionId: r.support.supportSessionId,
+  };
+}
+
 /** GET /me; sets the CSRF token before any write (TR-AUTH-02). Falls back to support mode after a handoff. */
 export async function fetchMe(): Promise<Me> {
   try {
-    const me = await authApi.get<Me>('/me');
+    const me = normalizeMe(await authApi.get<Me | SupportMeResponse>('/me'));
     setCsrfToken(me.csrfToken);
-    if (me.currentRole) setSupportMode(false);
+    setSupportMode(me.support === true);
     return me;
   } catch (e) {
     if (e instanceof ApiError && e.status === 401 && isSupportMode()) {
@@ -63,8 +91,11 @@ export function useRole(): ViewerRole | null {
 
 export const useIsSupport = () => useMe().data?.support === true;
 
-/** GET /tenant needs a user session (support agents cannot read it, TR-AUTH-10). */
+/**
+ * GET /tenant needs a user session (support agents cannot read it, TR-AUTH-10). It waits for the identity, so a
+ * support agent's first render never requests it before /me says who is signed in (AS01).
+ */
 export function useTenant() {
-  const support = useIsSupport();
-  return useQuery({ queryKey: tenantKey, queryFn: () => api.get<TenantInfo>('/tenant'), staleTime: 60_000, enabled: !support });
+  const me = useMe();
+  return useQuery({ queryKey: tenantKey, queryFn: () => api.get<TenantInfo>('/tenant'), staleTime: 60_000, enabled: me.isSuccess && me.data.support !== true });
 }

@@ -229,6 +229,8 @@ export interface PlatformReportResponse {
   churnPct: number | null;
   cohorts: PlatformCohort[];
   deliveryHealth: DeliveryHealth;
+  /** Alert level at Ready per phone type (operating system/browser family) over the range (BRD §12.2). */
+  reachByUa?: Record<string, Record<string, number>>;
   trialDays: unknown;
 }
 

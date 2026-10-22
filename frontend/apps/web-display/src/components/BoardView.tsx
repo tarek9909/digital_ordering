@@ -3,20 +3,23 @@ import type { DisplayTicket } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
 import { LiveRegion } from '@dop/ui';
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { readyView, type Board } from '../lib/board';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { gridCapacity, READY_PAGE_MS, readyPage, tileMinVmin, type Board, type ReadyKey } from '../lib/board';
 import { PROMO_STRIP_VH, promoLayout } from '../lib/promo';
 import { useDisplay } from '../lib/store';
 
 // Platform palette (ember.css): white base, ink for weight, ember only for the number that just became ready.
 const SURFACE = '#ffffff';
 const INK = '#1c1917';
-const NUMBER_GRID: CSSProperties = { gridTemplateColumns: 'repeat(auto-fill, minmax(28vh, 1fr))' };
+// Tiles are sized in vmin (the same as vh on a landscape TV, and not oversized on a portrait one). Columns are at
+// least wide enough for the longest number; rows are as tall as their tile (max-content), so an `overflow: hidden`
+// tile (the highlighted one) is never squashed (CSD03).
+const numberGrid = (minVmin: number): CSSProperties => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${minVmin}vmin, 1fr))`, gridAutoRows: 'max-content' });
 
 function NumberTile({ t, highlighted }: { t: DisplayTicket; highlighted: boolean }) {
   return (
     <li
-      className={`num flex items-center justify-center rounded-[2.2vmin] py-[1.2vh] font-display text-[13vh] leading-none font-bold ${
+      className={`num flex items-center justify-center rounded-[2.2vmin] py-[1.2vmin] font-display text-[13vmin] leading-none font-bold ${
         highlighted ? 'ember-glow ready-pop bg-primary text-on-primary' : 'bg-white/[0.07] text-white'
       }`}
     >
@@ -29,9 +32,11 @@ function Badges() {
   const { t } = useTranslation();
   const connected = useDisplay((s) => s.connected);
   const resyncing = useDisplay((s) => s.resyncing);
+  const stale = useDisplay((s) => s.stale);
   const missing = useDisplay((s) => s.missingVoices);
   const soundOn = useDisplay((s) => s.soundEnabled);
-  const offline = connected === false || (connected === true && resyncing);
+  // Disconnected, reconnecting, or showing a list whose refresh failed (CSD04): never look current.
+  const offline = connected === false || (connected === true && resyncing) || stale;
   return (
     <div className="flex flex-col items-end gap-[1vmin] text-[1.9vmin] font-semibold">
       {offline && (
@@ -59,6 +64,57 @@ function useViewport() {
   return size;
 }
 
+/**
+ * How many tiles fit completely in a grid list, measured from the browser's own layout (CSD03): resolved columns,
+ * row gap, the list's height and one tile's layout height. Re-measured whenever the list is resized (viewport,
+ * promo, the page indicator appearing). 0 until there is a layout to measure.
+ */
+function useGridCapacity(ref: RefObject<HTMLUListElement | null>, active: boolean, layoutKey: string) {
+  const [capacity, setCapacity] = useState(0);
+  useLayoutEffect(() => {
+    const ul = ref.current;
+    if (!active || !ul) return;
+    const measure = () => {
+      const cs = getComputedStyle(ul);
+      const columns = cs.gridTemplateColumns.split(' ').filter((x) => /px$/.test(x)).length;
+      // Layout height (transform-free) of the tallest of the first tiles; all tiles share one size.
+      const tileHeight = Math.max(0, ...[...ul.children].slice(0, 4).map((c) => (c as HTMLElement).offsetHeight));
+      const next = gridCapacity({ height: ul.clientHeight, columns, rowGap: parseFloat(cs.rowGap) || 0, tileHeight });
+      setCapacity((c) => (c === next ? c : next));
+    };
+    measure();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    ro?.observe(ul);
+    window.addEventListener('resize', measure);
+    // Web fonts change the tile height once loaded.
+    void document.fonts?.ready.then(measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [ref, active, layoutKey]);
+  return capacity;
+}
+
+/** Rotates Ready pages on a fixed interval while the list is longer than the grid (CSD03). */
+function useReadyPages(board: Board, capacity: number, pinnedId: string | null) {
+  const [start, setStart] = useState<ReadyKey | null>(null);
+  const page = useMemo(() => readyPage(board.ready, capacity, start, pinnedId), [board.ready, capacity, start, pinnedId]);
+  const next = useRef(page.next);
+  next.current = page.next;
+  const paged = page.pages > 1;
+  useEffect(() => {
+    if (!paged) {
+      setStart(null);
+      return;
+    }
+    // A steady interval, not reset by board updates, so a busy venue never stalls the rotation.
+    const id = setInterval(() => setStart(next.current), READY_PAGE_MS);
+    return () => clearInterval(id);
+  }, [paged]);
+  return page;
+}
+
 /** Promo content (FR-DSP-07): image and text side by side, clipped to its own box. */
 const PROMO_HEIGHT: CSSProperties = { height: `${PROMO_STRIP_VH}vh` };
 
@@ -76,9 +132,19 @@ function PromoContent({ text, imageUrl, className }: { text: string; imageUrl: s
 export function BoardView({ board }: { board: Board }) {
   const { t, i18n } = useTranslation();
   const highlightId = useDisplay((s) => s.highlightId);
-  const { shown, more } = useMemo(() => readyView(board.ready), [board.ready]);
-  // Preparing keeps the server's order (oldest first); new tickets join at the end.
-  const preparing = board.preparing;
+  const readyList = useRef<HTMLUListElement>(null);
+  const preparingList = useRef<HTMLUListElement>(null);
+  const readyGrid = useMemo(() => numberGrid(tileMinVmin(board.ready.map((x) => x.displayNumber))), [board.ready]);
+  const preparingGrid = useMemo(() => numberGrid(tileMinVmin(board.preparing.map((x) => x.displayNumber), 11)), [board.preparing]);
+  // Re-measured when the column template changes (a longer number widens the tiles without resizing the list).
+  const readyCapacity = useGridCapacity(readyList, board.ready.length > 0, String(readyGrid.gridTemplateColumns));
+  const { shown, page, pages, hidden } = useReadyPages(board, readyCapacity, highlightId);
+  // Preparing keeps the server's order (oldest first); new tickets join at the end. Only whole numbers are shown;
+  // the rest are counted (Preparing is informational, so it is capped rather than rotated).
+  const preparingCapacity = useGridCapacity(preparingList, board.settings.showPreparing && board.preparing.length > 0, String(preparingGrid.gridTemplateColumns));
+  const preparingCap = preparingCapacity > 0 && board.preparing.length > preparingCapacity ? preparingCapacity : board.preparing.length;
+  const preparing = board.preparing.slice(0, preparingCap);
+  const preparingMore = board.preparing.length - preparing.length;
   // The venue's own colour marks the top edge; the platform palette (ink, ember) does the rest.
   const brand = brandTokens(board.venue.brandColor, SURFACE) as CSSProperties;
   const lang = i18n.language;
@@ -89,8 +155,9 @@ export function BoardView({ board }: { board: Board }) {
     promo: board.settings.promo,
     lang,
     showPreparing: board.settings.showPreparing,
-    readyShown: shown.length,
-    readyMore: more > 0,
+    // The strip is planned for the whole Ready list (not the measured page), so it never toggles with paging.
+    readyShown: board.ready.length,
+    readyMore: false,
     viewportW: vp.w,
     viewportH: vp.h,
   });
@@ -118,33 +185,49 @@ export function BoardView({ board }: { board: Board }) {
           <section aria-labelledby="col-preparing" className="flex min-h-0 min-w-0 flex-[2] flex-col rounded-[3vmin] border-[0.3vmin] border-line p-[3vmin]">
             <h2 id="col-preparing" className="mb-[2.5vmin] flex items-baseline gap-[2vmin]">
               <span className="font-display text-[5vmin] leading-none font-bold text-ink-2">{t('common:status.preparing')}</span>
-              <span className="board-label text-muted">{preparing.length}</span>
+              <span className="board-label text-muted">{board.preparing.length}</span>
             </h2>
-            <ul className="grid min-h-0 flex-1 content-start gap-x-[2vmin] gap-y-[1vmin] overflow-hidden" style={NUMBER_GRID}>
+            <ul ref={preparingList} className="grid min-h-0 flex-1 content-start gap-x-[2vmin] gap-y-[1vmin] overflow-hidden" style={preparingGrid}>
               {preparing.map((x) => (
-                <li key={x.id} className="num flex items-center justify-center py-[1vh] font-display text-[11vh] leading-none font-semibold text-muted">
+                <li key={x.id} className="num flex items-center justify-center py-[1vmin] font-display text-[11vmin] leading-none font-semibold text-muted">
                   {x.displayNumber}
                 </li>
               ))}
             </ul>
+            {preparingMore > 0 && <p className="mt-[1vmin] text-end font-display text-[3vmin] font-bold text-muted">{t('more', { n: preparingMore })}</p>}
             {promo.placement === 'preparing' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mt-[2vmin]" />}
           </section>
         )}
         <section aria-labelledby="col-ready" className="flex min-h-0 min-w-0 flex-[3] flex-col rounded-[3vmin] bg-ink p-[3vmin] text-white">
           <h2 id="col-ready" className="mb-[2.5vmin] flex items-baseline gap-[2vmin]">
             <span className="font-display text-[5vmin] leading-none font-bold">{t('common:status.ready')}</span>
-            <span className="board-label text-white/55">{shown.length + more}</span>
+            <span className="board-label text-white/55">{board.ready.length}</span>
           </h2>
           {shown.length === 0 ? (
             <p className="flex flex-1 items-center justify-center text-[3.6vmin] text-white/55">{t('emptyReady')}</p>
           ) : (
-            <ul className="grid min-h-0 flex-1 content-start gap-[1.8vmin] overflow-hidden" style={NUMBER_GRID}>
+            <ul ref={readyList} className="grid min-h-0 flex-1 content-start gap-[1.8vmin] overflow-hidden" style={readyGrid}>
               {shown.map((x) => (
                 <NumberTile key={x.id} t={x} highlighted={x.id === highlightId} />
               ))}
             </ul>
           )}
-          {more > 0 && <p className="mt-[1.5vmin] text-end font-display text-[3.4vmin] font-bold text-white/80">{t('more', { n: more })}</p>}
+          {(pages > 1 || hidden > 0) && (
+            <p data-testid="ready-overflow" className="mt-[1.5vmin] flex items-baseline justify-end gap-[2vmin] font-display text-[3.4vmin] font-bold text-white/80">
+              {pages > 1 && (
+                <span className="flex items-center gap-[1vmin]">
+                  {/* Page dots: which page of the rotation is on screen. */}
+                  <span aria-hidden="true" className="flex gap-[0.8vmin]">
+                    {Array.from({ length: Math.min(pages, 8) }, (_, i) => (
+                      <span key={i} className={`inline-block size-[1.4vmin] rounded-full ${i === Math.min(page, 8) - 1 ? 'bg-white' : 'bg-white/30'}`} />
+                    ))}
+                  </span>
+                  <span>{t('page', { x: page, y: pages })}</span>
+                </span>
+              )}
+              {hidden > 0 && <span>{t('more', { n: hidden })}</span>}
+            </p>
+          )}
         </section>
       </main>
       {promo.placement === 'strip' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mx-[4vmin] mb-[3vmin]" />}

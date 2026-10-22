@@ -235,10 +235,15 @@ export const recordPaymentBody = z
     method: z.enum(['cash', 'bank_transfer', 'wallet', 'other']),
     reference: z.string().trim().max(120).optional(),
     note: z.string().trim().max(500).optional(),
+    /** Generated once per payment form: a repeated submit with the same id records the payment once (BW02). */
+    requestId: uuidSchema.optional(),
   })
   .strict();
 export const freeMonthsBody = z.object({ months: z.number().int().min(1).max(12) }).strict();
 export const flagOverrideBody = z.object({ enabled: z.boolean() }).strict();
 export const transferOwnershipPlatformBody = z.object({ email: emailSchema, verificationNote: z.string().trim().min(10).max(1000) }).strict();
 export const legalDocumentBody = z.object({ kind: z.enum(['terms', 'privacy', 'dpa', 'customer_privacy']), version: z.string().min(1).max(20), locale: z.string().min(2).max(10), html: z.string().min(1).max(500_000) }).strict();
+/** Acceptance gate (FR-ADM-16, AS04): the exact document ids shown, in the locale they were shown for. */
+export const legalPendingQuery = z.object({ locale: localeSchema.optional() }).strict();
+export const legalAcceptBody = z.object({ documentIds: z.array(uuidSchema).min(1).max(5), locale: localeSchema.optional() }).strict();
 export const emailTemplateBody = z.object({ subject: z.string().min(1).max(200), blocks: z.array(z.string().max(2000)).min(1).max(10) }).strict();

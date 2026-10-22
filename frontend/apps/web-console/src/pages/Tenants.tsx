@@ -14,12 +14,34 @@ import type { Paged, TenantRow } from '../lib/types';
 
 // Tenants list (FR-SA-04, TR-FE-25): search, status and plan filters, cursor paging.
 
+export interface PlanOption {
+  code: string;
+  name: string;
+  archived: boolean;
+}
+
+/**
+ * Plan filter choices from the catalogue (AS10), readable by every role that lists tenants. Built-in plans keep
+ * their translated names; custom plans show their catalogue name. Until the catalogue loads (or if it fails) the
+ * built-in codes are offered, so the filter always works.
+ */
+export function usePlanOptions() {
+  const { t } = useTranslation();
+  const q = useQuery({ queryKey: ['plan-options'], queryFn: async () => (await api.get<{ items: PlanOption[] }>('/plan-options')).items, staleTime: 5 * 60_000 });
+  const catalogue: PlanOption[] = q.data ?? PLAN_CODES.map((code) => ({ code, name: code, archived: false }));
+  return catalogue.map((p) => {
+    const name = t(`plan.${p.code}`, { defaultValue: p.name });
+    return { value: p.code, label: p.archived ? t('tenants.planArchived', { name }) : name };
+  });
+}
+
 export function TenantsPage() {
   const { t, i18n } = useTranslation();
   const role = useMe().data?.platformUser.role;
   const [draft, setDraft] = useState({ q: '', status: '', plan: '' });
   const [filters, setFilters] = useState(draft);
   const pager = useCursorPager();
+  const planOptions = usePlanOptions();
   const list = useQuery({
     queryKey: ['tenants', filters, pager.cursor],
     queryFn: () => api.get<Paged<TenantRow>>('/tenants', { ...filters, limit: 50, cursor: pager.cursor }),
@@ -56,7 +78,7 @@ export function TenantsPage() {
           label={t('tenants.plan')}
           value={draft.plan}
           onChange={(e) => setDraft({ ...draft, plan: e.target.value })}
-          options={[{ value: '', label: t('tenants.any') }, ...PLAN_CODES.map((p) => ({ value: p, label: t(`plan.${p}`) }))]}
+          options={[{ value: '', label: t('tenants.any') }, ...planOptions]}
         />
         <Button type="submit">{t('tenants.apply')}</Button>
       </form>

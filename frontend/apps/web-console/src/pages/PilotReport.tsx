@@ -94,7 +94,7 @@ function TenantPicker({ selected, onChange }: { selected: Map<string, string>; o
   );
 }
 
-function Results({ items }: { items: ConsolePilotItem[] }) {
+export function Results({ items }: { items: ConsolePilotItem[] }) {
   const { t } = useTranslation();
   const chart = items.map((i) => ({ name: i.tenant.name, ...i.report.total.alertReach }));
   return (
@@ -110,6 +110,7 @@ function Results({ items }: { items: ConsolePilotItem[] }) {
           t('pilot.prepP50'),
           t('pilot.prepP90'),
           t('pilot.pickupP50'),
+          t('pilot.pickupP90'),
           t('pilot.uncollected'),
           t('pilot.undoPct'),
         ]}
@@ -124,6 +125,7 @@ function Results({ items }: { items: ConsolePilotItem[] }) {
             <Td className="num">{fmtDuration(s.prepSecondsP50)}</Td>
             <Td className="num">{fmtDuration(s.prepSecondsP90)}</Td>
             <Td className="num">{fmtDuration(s.pickupSecondsP50)}</Td>
+            <Td className="num">{fmtDuration(s.pickupSecondsP90)}</Td>
             <Td className="num">{s.uncollected}</Td>
             <Td className="num">{fmtPct(s.undoPct)}</Td>
           </tr>

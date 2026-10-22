@@ -126,6 +126,7 @@ export function PlanForm({ tenant, onCancel, onDone }: FormProps & { onDone: (ef
 
 function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUntil: string) => void }) {
   const { t, i18n } = useTranslation();
+  const run = useFreshMfa();
   const [v, setV] = useState({ amount: '', currency: 'USD', months: '1', method: 'cash', reference: '', note: '' });
   const [errs, setErrs] = useState<{ amountMinor?: boolean; months?: boolean }>({});
   const [error, setError] = useState<unknown>(null);
@@ -147,10 +148,10 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
     setBusy(true);
     setError(null);
     try {
-      const res = await api.post<{ id: string; paidUntil: string }>(`/tenants/${tenant.id}/payments`, r.data);
+      const res = await run(() => api.post<{ id: string; paidUntil: string }>(`/tenants/${tenant.id}/payments`, r.data));
       onDone(res.paidUntil);
     } catch (x) {
-      setError(x);
+      if (!(x instanceof MfaCancelled)) setError(x);
     } finally {
       setBusy(false);
     }
@@ -174,6 +175,7 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
 
 function FreeMonthsForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => void }) {
   const { t } = useTranslation();
+  const run = useFreshMfa();
   const [months, setMonths] = useState('1');
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -186,10 +188,10 @@ function FreeMonthsForm({ tenant, onCancel, onDone }: FormProps & { onDone: () =
     setBusy(true);
     setError(null);
     try {
-      await api.post(`/tenants/${tenant.id}/free-months`, r.data);
+      await run(() => api.post(`/tenants/${tenant.id}/free-months`, r.data));
       onDone();
     } catch (x) {
-      setError(x);
+      if (!(x instanceof MfaCancelled)) setError(x);
     } finally {
       setBusy(false);
     }

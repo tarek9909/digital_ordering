@@ -14,22 +14,41 @@ import { clientId } from '../lib/storage';
 
 type Step = 'intro' | 'heard' | 'volume' | 'push' | 'ios' | 'inapp' | 'blocked' | 'failed' | 'done';
 
+/**
+ * What this ticket can actually alert through (CSD01, FR-ALR-01/03/05):
+ * - `push`: the browser subscription was saved for this ticket's follower (background alerts work);
+ * - `live`: sound/vibration while the page stays open, no background push (unsupported, or no push configured);
+ * - `blocked`: the customer or browser refused notifications;
+ * - `failed`: setting up push failed operationally (config, worker, subscribe or saving it) — offer a retry;
+ * - `none`: nothing changed (the customer skipped before any attempt).
+ */
+export type AlertDelivery = 'none' | 'live' | 'push' | 'blocked' | 'failed';
+
 export function ActivationSheet({
   token,
   chime,
   fromHomeScreen,
+  ensureFollowed,
   onClose,
 }: {
   token: string;
   /** The venue's chime, so the test sound is the one the alert will use (W11). */
   chime?: ChimeSource;
   fromHomeScreen: boolean;
-  onClose: (alertsOn: boolean) => void;
+  /**
+   * Resolves true once this phone follows the ticket. Saving a push subscription needs the follower row, so the
+   * sheet waits for it instead of racing the page's own registration (CSD01).
+   */
+  ensureFollowed?: () => Promise<boolean>;
+  /** Reports the delivery capability actually reached; never `push` unless the subscription was saved. */
+  onClose: (delivery: AlertDelivery) => void;
 }) {
   const { t } = useTranslation();
   const [step, setStep] = useState<Step>(fromHomeScreen ? 'push' : inAppBrowser() ? 'inapp' : 'intro');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // The capability the sheet has established so far; reported on every close.
+  const [delivery, setDelivery] = useState<AlertDelivery>('none');
 
   const recordEnabled = () => publicApi.post(`/tickets/${token}/alerts-enabled`, { clientId: clientId() }).catch(() => undefined);
 
@@ -45,34 +64,46 @@ export function ActivationSheet({
     if (notificationsBlocked()) return setStep('blocked');
     if (isIOS() && !isStandalone()) return setStep('ios');
     await recordEnabled();
+    setDelivery('live');
     setStep('done');
   };
 
   const allow = async () => {
     setBusy(true);
     await unlockAudio();
-    // A setup error (config, worker, subscribe or saving the subscription) is not "unsupported": the ticket has no
-    // background alerts, so say so and offer a retry instead of reporting success (CSD01).
-    const r = await enablePush(token).catch(() => 'failed' as const);
+    // A setup error (follow, config, worker, subscribe or saving the subscription) is not "unsupported": the ticket
+    // has no background alerts, so say so and offer a retry instead of reporting success (CSD01).
+    const followed = ensureFollowed ? await ensureFollowed().catch(() => false) : true;
+    const r = followed ? await enablePush(token).catch(() => 'failed' as const) : ('failed' as const);
     if (r === 'failed') {
       setBusy(false);
+      setDelivery('failed');
       return setStep('failed');
     }
     await recordEnabled();
     setBusy(false);
     if (r === 'granted') {
+      setDelivery('push');
       setStep('done');
-      setTimeout(() => onClose(true), 1500);
-    } else setStep(r === 'denied' ? 'blocked' : 'done');
+      setTimeout(() => onClose('push'), 1500);
+    } else if (r === 'denied') {
+      setDelivery('blocked');
+      setStep('blocked');
+    } else {
+      // No push in this browser (or none configured): alerts work only while the page is open.
+      setDelivery('live');
+      setStep('done');
+    }
   };
 
   const skip = async () => {
     await recordEnabled();
-    onClose(false);
+    // Skipping after a failed attempt keeps the failure visible on the page, with its retry.
+    onClose(delivery === 'failed' ? 'failed' : 'none');
   };
 
   return (
-    <Sheet onClose={() => onClose(step === 'done')} title={step === 'ios' ? t('ios.title') : step === 'inapp' ? t('inApp.title') : t('activation.title')}>
+    <Sheet onClose={() => onClose(delivery)} title={step === 'ios' ? t('ios.title') : step === 'inapp' ? t('inApp.title') : t('activation.title')}>
       <div className="flex flex-col gap-4 text-lg">
         {step === 'intro' && (
           <>
@@ -150,7 +181,7 @@ export function ActivationSheet({
         {step === 'blocked' && (
           <>
             <p>{t('activation.blocked')}</p>
-            <Button onClick={() => onClose(false)}>{t('common:close')}</Button>
+            <Button onClick={() => onClose(delivery)}>{t('common:close')}</Button>
           </>
         )}
         {step === 'failed' && (
@@ -169,7 +200,7 @@ export function ActivationSheet({
         {step === 'done' && (
           <>
             <p className="font-semibold text-ok">✓ {t('activation.done')}</p>
-            <Button onClick={() => onClose(true)}>{t('common:close')}</Button>
+            <Button onClick={() => onClose(delivery)}>{t('common:close')}</Button>
           </>
         )}
       </div>

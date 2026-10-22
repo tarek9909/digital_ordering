@@ -84,6 +84,8 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
   const now = useNow();
   const claimNow = useNow(5_000);
   const offline = useOffline();
+  const liveRefused = useStaff((s) => s.liveRefused);
+  const offlineText = liveRefused ? t('liveRefused') : t('common:offline');
   const live = useStaff((s) => s.live);
   const allClaims = useStaff((s) => s.claims);
   const memberAsking = useMember((s) => s.asking);
@@ -173,7 +175,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
     // Kitchen mode (FR-STF-11): Preparing cards with one Ready action; the Undo bar is the only other control.
     return (
       <div className="flex min-h-dvh flex-col bg-[#0b0d12]">
-        {offline && <OfflineBar text={t('common:offline')} />}
+        {offline && <OfflineBar text={offlineText} />}
         {status === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
         <KitchenBoard
           venueName={board.venue.name}
@@ -190,7 +192,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
 
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
-      {offline && <OfflineBar text={t('common:offline')} />}
+      {offline && <OfflineBar text={offlineText} />}
       {status === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
       <TopBar
         venueName={board.venue.name}

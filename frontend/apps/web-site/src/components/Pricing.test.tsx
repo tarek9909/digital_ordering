@@ -88,7 +88,12 @@ it('renders one card per plan with price, limits, translated features and the tr
 });
 
 it('shows an error with a retry', async () => {
-  get.mockRejectedValueOnce(new ApiError(503, 'SERVICE_UNAVAILABLE', null)).mockResolvedValueOnce(catalogue);
+  let calls = 0;
+  get.mockImplementation(async (path: string) => {
+    if (path === '/site') return { contact: { email: null, whatsapp: null, whatsappUrl: null } };
+    if (calls++ === 0) throw new ApiError(503, 'SERVICE_UNAVAILABLE', null);
+    return catalogue;
+  });
   renderPricing();
   fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
   await screen.findByRole('heading', { name: 'Pro' });

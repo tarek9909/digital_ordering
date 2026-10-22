@@ -2,7 +2,7 @@ import { formatDateTime } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
 import { Card, Spinner } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { FormError } from '../components/FormCard';
 import { isLegalKind, publicApi, type LegalDocument } from '../lib/api';
 import { errorText, isApiError } from '../lib/errors';
@@ -22,14 +22,22 @@ const LEGAL_TYPOGRAPHY = [
   '[&_hr]:my-6 [&_hr]:border-line',
 ].join(' ');
 
-/** `/legal/{terms|privacy|dpa}` from GET /api/public/v1/legal/{kind}?locale= (TRD §16.7). */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * `/legal/{terms|privacy|dpa}` from GET /api/public/v1/legal/{kind}?locale= (TRD §16.7). With `?document=<id>` it
+ * shows that exact published version, as linked from the admin acceptance gate (AS04), whatever the site language.
+ */
 export function LegalPage() {
   const { t, i18n } = useTranslation();
   const { kind } = useParams();
+  const [params] = useSearchParams();
+  const raw = params.get('document');
+  const document = raw && UUID.test(raw) ? raw : undefined;
   const locale = i18n.language === 'en' ? 'en' : 'ar';
   const q = useQuery({
-    queryKey: ['legal', kind, locale],
-    queryFn: async () => ({ doc: await publicApi.get<LegalDocument>(`/legal/${kind ?? ''}`, { locale }) }),
+    queryKey: ['legal', kind, locale, document ?? null],
+    queryFn: async () => ({ doc: await publicApi.get<LegalDocument>(`/legal/${kind ?? ''}`, document ? { locale, document } : { locale }) }),
     enabled: isLegalKind(kind),
     retry: (n, e) => !isApiError(e, 'NOT_FOUND') && n < 2,
   });

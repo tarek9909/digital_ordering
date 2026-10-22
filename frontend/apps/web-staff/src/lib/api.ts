@@ -1,4 +1,4 @@
-import { ApiError, createApi } from '@dop/client-sdk';
+import { ApiError, createApi, withQuery } from '@dop/client-sdk';
 import type { TFunction } from 'i18next';
 import { currentMember, markNamedStaff, clearMember, requestPin, touchCurrentMember, useMember } from './member';
 import { beforeWrite, isPinRequired, MEMBER_HEADER, PIN_REQUIRED_DETAIL } from './memberSession';
@@ -22,7 +22,7 @@ function readVenueId(): string | null {
 export const venueId = typeof window === 'undefined' ? null : readVenueId();
 
 /** Adds `venueId` to a path when the board was opened by an owner or manager. */
-export const vq = (path: string) => (venueId ? `${path}${path.includes('?') ? '&' : '?'}venueId=${encodeURIComponent(venueId)}` : path);
+export const vq = (path: string) => (venueId ? withQuery(path, { venueId }) : path);
 
 const raw = createApi({
   base: '/api/staff/v1',

@@ -1,11 +1,11 @@
 import { useTranslation } from '@dop/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { QueryView, Section, Stat, StatusPill } from '../components/common';
+import { QueryView, Section, Stat, StatusPill, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration, pct } from '../lib/format';
 import { useCurrentVenueId } from '../lib/venue';
-import type { Onboarding, OnboardingKey, TodayReport } from '../lib/types';
+import type { Onboarding, OnboardingKey, TodayReport, WaitingTicket } from '../lib/types';
 
 const STEP_LINKS: Record<OnboardingKey, string> = {
   verify_email: '/account',
@@ -81,7 +81,36 @@ export function TodayStats({ r }: { r: TodayReport }) {
         <Stat label={t('today.ackPct')} value={pct(r.acknowledgedPct)} />
       </div>
       <p className="mt-3 text-sm text-muted">{t('reports.wordingNote')}</p>
+      <LongestWaiting items={r.longestWaiting ?? []} />
     </>
+  );
+}
+
+/** Open tickets waiting longest, oldest first (FR-RPT-01). Waiting time counts from ticket creation. */
+export function LongestWaiting({ items }: { items: WaitingTicket[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-4">
+      <h3 className="mb-2 font-bold">{t('today.longestTitle')}</h3>
+      {items.length === 0 ? (
+        <p className="text-muted">{t('today.longestEmpty')}</p>
+      ) : (
+        <Table caption={t('today.longestTitle')} head={[t('today.longestNumber'), t('today.longestStatus'), t('today.longestWaiting')]}>
+          {items.map((w) => (
+            <tr key={w.id}>
+              <Td>
+                <span dir="ltr" className="num font-semibold">
+                  {w.displayNumber}
+                </span>
+              </Td>
+              <Td>{t(`common:status.${w.status}`, { defaultValue: w.status })}</Td>
+              <Td className="num">{formatDuration(w.waitingSeconds)}</Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+      <p className="mt-1 text-xs text-muted">{t('today.longestNote')}</p>
+    </div>
   );
 }
 

@@ -5,7 +5,7 @@ import { Banner, Button, LiveRegion, Spinner } from '@dop/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from '../lib/router';
-import { ActivationSheet } from '../components/ActivationSheet';
+import { ActivationSheet, type AlertDelivery } from '../components/ActivationSheet';
 import { RatingForm } from '../components/RatingForm';
 import { ReadyScreen } from '../components/ReadyScreen';
 import { VenueHeader, VenueFooter } from '../components/VenueChrome';
@@ -78,8 +78,8 @@ function TicketView({ token }: { token: string }) {
   const [alerting, setAlerting] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(fromHomeScreen);
-  const [alertsOn, setAlertsOn] = useState(false);
-  const [pushLinkFailed, setPushLinkFailed] = useState(false);
+  // What this ticket can alert through (CSD01): only `push` after the subscription was saved for this ticket.
+  const [delivery, setDelivery] = useState<AlertDelivery>('none');
   const [followFailed, setFollowFailed] = useState(false);
   const [windowOver, setWindowOver] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -129,46 +129,60 @@ function TicketView({ token }: { token: string }) {
   }, []);
 
   // ---- Follow registration (TR-FE-12) with retry; push subscription linked per ticket (TRD §11.2 step 4).
-  const follow = useRef<{ state: 'idle' | 'pending' | 'ok' | 'failed'; attempts: number; timer?: ReturnType<typeof setTimeout> }>({ state: 'idle', attempts: 0 });
-  const register = useCallback(async () => {
+  const follow = useRef<{
+    state: 'idle' | 'pending' | 'ok' | 'failed';
+    attempts: number;
+    timer?: ReturnType<typeof setTimeout>;
+    inflight?: Promise<boolean>;
+  }>({ state: 'idle', attempts: 0 });
+  /** Registers this phone as a follower; resolves true once it is registered (shared by concurrent callers). */
+  const register = useCallback((): Promise<boolean> => {
     const f = follow.current;
     const tk = ticketRef.current;
-    if (!tk || !OPEN.has(tk.status) || f.state === 'pending' || f.state === 'ok') return;
+    if (f.state === 'ok') return Promise.resolve(true);
+    if (f.state === 'pending' && f.inflight) return f.inflight;
+    if (!tk || !OPEN.has(tk.status)) return Promise.resolve(false);
     clearTimeout(f.timer);
     f.state = 'pending';
-    try {
-      await publicApi.post(`/tickets/${token}/follow`, {
-        clientId: clientId(),
-        joinedVia: fromHomeScreen ? 'home_screen' : 'ticket_qr',
-        uaFamily: uaFamily(),
-        locale: i18next.language,
-      });
-    } catch (e) {
-      f.state = 'failed';
-      f.attempts += 1;
-      if (!alive.current) return;
-      setFollowFailed(true);
-      if (isRetriable(e)) {
-        const delay = Math.min(FOLLOW_RETRY_MAX_MS, FOLLOW_RETRY_BASE_MS * 2 ** (f.attempts - 1));
-        f.timer = setTimeout(() => void register(), delay);
+    const run = async (): Promise<boolean> => {
+      try {
+        await publicApi.post(`/tickets/${token}/follow`, {
+          clientId: clientId(),
+          joinedVia: fromHomeScreen ? 'home_screen' : 'ticket_qr',
+          uaFamily: uaFamily(),
+          locale: i18next.language,
+        });
+      } catch (e) {
+        f.state = 'failed';
+        f.attempts += 1;
+        if (!alive.current) return false;
+        setFollowFailed(true);
+        if (isRetriable(e)) {
+          const delay = Math.min(FOLLOW_RETRY_MAX_MS, FOLLOW_RETRY_BASE_MS * 2 ** (f.attempts - 1));
+          f.timer = setTimeout(() => void register(), delay);
+        }
+        return false;
       }
-      return;
-    }
-    f.state = 'ok';
-    f.attempts = 0;
-    if (!alive.current) return;
-    setFollowFailed(false);
-    // A subscription from an earlier ticket must be linked to this ticket's follower before "Alerts are on".
-    try {
-      const r = await linkExistingSubscription(token);
-      if (!alive.current) return;
-      setPushLinkFailed(false);
-      if (r === 'linked') setAlertsOn(true);
-    } catch {
-      if (!alive.current) return;
-      setAlertsOn(false);
-      setPushLinkFailed(true);
-    }
+      f.state = 'ok';
+      f.attempts = 0;
+      if (!alive.current) return true;
+      setFollowFailed(false);
+      // A subscription from an earlier ticket must be linked to this ticket's follower before "Alerts are on".
+      try {
+        const r = await linkExistingSubscription(token);
+        if (!alive.current) return true;
+        if (r === 'linked') setDelivery('push');
+      } catch {
+        if (!alive.current) return true;
+        // Do not undo a subscription the activation sheet saved meanwhile.
+        setDelivery((d) => (d === 'push' ? d : 'failed'));
+      }
+      return true;
+    };
+    f.inflight = run().finally(() => {
+      f.inflight = undefined;
+    });
+    return f.inflight;
   }, [token, fromHomeScreen]);
 
   useEffect(() => () => clearTimeout(follow.current.timer), []);
@@ -428,7 +442,7 @@ function TicketView({ token }: { token: string }) {
           onComing={acknowledge}
         />
       ) : (
-        <TicketBody ticket={ticket} wait={wait} alertsOn={alertsOn} pushLinkFailed={pushLinkFailed} onTurnOn={() => setSheetOpen(true)} />
+        <TicketBody ticket={ticket} wait={wait} delivery={delivery} onTurnOn={() => setSheetOpen(true)} />
       )}
 
       <VenueFooter venue={ticket.venue} />
@@ -437,12 +451,11 @@ function TicketView({ token }: { token: string }) {
           token={token}
           chime={ticket.venue}
           fromHomeScreen={fromHomeScreen}
-          onClose={(on) => {
+          ensureFollowed={register}
+          onClose={(d) => {
             setSheetOpen(false);
-            if (on) {
-              setAlertsOn(true);
-              setPushLinkFailed(false);
-            }
+            // A background subscription already linked stays; otherwise show what the sheet actually reached.
+            if (d !== 'none') setDelivery((cur) => (cur === 'push' && d !== 'push' ? cur : d));
           }}
         />
       )}
@@ -453,18 +466,17 @@ function TicketView({ token }: { token: string }) {
 function TicketBody({
   ticket,
   wait,
-  alertsOn,
-  pushLinkFailed,
+  delivery,
   onTurnOn,
 }: {
   ticket: PublicTicket;
   wait: WaitView | null;
-  alertsOn: boolean;
-  pushLinkFailed: boolean;
+  delivery: AlertDelivery;
   onTurnOn: () => void;
 }) {
   const { t } = useTranslation();
   const open = OPEN.has(ticket.status);
+  const alertsOn = delivery === 'push' || delivery === 'live';
   const msgs = { ...(ticket.venue.messages[ticket.venue.locales[0] ?? 'ar'] ?? {}), ...(ticket.venue.messages[i18next.language] ?? {}) };
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center gap-5 px-4 py-6 text-center">
@@ -512,17 +524,18 @@ function TicketBody({
             <p className="inline-flex items-center gap-2 rounded-full bg-ok-bg px-4 py-2 font-semibold text-ok">✓ {t('alertsOn')}</p>
           ) : (
             <>
-              {pushLinkFailed && (
+              {delivery === 'failed' && (
                 <p role="alert" className="text-danger">
                   {t('alertsLinkFailed')}
                 </p>
               )}
+              {delivery === 'blocked' && <p className="text-ink-2">{t('alertsBlocked')}</p>}
               <Button size="lg" variant="brand" className="w-full" onClick={onTurnOn}>
                 🔔 {t('turnOnAlerts')}
               </Button>
             </>
           )}
-          <p className="text-muted">{alertsOn ? t('keepOpenLive') : t('keepOpen')}</p>
+          <p className="text-muted">{delivery === 'push' ? t('alertsPushOn') : delivery === 'live' ? t('keepOpenLive') : t('keepOpen')}</p>
           {msgs.welcome && <p>{msgs.welcome}</p>}
         </>
       )}

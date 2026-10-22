@@ -1,7 +1,7 @@
 import { useTranslation } from '@dop/i18n';
 import { Button, Field, LiveRegion, Select } from '@dop/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ErrorNote, QueryView, Section, Table, Td } from '../components/common';
@@ -38,7 +38,9 @@ function Row({ label, s }: { label: string; s: PilotSummary }) {
       <Td className="num">{pct(s.reachPushOrLivePct)}</Td>
       <Td className="num">{pct(s.acknowledgedPct)}</Td>
       <Td className="num">{formatDuration(s.prepSecondsP50)}</Td>
+      <Td className="num">{formatDuration(s.prepSecondsP90)}</Td>
       <Td className="num">{formatDuration(s.pickupSecondsP50)}</Td>
+      <Td className="num">{formatDuration(s.pickupSecondsP90)}</Td>
       <Td className="num">{s.uncollected}</Td>
     </tr>
   );
@@ -68,7 +70,7 @@ function ReachChart({ r }: { r: PilotReport }) {
 function Daily({ f }: { f: ReportFilter }) {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ['pilot', f.venueId, f.from, f.to], queryFn: () => api.get<PilotReport>('/reports/pilot', { from: f.from, to: f.to, venueId: f.venueId === ALL_VENUES ? undefined : f.venueId }) });
-  const head = [t('reports.day'), t('reports.tickets'), ...REACH.map((k) => t(`common:alertLevel.${k}`)), t('today.reachPct'), t('today.ackPct'), t('reports.prep'), t('reports.pickup'), t('reports.uncollected')];
+  const head = [t('reports.day'), t('reports.tickets'), ...REACH.map((k) => t(`common:alertLevel.${k}`)), t('today.reachPct'), t('today.ackPct'), t('reports.prep'), t('reports.prepP90'), t('reports.pickup'), t('reports.pickupP90'), t('reports.uncollected')];
   return (
     <QueryView q={q}>
       {(r) =>
@@ -125,6 +127,8 @@ function Trends({ f }: { f: ReportFilter }) {
     { key: 'undoPct', label: t('trends.undo'), format: pct, unit: 'pct', lowerIsBetter: true },
     { key: 'prepSecondsP50', label: t('trends.prep'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
     { key: 'pickupSecondsP50', label: t('today.pickup'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
+    { key: 'totalSecondsP50', label: t('trends.totalWait'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
+    { key: 'cancelled', label: t('trends.cancelled'), format: (v) => (v === null ? '—' : String(v)), unit: 'count', lowerIsBetter: true },
     { key: 'ratingAvg', label: t('trends.rating'), format: (v) => (v === null ? '—' : `${v} / 5`), unit: 'stars' },
   ];
   return (
@@ -152,6 +156,7 @@ function Trends({ f }: { f: ReportFilter }) {
               {t('reports.prepNote')} {t('reports.wordingNote')}
             </p>
           </Section>
+          <CancelReasons current={r.current} previous={r.previous} />
           <Section title={t('trends.seriesTitle')}>
             {r.series.length === 0 ? (
               <p className="text-muted">{t('reports.empty')}</p>
@@ -170,7 +175,7 @@ function Trends({ f }: { f: ReportFilter }) {
                 </div>
                 <details className="mt-3">
                   <summary className="inline-flex min-h-12 cursor-pointer items-center font-medium">{t('trends.showTable')}</summary>
-                  <Table caption={t('trends.seriesTitle')} head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.rating')]}>
+                  <Table caption={t('trends.seriesTitle')} head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.totalWait'), t('trends.cancelled'), t('trends.rating')]}>
                     {r.series.map((s) => (
                       <tr key={s.date}>
                         <Td className="whitespace-nowrap">{s.date}</Td>
@@ -179,6 +184,8 @@ function Trends({ f }: { f: ReportFilter }) {
                         <Td className="num">{pct(s.acknowledgedPct)}</Td>
                         <Td className="num">{formatDuration(s.prepSecondsP50)}</Td>
                         <Td className="num">{formatDuration(s.pickupSecondsP50)}</Td>
+                        <Td className="num">{formatDuration(s.totalSecondsP50)}</Td>
+                        <Td className="num">{s.cancelled}</Td>
                         <Td className="num">{s.ratingAvg ?? '—'}</Td>
                       </tr>
                     ))}
@@ -190,6 +197,29 @@ function Trends({ f }: { f: ReportFilter }) {
         </>
       )}
     </QueryView>
+  );
+}
+
+/** Cancellations by reason for the range and the previous period (BRD §12.1, FR-RPT-02). */
+function CancelReasons({ current, previous }: { current: TrendSummary; previous: TrendSummary }) {
+  const { t } = useTranslation();
+  const reasons = [...new Set([...Object.keys(current.cancelReasons ?? {}), ...Object.keys(previous.cancelReasons ?? {})])];
+  return (
+    <Section title={t('trends.cancelReasonsTitle')} description={t('trends.cancelReasonsHint', { n: current.cancelled })}>
+      {current.cancelled === 0 && previous.cancelled === 0 ? (
+        <p className="text-muted">{t('trends.noCancellations')}</p>
+      ) : (
+        <Table caption={t('trends.cancelReasonsTitle')} head={[t('trends.reason'), t('trends.thisPeriod'), t('trends.previousPeriod')]}>
+          {reasons.map((k) => (
+            <tr key={k}>
+              <Td>{t(`trends.reasons.${k}`, { defaultValue: k })}</Td>
+              <Td className="num">{current.cancelReasons?.[k] ?? 0}</Td>
+              <Td className="num">{previous.cancelReasons?.[k] ?? 0}</Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Section>
   );
 }
 
@@ -320,6 +350,14 @@ export function ReportsPage() {
   const initial = (): ReportFilter => ({ venueId: current ?? ALL_VENUES, counterId: '', from: isoDate(new Date(Date.now() - 13 * 86_400_000)), to: isoDate(new Date()) });
   const [draft, setDraft] = useState<ReportFilter>(initial);
   const [filter, setFilter] = useState<ReportFilter>(initial);
+  // On a cold load the venue is still unknown, so both filters start at "all venues". Once it resolves, an
+  // untouched venue choice follows it (so the sole venue's counters can be chosen); a deliberate choice stays (AS07).
+  const venueTouched = useRef(false);
+  useEffect(() => {
+    if (!current || venueTouched.current) return;
+    setDraft((d) => (d.venueId === ALL_VENUES ? { ...d, venueId: current, counterId: '' } : d));
+    setFilter((f) => (f.venueId === ALL_VENUES ? { ...f, venueId: current, counterId: '' } : f));
+  }, [current]);
   const counters = useCounters(draft.venueId).data ?? [];
   const venueOptions = [...(venues.length > 1 ? [{ value: ALL_VENUES, label: t('reports.allVenues') }] : []), ...venues.map((v) => ({ value: v.id, label: v.name }))];
 
@@ -334,7 +372,17 @@ export function ReportsPage() {
             if (draft.from && draft.to && draft.from <= draft.to) setFilter(draft);
           }}
         >
-          {venueOptions.length > 1 && <Select label={t('reports.venue')} value={draft.venueId} options={venueOptions} onChange={(e) => setDraft((d) => ({ ...d, venueId: e.target.value, counterId: '' }))} />}
+          {venueOptions.length > 1 && (
+            <Select
+              label={t('reports.venue')}
+              value={draft.venueId}
+              options={venueOptions}
+              onChange={(e) => {
+                venueTouched.current = true;
+                setDraft((d) => ({ ...d, venueId: e.target.value, counterId: '' }));
+              }}
+            />
+          )}
           {draft.venueId !== ALL_VENUES && counters.length > 0 && (
             <Select
               label={t('reports.counter')}

@@ -1,4 +1,4 @@
-import { connectSocket, SeqTracker, setCsrfToken, type DopSocket } from '@dop/client-sdk';
+import { connectSocket, createReconnector, SeqTracker, setCsrfToken, type DopSocket, type Revalidation } from '@dop/client-sdk';
 import type { StaffTicket } from '@dop/contracts';
 import { i18next } from '@dop/i18n';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
@@ -66,22 +66,27 @@ export function useBoardSocket(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     const st = useStaff.getState;
-    let reloading = false;
+    let reloading: Promise<Revalidation> | null = null;
     let queued: Array<() => void> = [];
 
-    const reload = async () => {
-      if (reloading) return;
-      reloading = true;
-      try {
-        await qc.fetchQuery({ queryKey: BOARD_KEY, queryFn: fetchBoard, staleTime: 0, retry: false });
-        const run = queued;
-        queued = [];
-        run.forEach((f) => f());
-      } catch {
-        st().markStale();
-      } finally {
-        reloading = false;
-      }
+    /** Reloads the snapshot (one at a time) and says whether the session is still valid over HTTP. */
+    const reload = (): Promise<Revalidation> => {
+      if (reloading) return reloading;
+      reloading = (async (): Promise<Revalidation> => {
+        try {
+          await qc.fetchQuery({ queryKey: BOARD_KEY, queryFn: fetchBoard, staleTime: 0, retry: false });
+          const run = queued;
+          queued = [];
+          run.forEach((f) => f());
+          return 'ok';
+        } catch (e) {
+          st().markStale();
+          return isApiError(e, 'UNAUTHENTICATED') ? 'signed-out' : 'unavailable';
+        } finally {
+          reloading = null;
+        }
+      })();
+      return reloading;
     };
     const whenFresh = (f: () => void) => (reloading ? queued.push(f) : f());
 
@@ -96,14 +101,26 @@ export function useBoardSocket(enabled: boolean) {
       if (b?.businessDate && businessDateOf(t, b.venue) > b.businessDate) void reload();
     };
 
+    // A handshake the server refused leaves the socket inactive; retry it with back-off after revalidating over
+    // HTTP, but stop on a signed-out session or repeated refusals (CSD06).
+    const rc = createReconnector({
+      connect: () => socket.connect(),
+      revalidate: reload,
+      onGiveUp: (why) => (why === 'signed-out' ? st().setSignedOut(true) : st().setLiveRefused(true)),
+    });
     const socket: DopSocket = connectSocket(venueId ? { app: 'staff', venueId } : { app: 'staff' }, {
       // After a disconnect `needsReload` is already set, so actions stay disabled until the snapshot is back.
       onConnect: () => {
+        rc.connected();
+        st().setLiveRefused(false);
         st().setSocketUp(true);
         void reload();
       },
       onDisconnect: () => st().setSocketUp(false),
-      onError: () => st().setSocketUp(false),
+      onError: (e) => {
+        st().setSocketUp(false);
+        rc.refused(e, socket.active);
+      },
     });
 
     // POS tickets: chime (after the one-time "Enable sound" tap) and highlight the new card (FR-STF-16).
@@ -139,7 +156,10 @@ export function useBoardSocket(enabled: boolean) {
     });
 
     const goOffline = () => st().setSocketUp(false);
-    const goOnline = () => void reload();
+    const goOnline = () => {
+      void reload();
+      rc.kick();
+    };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
     // Keep trying to reload while offline but connected (a failed request marked the board stale).
@@ -149,6 +169,7 @@ export function useBoardSocket(enabled: boolean) {
     }, 5_000);
 
     return () => {
+      rc.stop();
       clearInterval(retry);
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('online', goOnline);

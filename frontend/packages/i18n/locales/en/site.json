@@ -117,6 +117,8 @@
     "setupFor": "Want Tanbeeh for {{name}}? Send us the restaurant name, your city and phone number. We set up your account and email you an invitation to sign in."
   },
   "signin": {
+    "google": "Continue with Google",
+    "googleNoAccount": "There is no Tanbeeh account for that Google address. Restaurants are set up by the Tanbeeh team: contact us, or sign in with the email you were invited with.",
     "linkTitle": "Connect your Google account",
     "linkIntro": "An account with this email already exists. Enter its password to sign in with Google from now on. If you did not create it, or forgot the password, reset it first.",
     "linkSubmit": "Connect and sign in",
