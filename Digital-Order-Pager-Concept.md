@@ -6,6 +6,8 @@ Oct 22, 2026 · @ZinGlow
 
 The product turns a customer's own phone into an order pager, using only a web browser. Staff create a ticket when an order is taken, the customer scans a QR code to open that ticket, and when staff tap **Ready** the phone alerts the customer and an in-venue screen shows and announces the number.
 
+It is run as a **multi-tenant platform**: each restaurant (or other business) that signs up is a separate **tenant** with its own data, settings, staff and subscription. The company running the platform manages all tenants through a **super admin console** (section 11).
+
 ### The problem
 
 - **Calling out names or numbers** fails in noisy venues, and customers crowd the counter so they don't miss it.
@@ -27,37 +29,58 @@ The product turns a customer's own phone into an order pager, using only a web b
 3. **Staff always know the truth.** The board shows which customers can actually be reached, so nobody is silently missed.
 4. **Ready and Collected are different facts.** The system tracks both.
 5. **Works with what the venue already owns.** Any phone, tablet, computer or TV with a browser.
+6. **Every restaurant is its own tenant.** No tenant can ever see or change another tenant's data; only the platform team works across tenants, and every such action is logged.
 
 ## 2. Users and interfaces
 
-Four web interfaces share one live set of ticket data, so a change made in one appears in all the others within about a second.
+Five web interfaces share one live set of data. Four of them work inside a single tenant (restaurant); the fifth, the super admin console, is used only by the platform team and works across all tenants. A ticket change made in one interface appears in the others within about a second.
 
 | Interface | Used by | Device | Main jobs |
 | --- | --- | --- | --- |
 | Customer ticket page | The customer | Their own phone | See number and status, turn on alerts, get the Ready alert, say "I'm coming" |
 | Staff board | Cashiers, kitchen, runners | Phone, tablet or PC at the counter or kitchen | Create tickets, move them through statuses, undo, cancel, see who has alerts |
-| Admin area | Owner or manager | Any browser | Branding, messages, staff access, numbering rules, reports, billing |
+| Tenant admin area | Restaurant owner or manager | Any browser | Branding, messages, staff access, numbering rules, reports, billing for their own restaurant |
 | Display screen | Customers in the venue | TV, monitor or tablet on a wall | Show preparing and ready numbers, speak ready numbers, show a QR code |
+| Super admin console | Platform team | Any browser | Manage all tenants, plans and prices, support, platform settings, platform health and revenue reports |
 
-A fifth, invisible interface is the **integration API**, used by cashier (POS) systems to create and update tickets automatically (section 11).
+A sixth, invisible interface is the **integration API**, used by cashier (POS) systems to create and update tickets automatically within one tenant (section 12).
 
 ### Roles
 
-- **Owner:** everything, including billing and deleting the venue. One per account, can be transferred.
-- **Manager:** everything except billing and account deletion.
+Platform level (the company running the service, across all tenants):
+
+- **Super admin:** full control of the platform: create, suspend and delete tenants, set plans and prices, change platform settings, manage other platform users. Two-factor sign-in is mandatory.
+- **Support agent:** reads tenant details and helps tenants; can enter a tenant's admin area only through approved, time-limited support access (section 11). Cannot change plans, prices or platform settings.
+- **Finance (read-only):** sees subscriptions, invoices and revenue reports; cannot change tenant data.
+
+Tenant level (inside one restaurant):
+
+- **Owner:** everything inside the tenant, including billing and deleting the tenant. One per tenant, can be transferred.
+- **Manager:** everything inside the tenant except billing and tenant deletion.
 - **Staff device:** uses the staff board only. In the first version this is a device signed in with the venue's staff link and PIN, not a named person.
-- **Customer:** anonymous, identified only by a random token held by their browser.
 
-## 3. Core model: venues, tickets, statuses
+Public:
 
-Everything revolves around one object, the **ticket**: one order, one number, one customer page, moving through a fixed set of statuses.
+- **Customer:** anonymous, identified only by a random token held by their browser. Belongs to no tenant; can hold tickets from several restaurants on one phone.
+
+## 3. Core model: tenants, venues, tickets, statuses
+
+Everything revolves around one object, the **ticket**: one order, one number, one customer page, moving through a fixed set of statuses. Every ticket belongs to exactly one tenant.
 
 ### Hierarchy
 
-- **Account** (the paying business) owns one or more **venues** (locations).
-- A **venue** has its own settings, numbering, staff link, QR codes, display screens and subscription.
+- The **platform** is the whole service, run by the platform team through the super admin console.
+- A **tenant** is one restaurant business (the paying customer of the platform). It has its own owner, managers, subscription, billing details and data. A tenant owns one or more **venues**.
+- A **venue** is one physical location of that tenant. It has its own settings, numbering, staff link, QR codes and display screens.
 - A venue can have several **counters** (e.g. "Drinks" and "Food"), each with an optional number prefix.
-- A **ticket** belongs to one venue and one counter.
+- A **ticket** belongs to one tenant, one venue and one counter.
+
+### Tenant identity and isolation
+
+- Each tenant gets a unique short name (slug), e.g. `burger-house`, used in its admin, staff and venue links (`burger-house.<platform-domain>`). A custom domain is a later option.
+- Every record (venue, ticket, event, device, setting, rating, API key) carries its tenant's ID. The system refuses any read or write where the tenant does not match.
+- Tenant users can only sign in to their own tenant. A person who works for two restaurants has two separate memberships.
+- Ticket links work without the tenant slug (the random token is enough), so a printed QR never breaks if a tenant renames its slug.
 
 ### Ticket statuses
 
@@ -272,7 +295,7 @@ The page sends a small heartbeat every 20 seconds, so the board knows within a m
 
 - Ready triggers alert #1 at once.
 - If not acknowledged or collected: repeat at +2 min and +5 min (venue-adjustable), then stop. Maximum 3 automatic alerts.
-- After the last repeat, the ticket turns amber on the board: "Not collected — call out".
+- 60 seconds after the last automatic alert, the ticket turns red on the board: "Not collected — call out".
 - Staff can tap **Alert again** at any time; manual alerts don't count toward the maximum.
 - All repeats stop immediately on Acknowledged, Collected, Cancelled, Expired or an undo of Ready.
 
@@ -361,13 +384,13 @@ The display is a full-screen web page opened on any TV, monitor or tablet, and i
 
 A number leaves the Ready list when collected, cancelled or expired. If Ready is undone, it moves back to Preparing on screen at once.
 
-## 10. Business setup and administration
+## 10. Restaurant (tenant) setup and administration
 
-A venue should go from sign-up to its first real ticket in under 10 minutes, guided by a setup checklist in the admin area.
+A restaurant should go from sign-up to its first real ticket in under 10 minutes, guided by a setup checklist in its tenant admin area. Everything in this section happens inside one tenant and affects only that tenant.
 
 ### Setup checklist
 
-- [ ] Create the account (email + password, or Google/Apple sign-in), confirm email.
+- [ ] Create the restaurant account (email + password, or Google/Apple sign-in), confirm email. This creates the tenant, makes the person its owner, and reserves its slug. Alternatively the platform team creates the tenant and emails the owner an invitation (section 11).
 - [ ] Start the free trial (14 days, no card needed) or pick a plan.
 - [ ] Enter venue name, address, time zone and language(s).
 - [ ] Upload logo, choose brand colour.
@@ -394,6 +417,8 @@ A venue should go from sign-up to its first real ticket in under 10 minutes, gui
 | Staff access | Staff link, PIN, connected devices list, revoke |
 | Integrations | API keys, webhooks, POS connectors |
 | Billing | Plan, payment method, invoices, cancel renewal |
+| Team | Invite managers, transfer ownership, remove members |
+| Support access | Approve or refuse a platform support request; see the log of support sessions |
 
 ### Staff access
 
@@ -401,17 +426,74 @@ The staff board is opened with a **staff link plus a 4-to-6-digit PIN**. The lin
 
 - Each device that signs in is listed in admin with its name ("Counter iPad"), last seen time, and a **Remove** button.
 - **Reset link** invalidates the old link and signs out every device at once (e.g. when an employee leaves).
-- Changing the PIN signs out all devices except the one making the change.
+- Changing the PIN (in the admin area) signs out all staff devices of that venue.
 - A device stays signed in for 30 days of use, then asks for the PIN again.
 - Later tier: named staff accounts with personal PINs, so the event log shows the person, not just the device.
 
-## 11. Integrations
+## 11. Platform administration (super admin) and tenants
+
+The platform team runs the whole service from a separate super admin console: it creates and manages tenants, sets plans and prices, supports restaurants, and watches platform health, without ever mixing one tenant's data with another's.
+
+### Super admin console
+
+The console lives on its own address (e.g. `admin.<platform-domain>`), separate from tenant admin areas. Only platform users can sign in, with mandatory two-factor sign-in.
+
+| Area | What the platform team can do |
+| --- | --- |
+| Tenants | List and search all tenants (name, slug, owner email, plan, status, venues, tickets this month, last activity); open a tenant's profile |
+| Tenant actions | Create a tenant and invite its owner; edit tenant details; extend a trial; change plan; suspend, reactivate, cancel or delete a tenant; transfer ownership when the owner has left |
+| Venues | See each tenant's venues, devices and displays; force sign-out of all staff devices of a venue (e.g. security incident) |
+| Plans and prices | Create and edit plans, prices, billing periods, discounts and coupons; set plan limits (venues, counters, languages, tickets/day on trial) |
+| Feature flags | Turn features on or off per plan or per tenant (e.g. give one pilot tenant POS connectors early) |
+| Platform settings | Default settings for new tenants, the chime library, supported languages, voice languages for announcements, Web Push keys, email templates, legal documents (terms, privacy policy, data processing agreement) with versions |
+| Support | Request support access to a tenant, see open support sessions, add internal notes to a tenant |
+| Announcements | Show a banner in all (or selected) tenant admin areas, e.g. planned maintenance |
+| Platform reports | Tenants by status and plan, new sign-ups, trial conversion, churn, monthly recurring revenue, tickets and alerts per day across the platform, alert reach by phone type, error rates |
+| Audit log | Every platform-user action, with who, when, which tenant, and before/after values |
+| Platform users | Invite platform users, give roles (super admin, support agent, finance), remove access |
+
+### Tenant lifecycle
+
+| Status | Meaning | Tenant can use the product? | How it changes |
+| --- | --- | --- | --- |
+| Trial | Signed up, 14-day free trial | Yes, within trial limits | To Active on first payment; to Expired trial after 14 days |
+| Active | Paying, in good standing | Yes | To Past due on failed payment; to Cancelled at end of paid period if renewal is cancelled |
+| Past due | Payment failed, retrying (7 days), then a grace period (7 days; to be confirmed) | Yes, with warning banner | To Active on payment; to Suspended (non-payment) when the grace period ends. Later failed retries do not extend it |
+| Suspended | Blocked for non-payment, or by a super admin (abuse, fraud, legal request) | No new tickets; staff can still finish open orders (Ready, Collected, Cancel); customer pages of open tickets keep working | Non-payment: to Active on payment, to Cancelled after 30 days. Super admin suspension: lifted only by a super admin, back to the previous status; paying does not lift it |
+| Expired trial / Cancelled | Not paying | Admin area only (billing, export, team), to subscribe again; data kept 90 days | To Active on subscribing; to Deleted after 90 days |
+| Deleted | Tenant removed, by owner request or after retention | No | Final; data erased within 30 days, backups roll off |
+
+Suspending a tenant always records a reason, and the owner gets an email with that reason.
+
+### Support access to a tenant
+
+Platform users cannot open a tenant's admin area by default. To help a restaurant:
+
+1. A support agent sends a support-access request from the console, with a reason.
+2. The tenant owner (or a manager) approves it in their admin area, or the owner gives a one-time code over the phone.
+3. Access lasts a set time (default 2 hours), can be ended by either side, and shows a visible "Platform support is viewing this account" banner.
+4. Every action taken during support access is recorded in both the platform audit log and the tenant's own log.
+5. A super admin can open emergency access without approval only for a recorded reason (e.g. a security incident); the owner is notified at once.
+
+### Tenant onboarding paths
+
+- **Self sign-up** (default): a restaurant signs up on the website; a tenant is created in Trial.
+- **Created by the platform team**: for sales-led or chain customers. The super admin creates the tenant, chooses the plan and trial length, and the owner receives an invitation email to set a password.
+- Slugs are unique across the platform; reserved words (admin, api, www, support) cannot be used.
+
+### What the platform team cannot do
+
+- See customers' identities (there are none to see) or change ticket statuses in a live venue, except during approved support access.
+- Read a tenant's data for any purpose other than support, security, billing or legal duties.
+- Delete a tenant without the deletion being recorded and the owner being notified, except after the retention period ends.
+
+## 12. Integrations
 
 Cashier and kitchen systems connect through a small REST API (they call us) and webhooks (we call them), and the same ticket can be changed from either side.
 
 ### API (the POS calls the service)
 
-Authenticated with a per-venue API key, sent in a header over HTTPS. Keys can be created, named and revoked in admin.
+Authenticated with a per-venue API key, sent in a header over HTTPS. Keys can be created, named and revoked in the tenant admin area. A key belongs to one tenant and one venue, so a POS can never read or change another restaurant's tickets.
 
 | Request | Purpose | Key fields |
 | --- | --- | --- |
@@ -439,12 +521,13 @@ An API alone needs a developer on the venue's side, which small cafés don't hav
 
 Standalone use (section 4) is always available and is the default. Integration is an option, never a requirement.
 
-## 12. Technical architecture
+## 13. Technical architecture
 
 One central service holds all ticket data and pushes every change over live connections to the open pages, while a separate notification worker sends Web Push for phones whose page is closed.
 
 ```mermaid
 flowchart LR
+    SA["Super admin console<br/>platform team, all tenants"]
     Staff["Staff board<br/>phone, tablet, PC"]
     POS["POS system<br/>optional: API, webhooks"]
     subgraph Central["Central service"]
@@ -457,6 +540,7 @@ flowchart LR
     Phone["Customer phone<br/>ticket page"]
     Push["Push services<br/>Google, Apple, Mozilla"]
 
+    SA -->|tenants, plans, support| API
     Staff <-->|taps| API
     POS --> API
     Workers -->|webhooks| POS
@@ -473,16 +557,27 @@ The real-time hub updates every open page (displays, customer pages, and staff b
 
 ### Components
 
-| Component | Job | Suggested technology (one sound option) |
+| Component | Job | Technology (full detail in the Technical Requirements Document) |
 | --- | --- | --- |
-| Web front-ends | Customer page, staff board, display, admin | One TypeScript web app (e.g. React or Svelte), installable as a PWA with a service worker for push and Home Screen |
-| API service | All reads and writes, rules, auth | Node.js or Go, stateless, behind a load balancer |
-| Real-time hub | Sends status changes to open pages within \~1 s | WebSockets, with Server-Sent Events as a fallback; Redis pub/sub between servers |
-| Database | Venues, tickets, events, settings, devices | PostgreSQL |
-| Job queue + workers | Push sending, repeat alerts, webhooks, daily reset and expiry | Redis-based or managed queue |
+| Web front-ends | Customer page, staff board, display, tenant admin, super admin console | React + Vite (TypeScript), one Vite app per audience; the customer app is a PWA with a service worker for push and Home Screen |
+| API service | All reads and writes, rules, auth | Node.js + Express.js (TypeScript), stateless, behind a load balancer |
+| Real-time hub | Sends status changes to open pages within \~1 s | Socket.IO (WebSocket with long-polling fallback), Redis adapter between servers |
+| Database | Venues, tickets, events, settings, devices | MySQL 8.4 |
+| Job queue + workers | Push sending, repeat alerts, webhooks, daily reset and expiry | BullMQ on Redis |
 | Push gateway | Delivers notifications to phones | Standard Web Push (VAPID) to Google, Apple and Mozilla push services; no paid SMS |
-| Billing | Subscriptions, invoices, taxes | Stripe Billing or Paddle |
-| Hosting | Run everything, region near customers | A managed cloud in-region (e.g. EU for European venues) |
+| Billing | Subscriptions, invoices, taxes | Stripe Billing + Stripe Tax |
+| Hosting | Run everything, region near customers | AWS `me-central-1` (UAE), nearest to the Saudi launch market |
+
+### Multi-tenancy
+
+- **One shared system, separated by tenant.** All tenants run on the same servers and database; every table carries a `tenant_id`.
+- **Isolation enforced in several layers**, because MySQL has no built-in row-level security: a tenant-scoped data layer adds the tenant to every query automatically, database keys include the tenant so a record can never point to another restaurant's record, and automated tests try to cross tenants on every release. A bug in one screen cannot leak another restaurant's data unless all layers fail at once.
+- **Tenant resolved on every request** from the signed-in user, the staff device session, the API key, or the ticket token. It is never taken from something the browser can freely change.
+- **Real-time channels** are named per tenant and venue, so a display only ever hears its own venue's updates.
+- **Fair use per tenant:** rate limits and job-queue quotas per tenant, so one very busy restaurant cannot slow down others.
+- **Platform users** connect through a separate, audited path that can cross tenants; tenant users never can.
+- **Tenant data export and deletion** run per tenant (owner request, GDPR request, or end of retention).
+- A separate database per tenant is not used: it costs more to run and is only worth it for very large chains with special contracts (a possible later option).
 
 ### How a Ready tap travels
 
@@ -509,7 +604,7 @@ Target: under 1 second from tap to open-page update; push delivery depends on Go
 - **SMS:** reliable but needs phone numbers and costs per message. Could be a paid add-on later.
 - **Bluetooth or Wi-Fi presence:** too dependent on phone settings and venue hardware.
 
-## 13. Security, privacy and abuse prevention
+## 14. Security, privacy and abuse prevention
 
 The service collects almost no personal data from customers, but it still holds device identifiers, push addresses and business data, so it needs proper security and a clear privacy policy.
 
@@ -525,6 +620,8 @@ The service collects almost no personal data from customers, but it still holds 
 | API key leaked | Keys are scoped per venue, revocable, shown once on creation |
 | Forged webhooks | HMAC signature on every call |
 | Account takeover of the owner | Optional two-factor sign-in, required for accounts with several venues |
+| One restaurant sees another's data | `tenant_id` on every record, tenant-scoped data layer, tenant included in database keys, tenant taken only from the authenticated session, automated cross-tenant access tests on every release |
+| Misuse of platform access | Two-factor sign-in mandatory for platform users, least-privilege roles, support access only with tenant approval and time limit, full audit log visible to the tenant |
 | Data in transit | HTTPS everywhere, HSTS |
 | Data at rest | Encrypted database and backups |
 
@@ -542,7 +639,7 @@ No name, phone number, email or payment data, and no advertising trackers on the
 Rules:
 
 - **Retention:** push subscriptions deleted when the ticket closes; ticket records anonymised after 90 days (kept only as counts for reports).
-- **Legal role:** the business is the data controller for its customers; the service is the processor, with a data processing agreement in the terms.
+- **Legal role:** each tenant (restaurant) is the data controller for its own customers; the platform is the processor, with a data processing agreement accepted by each tenant at sign-up.
 - **Compliance:** GDPR (EU/UK) and the equivalent law in each launch country; a privacy notice linked from every customer page.
 - **Consent:** the local-storage token and push subscription are strictly necessary for the service the customer asked for, so no cookie banner is needed on the customer page. This should be confirmed by a lawyer for each market.
 - **Comments:** free-text ratings may contain personal data; the business can delete them, and they are deleted automatically with the ticket after 90 days.
@@ -553,7 +650,7 @@ Rules:
 - Uploaded logos are re-encoded server-side and size-limited.
 - Accounts on trial are limited (e.g. 200 tickets/day) to stop the free tier from being used for spam push notifications.
 
-## 14. Exceptions and edge cases
+## 15. Exceptions and edge cases
 
 Every exception has a defined behaviour, and in every case the display screen and calling the number out remain the last-resort fallback.
 
@@ -580,9 +677,13 @@ Every exception has a defined behaviour, and in every case the display screen an
 | POS sends Ready for unknown invoice | API returns not found; logged for admin | — |
 | Daily reset while tickets are open | Open tickets keep their numbers; new numbering starts after them | — |
 | Venue changes time zone or reset time | Applies from the next reset | — |
-| Subscription lapses | 7-day grace period with warnings, then staff board read-only; customer pages of open tickets keep working | Renew in admin |
+| Subscription lapses | Retries and grace period with warnings, then tenant Suspended: no new tickets, open orders can still be finished; customer pages of open tickets keep working | Renew in admin |
+| Tenant suspended by a super admin | No new tickets; open tickets can still be collected; owner emailed with the reason | Contact platform support |
+| Tenant owner leaves the business | Owner transfers ownership; if unreachable, a super admin transfers it after identity checks | Ask platform support |
+| Tenant asks to delete its account | Tenant moves to Deleted; data erased within 30 days; export offered first | Download export before deletion |
+| Customer has tickets from two restaurants | Both appear on the same phone, each with its own restaurant's branding | — |
 
-## 15. Statistics, reports and feedback
+## 16. Statistics, reports and feedback
 
 Reports measure only events the system actually records, and each metric says exactly which two events it runs between.
 
@@ -609,6 +710,7 @@ Reports measure only events the system actually records, and each metric says ex
 - **Heatmap:** tickets by hour × weekday, to plan staffing.
 - Filters by counter and date range; CSV export.
 - Weekly email summary to the owner (can be turned off).
+- Tenant reports only ever include that tenant's own data. Platform-wide reports (all tenants) exist only in the super admin console (section 11).
 
 ### Customer feedback
 
@@ -616,20 +718,20 @@ Reports measure only events the system actually records, and each metric says ex
 - Comments appear in admin with ticket number and time, never the customer's identity (there is none).
 - The venue can add a link to its Google or TripAdvisor page, shown to every customer after rating. It is never shown only to happy customers: review sites such as Google forbid this "review gating".
 
-## 16. Subscription and commercial model
+## 17. Subscription and commercial model
 
-The business pays a flat subscription per venue and customers never pay; the subscription covers unlimited tickets, alerts, staff devices and display screens at that venue.
+Each tenant (restaurant) pays a flat subscription per venue and customers never pay; the subscription covers unlimited tickets, alerts, staff devices and display screens at that venue. Plans, prices and coupons are defined by the platform team in the super admin console.
 
 ### Plans
 
 | Plan | For | Includes |
 | --- | --- | --- |
-| Free trial | Any new venue | Everything, 14 days, no card, capped at 200 tickets/day |
-| Standard | One location | Unlimited tickets and alerts, unlimited staff devices and displays, reports, ratings, 2 customer languages |
-| Pro | Busier or integrated venues | Standard + API and webhooks, POS connectors, multiple counters, named staff accounts, extra languages, CSV export |
-| Multi-site | Chains | Pro for every venue, central admin across venues, combined reports, volume discount |
+| Free trial | Any new venue | Pro features available at the time (except the API), 14 days, no card, 1 venue, capped at 200 tickets/day |
+| Standard | One location (from MVP) | Unlimited tickets and alerts, unlimited staff devices and displays, reports; from version 1.1 also ratings, trends and a second customer language |
+| Pro | Busier or integrated venues (from version 1.1) | Standard + multiple counters, extra languages, no "Powered by" line; from version 2 also API and webhooks, POS connectors, named staff accounts, CSV export |
+| Multi-site | Chains (from version 2) | Pro for every venue, central admin across venues, combined reports, volume discount |
 
-Prices are not set yet. As a working assumption to test with customers: Standard about €25/month, Pro about €45/month, compared with physical pager kits that cost several hundred euros up front plus replacements.
+Launch prices per venue (BRD decisions log, OI-02): Standard SAR 99/month, Pro SAR 179/month, Multi-site 15% off per venue from the 3rd venue, plus VAT. Physical pager kits cost several thousand riyals up front plus replacements.
 
 ### Billing
 
@@ -637,14 +739,15 @@ Prices are not set yet. As a working assumption to test with customers: Standard
 - Card payments and invoices handled by a billing provider, with VAT/sales tax applied per country.
 - Renews automatically. Cancelling stops the next renewal; access continues to the end of the paid period.
 - Upgrades take effect at once (pro-rated); downgrades apply at the next renewal.
-- Failed payment: retry over 7 days with emails; then the grace rules in section 14.
+- Failed payment: retry over 7 days with emails; then the grace rules in section 15.
 - Refunds: none for partial periods, except where local consumer law requires (to be checked per market).
+- Super admins can extend trials, apply coupons, give free months, or mark a tenant as complimentary (e.g. pilot venues); each change is audited.
 
 ### What the customer never sees
 
 No ads, no upsell from the service itself, no service branding larger than a small "Powered by" line (removable on Pro).
 
-## 17. Other business types
+## 18. Other business types
 
 The same ticket engine fits other waiting situations, but they split into two models: **"your item is ready"** (food, repairs) and **"it's your turn"** (queues), and the second needs a few extra features.
 
@@ -659,22 +762,26 @@ The same ticket engine fits other waiting situations, but they split into two mo
 
 The first version targets **item-ready** venues only. "Your turn" features are a later module.
 
-## 18. MVP scope, roadmap and decisions
+## 19. MVP scope, roadmap and decisions
 
 The first version is a standalone, single-venue product built around ticket QR codes, live page alerts plus Web Push, a staff board and a display screen; everything else waits until real venues have used it.
 
 ### Phases
 
-1. **MVP (pilot with 5–10 venues):** staff-created tickets with ticket QR, customer page with all statuses, alert activation, Web Push + live page alerts, repeat alerts, "I'm coming", staff board with undo/cancel/reopen, alert-level icons, display with speech, daily reset and expiry, staff link + PIN, setup checklist and QR poster kit, basic Today report, Standard plan billing.
+1. **MVP (pilot with 5–10 venues):** multi-tenant foundation (tenant on every record, tenant-scoped data layer, cross-tenant tests, tenant slugs), super admin console basics (tenant list and profile, create/suspend/reactivate tenant, extend trial, mark complimentary, audit log, platform users with two-factor sign-in), staff-created tickets with ticket QR, customer page with all statuses, alert activation, Web Push + live page alerts, repeat alerts, "I'm coming", staff board with undo/cancel/reopen, alert-level icons, display with speech, daily reset and expiry, staff link + PIN, setup checklist and QR poster kit, basic Today report and pilot metrics, tenant data export and deletion, Standard plan billing.
    - Exit criteria: over 70% of tickets reach Push or Live page; median pickup time under 2 minutes; pilot venues willing to pay.
-2. **Version 1.1:** venue QR with claim codes, multiple counters and prefixes, trends and heatmap reports, ratings, check code at collection, second language.
-3. **Version 2:** API and webhooks, first POS connectors, Pro and Multi-site plans, named staff accounts, calculated wait estimates.
-4. **Later:** "your turn" queue module, optional SMS add-on, rotating display QR, white-label.
+2. **Version 1.1:** Pro plan, approved support access, plan and coupon management in the console, platform reports, venue QR with claim codes, multiple counters and prefixes, trends and heatmap reports, ratings, check code at collection, second language.
+3. **Version 2:** API and webhooks, first POS connectors, Multi-site plan, named staff accounts, calculated wait estimates.
+4. **Later:** custom domains per tenant, dedicated database for large chains, "your turn" queue module, optional SMS add-on, rotating display QR, white-label.
 
 ### Decision record
 
 | Question | Decision | Reason |
 | --- | --- | --- |
+| How is the platform organised? | Multi-tenant: each restaurant is a tenant; one platform run by the platform team | One product to run and update for every restaurant |
+| How are tenants kept apart? | Shared MySQL database, `tenant_id` on every record, tenant-scoped data layer, tenant in database keys, cross-tenant tests; no per-tenant databases for now | Low running cost; isolation in several independent layers |
+| Who runs the platform? | Super admin console with super admin, support agent and finance roles, two-factor sign-in, full audit log | Clear control, least privilege |
+| Can the platform team enter a tenant's account? | Only through approved, time-limited, audited support access; emergency access only with a recorded reason | Restaurants keep control of their data |
 | How is a ticket linked to the order? | Staff/POS create the ticket; customer scans that ticket's QR | Removes matching errors and fraud |
 | Rotating 30 s QR? | Not in MVP; optional on display later | Not needed with ticket QRs |
 | Numbering | Sequential per venue/counter, daily reset at 04:00 by default, active numbers skipped | Short, callable, no duplicates |
@@ -696,10 +803,14 @@ The first version is a standalone, single-venue product built around ticket QR c
 | Customer data | No personal data; tokens and push addresses deleted on close; records anonymised after 90 days | Privacy by design |
 | Target venues first | Item-ready venues (cafés, food courts, takeaways) | Core fit; queues later |
 
-### Still open
+### Decisions closed
 
-- [ ] Launch country and language(s), which decide the POS connectors and legal checks.
-- [ ] Final prices, after pilot interviews.
-- [ ] Product name and brand.
-- [ ] Legal review of the privacy position (no cookie banner) and refund rules per market.
-- [ ] Test on real phones: current iPhone and Android models, silent mode, battery saver, in-app browsers (Instagram, WhatsApp) that open QR links.
+All earlier open points are decided; the full reasoning is in the BRD decisions log (section 18).
+
+- **Launch market:** Saudi Arabia first, then other Gulf countries. Customer pages in Arabic (primary, right-to-left) and English.
+- **Product name:** "Tanbeeh" (Arabic for "alert"), domain `tanbeeh.app` — availability and trademark to be checked.
+- **Prices per venue:** Standard SAR 99/month, Pro SAR 179/month, Multi-site 15% off per venue from the 3rd venue; −10% quarterly, −20% yearly. Pilot venues free during the pilot, then 50% off for 6 months.
+- **Legal position:** no cookie banner, no partial refunds except where law requires, audit log kept 2 years, hosting in the AWS UAE region — all to be confirmed by Saudi counsel before the pilot.
+- **POS connectors:** Foodics first.
+- **Payment grace:** 7 days of retries plus 7 days of grace.
+- **Real-phone alert test:** the first task of the build (Phase 0), using the device list in the technical requirements document.
