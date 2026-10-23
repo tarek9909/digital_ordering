@@ -31,7 +31,7 @@ export function PlansPage() {
   const close = () => setDialog(null);
 
   return (
-    <PageShell title={t('plans.title')} actions={<Button onClick={() => setDialog({ kind: 'create' })}>{t('plans.create')}</Button>}>
+    <PageShell eyebrow={t('layout.groups.platform')} title={t('plans.title')} description={t('plans.description')} actions={<Button onClick={() => setDialog({ kind: 'create' })}>{t('plans.create')}</Button>}>
       <LiveRegion text={announce} />
       <ErrorNote error={q.error} />
       {q.isPending ? <Spinner label={t('common:loading')} /> : <div className="flex flex-col gap-6">{q.data?.items.map((p) => <PlanCard key={p.id} plan={p} onDialog={setDialog} />)}</div>}

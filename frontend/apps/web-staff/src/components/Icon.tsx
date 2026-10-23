@@ -18,6 +18,8 @@ const PATHS = {
   device: 'M4 5h16v11H4zM9 20h6M12 16v4',
   person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
   sound: 'M3 10v4h4l5 4V6L7 10H3zm13-1a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12',
+  backspace: 'M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7zm3 4l6 6m0-6l-6 6',
+  arrowBack: 'M15 6l-6 6 6 6',
 } as const;
 
 export type IconName = keyof typeof PATHS;

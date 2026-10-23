@@ -43,9 +43,9 @@ export const TILE_MIN_VMIN = 28;
 /**
  * Minimum tile width (vmin) so the longest display number fits inside its tile at `fontVmin` (CSD03). Digits are
  * 0.70em wide in the display font (tabular), letters (counter prefixes) up to about 1.1em; 3-digit numbers keep the
- * standard 28vmin tile.
+ * standard 28vmin tile. `minVmin` is the smallest tile (the quieter Preparing list uses a narrower one).
  */
-export function tileMinVmin(numbers: Iterable<string>, fontVmin = TILE_FONT_VMIN): number {
+export function tileMinVmin(numbers: Iterable<string>, fontVmin = TILE_FONT_VMIN, minVmin = TILE_MIN_VMIN): number {
   let widest = 0;
   for (const n of numbers) {
     let em = 0;
@@ -53,7 +53,7 @@ export function tileMinVmin(numbers: Iterable<string>, fontVmin = TILE_FONT_VMIN
     widest = Math.max(widest, em);
   }
   const needed = widest * fontVmin;
-  return needed <= TILE_MIN_VMIN ? TILE_MIN_VMIN : Math.ceil(needed + 1.5);
+  return needed <= minVmin ? minVmin : Math.ceil(needed + 1.5);
 }
 
 /** Seconds each page stays on screen. */

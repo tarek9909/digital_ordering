@@ -1,6 +1,6 @@
 import type { CancelReason, StaffTicket } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, LiveRegion, OfflineBar, Spinner, Toasts, useToasts } from '@dop/ui';
+import { Banner, BrandMark, Button, LiveRegion, OfflineBar, Spinner, Toasts, useToasts } from '@dop/ui';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Notice } from '../components/Notice';
 import { errorText, isApiError } from '../lib/api';
@@ -73,7 +73,10 @@ export function BoardPage({ kitchen = false }: { kitchen?: boolean }) {
       </Notice>
     );
   return (
-    <main className="flex min-h-dvh items-center justify-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-canvas text-muted">
+      <span data-motion="draw" className="contents">
+        <BrandMark className="size-14" />
+      </span>
       <Spinner label={t('common:loading')} />
     </main>
   );
@@ -112,6 +115,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
     () => countTickets({ open: board.open, recent, collectedToday: board.collectedToday }, showReceived),
     [board.open, recent, board.collectedToday, showReceived],
   );
+  const collected = useMemo(() => recent.filter((tk) => tk.status === 'collected'), [recent]);
   const claims = useMemo(() => liveClaims(allClaims, claimNow), [allClaims, claimNow]);
   const status = board.tenantStatus;
   const settings = board.venue.settings;
@@ -174,7 +178,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
   if (kitchen) {
     // Kitchen mode (FR-STF-11): Preparing cards with one Ready action; the Undo bar is the only other control.
     return (
-      <div className="flex min-h-dvh flex-col bg-[#0b0d12]">
+      <div className="flex min-h-dvh flex-col bg-ink">
         {offline && <OfflineBar text={offlineText} />}
         {status === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
         <KitchenBoard
@@ -193,13 +197,15 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       {offline && <OfflineBar text={offlineText} />}
-      {status === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
+      {status === 'suspended' && (
+        <div className="px-3 pt-3">
+          <Banner tone="warn">{t('suspended')}</Banner>
+        </div>
+      )}
       <TopBar
         venueName={board.venue.name}
         claimCount={claims.length}
         showSound={showSound}
-        counts={counts}
-        showReceived={showReceived}
         canCreate={canCreate}
         disabled={offline}
         onNew={() => setDialog({ kind: 'new' })}
@@ -209,6 +215,8 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
       <ClaimsPanel claims={claims} now={claimNow} disabled={offline} onError={(text) => toast({ text, tone: 'danger' })} />
       <BoardColumns
         columns={columns}
+        collected={collected}
+        collectedCount={counts.collected}
         showReceived={showReceived}
         now={now}
         disabled={offline}

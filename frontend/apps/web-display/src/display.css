@@ -1,40 +1,154 @@
-/* TV board details on top of ember.css. Sizes are viewport-relative: the board is read from across a room. */
+/* TV board details on top of ember.css. Sizes are viewport-relative: the board is read from across a room.
+   Motion animates transform and opacity only (TV browsers are weak); the landing moment itself is GSAP
+   (moments.land in @dop/ui), and every screen is complete without it. */
 
-/* Count next to a column heading: a small mono figure, so it never competes with the order numbers. */
-.board-label {
+/* ---- Ready numbers ---- */
+.tile-ready {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2.2vmin;
+  padding: 1.2vmin 0;
+  font-family: var(--font-display);
+  font-size: 13vmin;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+  color: var(--color-surface);
+  background: rgb(255 255 255 / 0.045);
+}
+/* The number that just became ready: filled with the venue colour (ember when it would not read on ink). */
+.tile-hl {
+  z-index: 1;
+  background: var(--hl);
+  color: var(--on-hl);
+  box-shadow: 0 1.6vmin 4vmin -1.6vmin rgb(0 0 0 / 0.55);
+}
+/* One pulse radiates from the tile as it lands (GSAP sets its opacity; invisible without motion). */
+.land-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 0.7vmin solid var(--hl);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- Column headings ---- */
+.board-count {
+  border-radius: 999px;
+  padding: 0.6vmin 1.6vmin;
   font-family: var(--font-mono);
-  font-size: 2.4vmin;
+  font-size: 2.2vmin;
   font-weight: 500;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-/* The one moment of motion: the number that just became ready settles into place once. */
-@keyframes ready-pop {
+/* Live indicator next to "Ready": a dot with one soft ring every 2.4 s (the only loop on the board). */
+.live-dot {
+  position: relative;
+  width: 1.5vmin;
+  height: 1.5vmin;
+  flex: none;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.25);
+}
+.live-dot.is-live {
+  background: var(--hl);
+}
+.live-dot.is-live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--hl);
+  animation: live-ring 2.4s ease-out infinite;
+}
+@keyframes live-ring {
   0% {
-    transform: scale(0.82);
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
     opacity: 0;
   }
-  60% {
-    transform: scale(1.04);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
 }
-.ready-pop {
-  animation: ready-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+
+/* ---- Overflow page marks ---- */
+.page-mark {
+  display: inline-block;
+  width: 1.2vmin;
+  height: 1.2vmin;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.25);
 }
-/* Keep the glow inside the small tile. */
-.ready-pop.ember-glow::before {
-  inset-inline-end: -40%;
-  top: -60%;
-  width: 120%;
-  height: 160%;
+.page-mark.is-current {
+  width: 3.4vmin;
+  background: var(--color-surface);
+}
+
+/* ---- Status badges (text plus a shape, never colour alone) ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1vmin;
+  border-radius: 999px;
+  padding: 0.7vmin 1.8vmin;
+  white-space: nowrap;
+}
+.badge-mark {
+  width: 1.1vmin;
+  height: 1.1vmin;
+  flex: none;
+  border-radius: 50%;
+}
+
+/* ---- Promo ---- */
+.promo-tag {
+  font-family: var(--font-mono);
+  font-size: 1.6vmin;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-band);
+}
+:lang(ar) .promo-tag {
+  font-family: var(--font-sans);
+  font-size: 1.9vmin;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* ---- Pairing ---- */
+.pair-code {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  letter-spacing: 0.32em;
+  /* Keeps the digits optically centred despite the trailing tracking. */
+  text-indent: 0.32em;
+}
+.pair-code::placeholder {
+  color: var(--color-line);
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ready-pop {
+  .live-dot.is-live::after {
     animation: none;
+    opacity: 0;
   }
+}
+
+/* The code field shows focus with its ember border and halo; the global outline would double it. */
+.pair-code:focus-visible {
+  outline: none;
 }

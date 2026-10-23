@@ -1,4 +1,4 @@
-import { Banner, Button } from '@dop/ui';
+import { Banner, Button, Pill, Skeleton } from '@dop/ui';
 import { useTranslation } from '@dop/i18n';
 import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react';
 import { errorText } from '../lib/errors';
@@ -76,8 +76,8 @@ export function Table({ caption, head, children }: { caption: string; head: stri
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>
-            {head.map((h) => (
-              <th key={h} scope="col" className="eyebrow px-4 pt-4 pb-3 text-start whitespace-nowrap">
+            {head.map((h, i) => (
+              <th key={i} scope="col" className="eyebrow px-4 pt-4 pb-3 text-start whitespace-nowrap">
                 {h}
               </th>
             ))}
@@ -96,20 +96,20 @@ export const Td = ({ children, className }: { children?: ReactNode; className?: 
 /** Tenant status as text plus a marker shape, never colour alone. */
 export function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
-  const tone =
-    status === 'active'
-      ? 'bg-ok-bg text-ok'
-      : status === 'trial'
-        ? 'bg-info-bg text-info'
-        : status === 'past_due'
-          ? 'bg-warn-bg text-warn'
-          : 'bg-danger-bg text-danger';
-  const mark = status === 'active' ? '●' : status === 'trial' ? '◐' : status === 'past_due' ? '▲' : '■';
+  const tone = status === 'active' ? 'ok' : status === 'trial' ? 'info' : status === 'past_due' ? 'warn' : 'danger';
+  return <Pill tone={tone}>{t(`tenantStatus.${status}`, { defaultValue: status })}</Pill>;
+}
+
+/** Placeholder rows while a table loads (no motion beyond the shared shimmer). */
+export function TableSkeleton({ label, rows = 6 }: { label: string; rows?: number }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${tone}`}>
-      <span aria-hidden="true">{mark}</span>
-      {t(`tenantStatus.${status}`, { defaultValue: status })}
-    </span>
+    <div role="status" className="flex flex-col gap-3 rounded-[var(--radius-card)] bg-surface p-5 shadow-card">
+      <span className="sr-only">{label}</span>
+      <Skeleton className="h-3 w-1/3" />
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className="h-9 w-full" />
+      ))}
+    </div>
   );
 }
 

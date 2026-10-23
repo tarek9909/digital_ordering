@@ -113,7 +113,16 @@
     "digitsEntered": "{{n}} digits entered",
     "delete": "Delete last digit",
     "open": "Open board",
-    "lockedFor": "You can try again in {{time}}."
+    "lockedFor": "You can try again in {{time}}.",
+    "appTitle": "Tanbeeh Staff",
+    "eyebrow": "Shared counter device",
+    "panelEyebrow": "Counter board",
+    "headline": "Call every order the moment it is ready.",
+    "points": {
+      "tap": "Tap Ready and the customer’s phone alerts them",
+      "undo": "Undo any Ready for 10 seconds",
+      "devices": "Works on any tablet, phone or kitchen screen"
+    }
   },
   "device": {
     "title": "This device",
@@ -185,5 +194,9 @@
     "empty": "No orders being prepared"
   },
   "collectedToday": "Collected today",
-  "liveRefused": "Live updates are refused for this board — actions disabled. Reload the page or open the staff link again."
+  "liveRefused": "Live updates are refused for this board — actions disabled. Reload the page or open the staff link again.",
+  "agoMinutes_one": "{{count}} min ago",
+  "agoMinutes_other": "{{count}} min ago",
+  "collectedEmpty": "Collected orders show here for 30 minutes",
+  "today": "Today"
 }

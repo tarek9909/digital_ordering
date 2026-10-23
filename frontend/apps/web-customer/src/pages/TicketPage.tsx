@@ -1,11 +1,13 @@
 import type { PublicTicket } from '@dop/contracts';
 import { ApiError, applyBrand, prefetchChime, type DopSocket } from '@dop/client-sdk';
 import { i18next, useTranslation } from '@dop/i18n';
-import { Banner, Button, LiveRegion, Spinner } from '@dop/ui';
+import { Banner, Button, Card, LiveRegion, Spinner } from '@dop/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from '../lib/router';
 import { ActivationSheet, type AlertDelivery } from '../components/ActivationSheet';
+import { BellIcon, CheckIcon, ChevronIcon, ClockIcon } from '../components/icons';
+import { numberSize, OrderRing } from '../components/OrderRing';
 import { RatingForm } from '../components/RatingForm';
 import { ReadyScreen } from '../components/ReadyScreen';
 import { VenueHeader, VenueFooter } from '../components/VenueChrome';
@@ -15,6 +17,7 @@ import { applyVenueLanguage } from '../lib/lang';
 import { uaFamily } from '../lib/platform';
 import { linkExistingSubscription } from '../lib/push';
 import { clientId, closedAtOf, markClosed, rememberTicket } from '../lib/storage';
+import { ringProgress } from '../lib/progress';
 import { agedWait, type WaitView } from '../lib/wait';
 
 // Ticket page (TRD §16.2; FR-CUS-01 – FR-CUS-08, FR-CUS-11; FR-ALR-01 – FR-ALR-06).
@@ -78,6 +81,13 @@ function TicketView({ token }: { token: string }) {
   const [alerting, setAlerting] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(fromHomeScreen);
+  // The sheet stays mounted for its closing slide; what it reported is applied at once (CSD01).
+  const [sheetMounted, setSheetMounted] = useState(fromHomeScreen);
+  useEffect(() => {
+    if (sheetOpen) return setSheetMounted(true);
+    const id = setTimeout(() => setSheetMounted(false), 260);
+    return () => clearTimeout(id);
+  }, [sheetOpen]);
   // What this ticket can alert through (CSD01): only `push` after the subscription was saved for this ticket.
   const [delivery, setDelivery] = useState<AlertDelivery>('none');
   const [followFailed, setFollowFailed] = useState(false);
@@ -388,9 +398,10 @@ function TicketView({ token }: { token: string }) {
 
   if (!valid || (ticketQ.error instanceof ApiError && ticketQ.error.status === 404)) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-canvas p-6 text-center">
-        <h1 className="text-2xl font-bold">{t('notFoundTitle')}</h1>
-        <p className="text-muted">{t('notFoundBody')}</p>
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
+        <OrderRing token="" progress={0} idle className="w-28" />
+        <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('notFoundTitle')}</h1>
+        <p className="max-w-xs text-lg text-ink-2">{t('notFoundBody')}</p>
       </main>
     );
   }
@@ -398,9 +409,9 @@ function TicketView({ token }: { token: string }) {
     // Server or network failure on the first load (A28): say so and offer a retry.
     return (
       <main role="alert" className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
-        <h1 className="text-2xl font-bold">{t('loadError.title')}</h1>
-        <p className="text-muted">{t('loadError.body')}</p>
-        <Button size="lg" busy={ticketQ.isFetching} onClick={() => void ticketQ.refetch()}>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('loadError.title')}</h1>
+        <p className="max-w-xs text-lg text-ink-2">{t('loadError.body')}</p>
+        <Button size="lg" className="w-full max-w-sm" busy={ticketQ.isFetching} onClick={() => void ticketQ.refetch()}>
           {t('common:retry')}
         </Button>
       </main>
@@ -408,7 +419,7 @@ function TicketView({ token }: { token: string }) {
   }
   if (!ticket) {
     return (
-      <main className="flex min-h-dvh items-center justify-center">
+      <main className="flex min-h-dvh items-center justify-center bg-canvas text-muted">
         <Spinner label={t('common:loading')} />
       </main>
     );
@@ -417,17 +428,23 @@ function TicketView({ token }: { token: string }) {
   const ready = ticket.status === 'ready';
   const open = OPEN.has(ticket.status);
   const wait = agedWait(ticket.waitRemainingMinutes, ticket.waitOverdue, ticketQ.dataUpdatedAt || now, Math.max(now, ticketQ.dataUpdatedAt));
+  const notices = ticket.tenantStatus === 'suspended' || (followFailed && open) || undoNotice;
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
+    <div className="flex min-h-dvh flex-col overflow-x-clip bg-canvas">
       {!connected && open && (
-        <div role="status" className="bg-ink px-4 py-2 text-center text-white">
+        <div role="status" className="sticky top-0 z-30 flex items-center justify-center gap-2 bg-ink px-4 py-2 text-center text-sm font-medium text-white">
+          <Spinner />
           {t('reconnecting')}
         </div>
       )}
-      {ticket.tenantStatus === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
-      {followFailed && open && <Banner tone="warn">{t('followFailed')}</Banner>}
-      {undoNotice && <Banner tone="info">{t('undoNotice')}</Banner>}
       <VenueHeader venue={ticket.venue} />
+      {notices && (
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-2 px-4 pt-3">
+          {ticket.tenantStatus === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
+          {followFailed && open && <Banner tone="warn">{t('followFailed')}</Banner>}
+          {undoNotice && <Banner tone="info">{t('undoNotice')}</Banner>}
+        </div>
+      )}
       <LiveRegion text={t(`status.${ready && ticket.acknowledged ? 'readyAck' : ticket.status}`)} assertive={ready} />
 
       {ready ? (
@@ -446,12 +463,13 @@ function TicketView({ token }: { token: string }) {
       )}
 
       <VenueFooter venue={ticket.venue} />
-      {sheetOpen && open && (
+      {sheetMounted && open && (
         <ActivationSheet
           token={token}
           chime={ticket.venue}
           fromHomeScreen={fromHomeScreen}
           ensureFollowed={register}
+          leaving={!sheetOpen}
           onClose={(d) => {
             setSheetOpen(false);
             // A background subscription already linked stays; otherwise show what the sheet actually reached.
@@ -476,52 +494,52 @@ function TicketBody({
 }) {
   const { t } = useTranslation();
   const open = OPEN.has(ticket.status);
+  const idle = ticket.status === 'cancelled' || ticket.status === 'expired';
   const alertsOn = delivery === 'push' || delivery === 'live';
   const msgs = { ...(ticket.venue.messages[ticket.venue.locales[0] ?? 'ar'] ?? {}), ...(ticket.venue.messages[i18next.language] ?? {}) };
+  const progress = ringProgress(ticket.token, ticket.status, open ? wait : null);
+  const hint = delivery === 'push' ? t('alertsPushOn') : delivery === 'live' ? t('keepOpenLive') : t('keepOpen');
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center gap-5 px-4 py-6 text-center">
-      {/* The order as a paper ticket: number on top, a torn-off line, then the live status. */}
-      <section className="w-full rounded-[1.75rem] border border-line bg-surface shadow-card">
-        <div className="flex flex-col items-center gap-2 px-5 pt-6 pb-5">
-          <p className="eyebrow">{t('yourOrder')}</p>
-          {/* At least one third of the screen width (FR-CUS-02, TR-FE-11). */}
-          <div
-            className="num font-display font-extrabold leading-none tracking-tight"
-            style={{ fontSize: 'clamp(33vw, 40vw, 14rem)' }}
-            aria-label={`${t('order')} ${ticket.displayNumber}`}
-          >
-            {ticket.displayNumber}
-          </div>
-          {ticket.counterName && <p className="text-lg font-semibold text-ink-2">{ticket.counterName}</p>}
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center px-4 pt-7 pb-4 text-center">
+      {/* The call ring closes around the number as the order moves on; Ready closes it (ReadyScreen). */}
+      <OrderRing token={ticket.token} progress={progress} idle={idle} live={open} className="w-[min(82vw,21rem)]">
+        <p className="eyebrow">{t('yourOrder')}</p>
+        {/* At least one third of the screen width (FR-CUS-02, TR-FE-11). */}
+        <div
+          className={`num font-display leading-[0.95] font-extrabold tracking-tight ${idle ? 'text-muted' : ''}`}
+          style={{ fontSize: numberSize(ticket.displayNumber) }}
+          aria-label={`${t('order')} ${ticket.displayNumber}`}
+        >
+          {ticket.displayNumber}
         </div>
-        <div aria-hidden="true" className="relative mx-4 border-t-2 border-dashed border-line">
-          <span className="absolute -start-7 -top-3 size-6 rounded-full bg-canvas" />
-          <span className="absolute -end-7 -top-3 size-6 rounded-full bg-canvas" />
-        </div>
-        <div className="p-4">
-          <div
-            className={`flex items-center justify-center gap-3 rounded-2xl px-4 py-4 font-display text-xl font-bold ${open ? '' : 'bg-line text-ink'}`}
-            style={open ? { background: 'var(--brand-band)', color: 'var(--on-band)' } : undefined}
-          >
-            {open && <span aria-hidden="true" className="size-2.5 animate-pulse rounded-full bg-current motion-reduce:animate-none" />}
-            {t(`status.${ticket.status}`)}
-          </div>
-        </div>
-      </section>
-      {open && wait && <p className="text-lg">{wait.late ? t('wait.late') : t('wait.about', { count: wait.minutes })}</p>}
-      {ticket.status === 'cancelled' && msgs.cancelled && <p className="text-lg">{msgs.cancelled}</p>}
-      {ticket.status === 'collected' && msgs.afterCollection && <p className="text-lg">{msgs.afterCollection}</p>}
-      {ticket.status === 'collected' && ticket.ratingAllowed && <RatingForm token={ticket.token} />}
-      {!open && (
-        // A closed ticket links back to the venue page (FR-CUS-11).
-        <Link to={`/v/${encodeURIComponent(ticket.venue.venueCode)}`} className="text-lg font-semibold underline underline-offset-4">
-          {t('backToVenue', { venue: ticket.venue.name })}
-        </Link>
+        {ticket.counterName && <p className="mt-1 max-w-[12rem] truncate text-base font-semibold text-ink-2">{ticket.counterName}</p>}
+      </OrderRing>
+
+      <h1 className="mt-6 font-display text-[1.625rem] leading-tight font-extrabold tracking-tight text-balance">{t(`status.${ticket.status}`)}</h1>
+      {open && wait && (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-lg text-ink-2">
+          <ClockIcon className="size-5 text-muted" />
+          {wait.late ? t('wait.late') : t('wait.about', { count: wait.minutes })}
+        </p>
       )}
+      {open && msgs.welcome && <p className="mt-3 max-w-sm text-ink-2">{msgs.welcome}</p>}
+      {ticket.status === 'cancelled' && msgs.cancelled && <p className="mt-3 max-w-sm text-lg text-ink-2">{msgs.cancelled}</p>}
+      {ticket.status === 'collected' && msgs.afterCollection && <p className="mt-3 max-w-sm text-lg text-ink-2">{msgs.afterCollection}</p>}
+
+      {/* Actions sit low, within reach of a thumb. */}
+      <div className="min-h-8 flex-1" />
       {open && (
-        <>
+        <div className="flex w-full flex-col gap-3">
           {alertsOn ? (
-            <p className="inline-flex items-center gap-2 rounded-full bg-ok-bg px-4 py-2 font-semibold text-ok">✓ {t('alertsOn')}</p>
+            <div className="flex w-full items-center gap-3 rounded-[var(--radius-card)] bg-surface p-4 text-start shadow-card">
+              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-ok-bg text-ok">
+                <CheckIcon className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold">{t('alertsOn')}</p>
+                <p className="text-sm text-muted">{hint}</p>
+              </div>
+            </div>
           ) : (
             <>
               {delivery === 'failed' && (
@@ -530,14 +548,29 @@ function TicketBody({
                 </p>
               )}
               {delivery === 'blocked' && <p className="text-ink-2">{t('alertsBlocked')}</p>}
-              <Button size="lg" variant="brand" className="w-full" onClick={onTurnOn}>
-                🔔 {t('turnOnAlerts')}
+              <Button size="lg" className="w-full text-xl" onClick={onTurnOn}>
+                <BellIcon className="size-6" />
+                {t('turnOnAlerts')}
               </Button>
+              <p className="text-sm text-muted">{hint}</p>
             </>
           )}
-          <p className="text-muted">{delivery === 'push' ? t('alertsPushOn') : delivery === 'live' ? t('keepOpenLive') : t('keepOpen')}</p>
-          {msgs.welcome && <p>{msgs.welcome}</p>}
-        </>
+        </div>
+      )}
+      {ticket.status === 'collected' && ticket.ratingAllowed && (
+        <Card className="w-full">
+          <RatingForm token={ticket.token} />
+        </Card>
+      )}
+      {!open && (
+        // A closed ticket links back to the venue page (FR-CUS-11).
+        <Link
+          to={`/v/${encodeURIComponent(ticket.venue.venueCode)}`}
+          className="mt-4 inline-flex min-h-12 items-center gap-1 rounded-control px-5 font-semibold text-ink ring-1 ring-line transition-colors hover:bg-surface"
+        >
+          {t('backToVenue', { venue: ticket.venue.name })}
+          <ChevronIcon className="size-4 text-muted" />
+        </Link>
       )}
     </main>
   );

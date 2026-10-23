@@ -1,10 +1,10 @@
 import { PLAN_CODES, TENANT_STATUSES } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Field, PageShell, Select, Spinner } from '@dop/ui';
+import { Button, EmptyState, Field, PageShell, Select } from '@dop/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
-import { ErrorNote, PagerControls, StatusBadge, Table, Td } from '../components/common';
+import { ErrorNote, PagerControls, StatusBadge, Table, TableSkeleton, Td } from '../components/common';
 import { api } from '../lib/api';
 import { fmtDate } from '../lib/format';
 import { useMe } from '../lib/me';
@@ -56,17 +56,23 @@ export function TenantsPage() {
 
   return (
     <PageShell
+      wide
+      eyebrow={t('layout.groups.tenants')}
       title={t('tenants.title')}
+      description={t('tenants.description')}
       actions={
         can(role, 'tenants.lifecycle') && (
-          <Link to="/tenants/new" className="inline-flex min-h-12 items-center gap-2 rounded-control bg-primary px-5 font-semibold text-on-primary shadow-[0_8px_20px_-8px_rgb(194_65_12/0.6)] hover:bg-primary-hover">
+          <Link
+            to="/tenants/new"
+            className="inline-flex min-h-12 items-center gap-2 rounded-control bg-primary px-5 font-semibold text-on-primary shadow-button transition-[background-color,transform] duration-150 hover:-translate-y-px hover:bg-primary-hover active:scale-[.98]"
+          >
             <span aria-hidden="true">+</span>
             {t('nav.createTenant')}
           </Link>
         )
       }
     >
-      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-card sm:grid-cols-4 sm:items-end">
+      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card sm:grid-cols-4 sm:items-end">
         <Field label={t('tenants.search')} type="search" value={draft.q} maxLength={100} onChange={(e) => setDraft({ ...draft, q: e.target.value })} />
         <Select
           label={t('tenants.status')}
@@ -84,9 +90,12 @@ export function TenantsPage() {
       </form>
       <ErrorNote error={list.error} />
       {list.isPending ? (
-        <Spinner label={t('common:loading')} />
+        <TableSkeleton label={t('common:loading')} />
       ) : (
-        list.data && (
+        list.data &&
+        (list.data.items.length === 0 && !pager.canPrev ? (
+          <EmptyState title={t('tenants.empty')}>{t('tenants.emptyHint')}</EmptyState>
+        ) : (
           <>
             <Table
               caption={t('tenants.title')}
@@ -125,7 +134,7 @@ export function TenantsPage() {
             </Table>
             <PagerControls page={pager.page} canPrev={pager.canPrev} nextCursor={list.data.nextCursor} onPrev={pager.prev} onNext={pager.next} />
           </>
-        )
+        ))
       )}
     </PageShell>
   );

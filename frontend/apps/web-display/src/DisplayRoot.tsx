@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Spinner } from '@dop/ui';
+import { BrandMark, Button, Spinner } from '@dop/ui';
 import { useEffect, useState } from 'react';
 import { BoardView } from './components/BoardView';
 import { PairingScreen } from './components/PairingScreen';
@@ -29,8 +29,13 @@ function useDailyReload() {
   }, []);
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
-  return <main className="flex min-h-dvh flex-col items-center justify-center gap-[3vmin] p-[4vmin] text-center">{children}</main>;
+function Centered({ children, mark = true }: { children: React.ReactNode; mark?: boolean }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-[3vmin] p-[6vmin] text-center">
+      {mark && <BrandMark className="mb-[1vmin] size-[9vmin]" />}
+      {children}
+    </main>
+  );
 }
 
 export function DisplayRoot() {
@@ -48,8 +53,8 @@ export function DisplayRoot() {
   else if (board && isTenantBlocked(board.tenantStatus))
     content = (
       <Centered>
-        <h1 className="font-display text-[7vmin] font-bold">{t('blocked.title')}</h1>
-        <p className="max-w-[80vmin] text-[3.5vmin] text-muted">{t('blocked.body')}</p>
+        <h1 className="font-display text-[6.4vmin] leading-tight font-extrabold tracking-tight">{t('blocked.title')}</h1>
+        <p className="max-w-[80vmin] text-[3.2vmin] leading-snug text-ink-2">{t('blocked.body')}</p>
       </Centered>
     );
   else if (board)
@@ -62,7 +67,7 @@ export function DisplayRoot() {
   else if (query.error)
     content = (
       <Centered>
-        <h1 className="text-[5vmin] font-bold">{errorText(t, query.error)}</h1>
+        <h1 className="max-w-[90vmin] text-[5vmin] leading-tight font-extrabold tracking-tight">{errorText(t, query.error)}</h1>
         <Button size="xl" onClick={() => void query.refetch()}>
           {t('common:retry')}
         </Button>
@@ -70,7 +75,7 @@ export function DisplayRoot() {
     );
   else
     content = (
-      <Centered>
+      <Centered mark={false}>
         <Spinner label={t('common:loading')} />
       </Centered>
     );

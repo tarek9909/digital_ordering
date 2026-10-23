@@ -1,6 +1,6 @@
 import { formatMoney } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Field, PageShell, Select, Spinner } from '@dop/ui';
+import { Button, Card, EmptyState, Field, PageShell, Select, Skeleton, Stat } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -26,7 +26,7 @@ export function PlatformReportPage() {
     if (!invalid) setQuery(range);
   };
   return (
-    <PageShell title={t('platformReport.title')}>
+    <PageShell wide eyebrow={t('layout.groups.insights')} title={t('platformReport.title')} description={t('platformReport.description')}>
       <Card className="mb-6">
         <form onSubmit={run} className="grid gap-3 sm:grid-cols-3 sm:items-end" noValidate>
           <Field label={t('pilot.from')} type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
@@ -37,7 +37,7 @@ export function PlatformReportPage() {
         </form>
       </Card>
       <ErrorNote error={q.error} />
-      {q.isFetching && <Spinner label={t('common:loading')} />}
+      {q.isFetching && !q.data && <ReportSkeleton label={t('common:loading')} />}
       {q.data && <Results data={q.data} />}
     </PageShell>
   );
@@ -52,10 +52,22 @@ function Results({ data }: { data: PlatformReportResponse }) {
   const currencies = keysOf(days, 'mrr');
   const sum = (f: 'signups' | 'conversions' | 'cancellations' | 'tickets') => days.reduce((a, d) => a + d[f], 0);
 
-  if (days.length === 0) return <p className="text-muted">{t('platformReport.empty')}</p>;
+  if (days.length === 0) return <EmptyState title={t('platformReport.empty')}>{t('platformReport.emptyHint')}</EmptyState>;
+  // The one ember tile: revenue on the last day of the range, in the first currency.
+  const mrrCurrency = currencies[0];
+  const lastDay = days[days.length - 1]!;
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+      <div data-motion="stagger" className={`grid gap-3 sm:grid-cols-2 ${mrrCurrency ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+        {mrrCurrency && (
+          <Stat
+            accent
+            className="sm:col-span-2"
+            label={t('platformReport.mrrNow', { currency: mrrCurrency })}
+            value={formatMoney(lastDay.mrr[mrrCurrency] ?? 0, mrrCurrency, 'en')}
+            hint={t('platformReport.mrrNowHint')}
+          />
+        )}
         <Stat label={t('platformReport.churn')} value={pct(data.churnPct)} hint={t('platformReport.churnHint')} />
         <Stat label={t('platformReport.activeAtStart')} value={String(data.activeAtStart ?? 0)} hint={t('platformReport.activeAtStartHint')} />
         <Stat label={t('platformReport.signups')} value={String(sum('signups'))} />
@@ -78,8 +90,8 @@ function Results({ data }: { data: PlatformReportResponse }) {
       >
         {days.map((d) => (
           <tr key={d.date}>
-            <Td>
-              <span dir="ltr">{d.date}</span>
+            <Td className="whitespace-nowrap">
+              <span dir="ltr" className="font-mono text-xs">{d.date}</span>
             </Td>
             {statuses.map((s) => (
               <Td key={`s-${s}`} className="num">
@@ -214,18 +226,23 @@ export function ReachByPhone({ reach }: { reach: Record<string, Record<string, n
 }
 
 const RowHead = ({ children }: { children: string }) => (
-  <th scope="row" className="border-t border-line px-3 py-2 text-start font-medium">
+  <th scope="row" className="border-t border-line px-4 py-2.5 text-start font-medium">
     {children}
   </th>
 );
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+/** Placeholder for the figures and the daily table while the first report loads. */
+export function ReportSkeleton({ label }: { label: string }) {
   return (
-    <Card>
-      <p className="text-sm text-muted">{label}</p>
-      <p className="num text-2xl font-bold">{value}</p>
-      {hint && <p className="text-xs text-muted">{hint}</p>}
-    </Card>
+    <div role="status" className="flex flex-col gap-6">
+      <span className="sr-only">{label}</span>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-32 rounded-[var(--radius-card)]" />
+        ))}
+      </div>
+      <Skeleton className="h-80 rounded-[var(--radius-card)]" />
+    </div>
   );
 }
 
@@ -244,11 +261,11 @@ function MrrChart({ days, currencies }: { days: PlatformDay[]; currencies: strin
       <div className="h-64" dir="ltr" role="img" aria-label={title}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis allowDecimals={metric === 'mrr'} tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" name={title} stroke="#1f4fa3" strokeWidth={2} dot={days.length <= 31} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-line)" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="var(--color-line)" tickLine={false} />
+            <YAxis allowDecimals={metric === 'mrr'} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="var(--color-line)" tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid var(--color-line)', boxShadow: 'var(--shadow-card)' }} />
+            <Line type="monotone" dataKey="value" name={title} stroke="var(--color-ink)" strokeWidth={2.5} dot={days.length <= 31 ? { r: 3, fill: 'var(--color-surface)', strokeWidth: 2 } : false} activeDot={{ r: 5, fill: 'var(--color-ink)' }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -4,7 +4,7 @@ import './site.css';
 import { preloadMotion } from '@dop/ui';
 import { initI18n } from '@dop/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode, type ReactNode } from 'react';
+import { StrictMode, type ComponentType, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import ar from '../../../packages/i18n/locales/ar/site.json';
@@ -12,23 +12,25 @@ import en from '../../../packages/i18n/locales/en/site.json';
 import { Layout } from './components/Layout';
 import { RouteBoundary } from './components/RouteBoundary';
 import { initialLanguage } from './lib/lang';
-import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { ContactPage } from './pages/ContactPage';
 import { HomePage } from './pages/HomePage';
-import { LegalPage } from './pages/LegalPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { ForgotPasswordPage, ResetPasswordPage } from './pages/PasswordPages';
 import { PricingPage } from './pages/PricingPage';
-import { SignInPage } from './pages/SignInPage';
-import { VerifyEmailPage } from './pages/VerifyEmailPage';
 
 // Marketing and sign-in site on www.{domain} (TRD §16.7). Venues are onboarded by the platform team; there is no
 // self-signup. Arabic first unless the visitor chose English.
 initI18n('site', { ar, en }, initialLanguage());
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnReconnect: true, retry: 2 } } });
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { refetchOnReconnect: true, retry: 2 } },
+});
 
 const b = (el: ReactNode) => <RouteBoundary>{el}</RouteBoundary>;
+/** A route whose page component is loaded on demand. */
+const page = (load: () => Promise<ComponentType>) => async () => {
+  const Page = await load();
+  return { element: b(<Page />) };
+};
 
 const router = createBrowserRouter([
   {
@@ -38,12 +40,32 @@ const router = createBrowserRouter([
       { path: '/', element: b(<HomePage />) },
       { path: '/pricing', element: b(<PricingPage />) },
       { path: '/contact', element: b(<ContactPage />) },
-      { path: '/verify-email', element: b(<VerifyEmailPage />) },
-      { path: '/confirm-email', element: b(<ConfirmEmailPage />) },
-      { path: '/sign-in', element: b(<SignInPage />) },
-      { path: '/forgot-password', element: b(<ForgotPasswordPage />) },
-      { path: '/reset-password', element: b(<ResetPasswordPage />) },
-      { path: '/legal/:kind', element: b(<LegalPage />) },
+      // Sign-in, account emails and legal pages load on demand (forms and validation stay out of the landing's
+      // initial bundle, TR-FE-05).
+      {
+        path: '/verify-email',
+        lazy: page(async () => (await import('./pages/VerifyEmailPage')).VerifyEmailPage),
+      },
+      {
+        path: '/confirm-email',
+        lazy: page(async () => (await import('./pages/ConfirmEmailPage')).ConfirmEmailPage),
+      },
+      {
+        path: '/sign-in',
+        lazy: page(async () => (await import('./pages/SignInPage')).SignInPage),
+      },
+      {
+        path: '/forgot-password',
+        lazy: page(async () => (await import('./pages/PasswordPages')).ForgotPasswordPage),
+      },
+      {
+        path: '/reset-password',
+        lazy: page(async () => (await import('./pages/PasswordPages')).ResetPasswordPage),
+      },
+      {
+        path: '/legal/:kind',
+        lazy: page(async () => (await import('./pages/LegalPage')).LegalPage),
+      },
       { path: '*', element: b(<NotFoundPage />) },
     ],
   },

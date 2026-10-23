@@ -1,6 +1,7 @@
 {
   "pairing": {
     "title": "Connect this screen",
+    "lead": "Pair it once and it shows your pickup board from then on, every day.",
     "code": "Pairing code",
     "submit": "Connect",
     "step1": "In the admin area, open Displays and choose Pair a display.",

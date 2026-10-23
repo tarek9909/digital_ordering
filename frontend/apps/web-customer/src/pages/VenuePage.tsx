@@ -1,11 +1,13 @@
 import type { VenueBranding } from '@dop/contracts';
 import { ApiError, applyBrand } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Spinner } from '@dop/ui';
+import { Button, Skeleton, Spinner } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { Link, useParams } from '../lib/router';
+import { useParams } from '../lib/router';
 import { ClaimForm } from '../components/ClaimForm';
+import { OrderRing } from '../components/OrderRing';
+import { TicketCard } from '../components/TicketCard';
 import { VenueFooter, VenueHeader } from '../components/VenueChrome';
 import { publicApi } from '../lib/api';
 import { applyVenueLanguage } from '../lib/lang';
@@ -37,51 +39,70 @@ export function VenuePage() {
 
   // Only a 404 means the venue link is gone; a server or network failure says so and offers a retry (CSD08).
   if (venueQ.isError && !venueQ.data) {
-    if (venueQ.error instanceof ApiError && venueQ.error.status === 404) return <p className="p-6 text-center text-lg">{t('notFoundBody')}</p>;
+    if (venueQ.error instanceof ApiError && venueQ.error.status === 404)
+      return (
+        <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
+          <OrderRing token="" progress={0} idle className="w-28" />
+          <p className="max-w-xs text-lg text-ink-2">{t('notFoundBody')}</p>
+        </main>
+      );
     return (
-      <main role="alert" className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-lg">{t('venue.loadFailed')}</p>
-        <Button size="lg" busy={venueQ.isFetching} onClick={() => void venueQ.refetch()}>
+      <main role="alert" className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
+        <p className="max-w-xs text-lg text-ink-2">{t('venue.loadFailed')}</p>
+        <Button size="lg" className="w-full max-w-sm" busy={venueQ.isFetching} onClick={() => void venueQ.refetch()}>
           {t('common:retry')}
         </Button>
       </main>
     );
   }
-  if (!venueQ.data) return <Spinner label={t('common:loading')} />;
+  if (!venueQ.data)
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-canvas text-muted">
+        <Spinner label={t('common:loading')} />
+      </main>
+    );
   const tickets = mineQ.data?.tickets ?? [];
   const mineFailed = mineQ.isError;
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col bg-canvas">
       <VenueHeader venue={venueQ.data.venue} />
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-4 py-6">
-        <h1 className="text-2xl font-bold">{t('venue.yourTickets')}</h1>
+      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-4 pt-8 pb-6">
+        <h1 className="font-display text-[1.875rem] leading-tight font-extrabold tracking-tight">{t('venue.yourTickets')}</h1>
         {mineFailed && (
-          <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4">
-            <p className="text-danger">{t('venue.ticketsFailed')}</p>
-            <Button busy={mineQ.isFetching} onClick={() => void mineQ.refetch()}>
+          <div role="alert" className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] bg-danger-bg p-4">
+            <p className="font-medium text-danger">{t('venue.ticketsFailed')}</p>
+            <Button variant="secondary" busy={mineQ.isFetching} onClick={() => void mineQ.refetch()}>
               {t('common:retry')}
             </Button>
           </div>
         )}
-        {mineQ.isPending && !mineFailed && <Spinner label={t('common:loading')} />}
-        {mineQ.isSuccess && tickets.length === 0 && (
-          <Card>
-            <p className="text-lg font-semibold">{t('venue.noTickets')}</p>
-            <p className="text-muted">{t('venue.askStaff')}</p>
-          </Card>
+        {mineQ.isPending && !mineFailed && (
+          <div role="status">
+            <span className="sr-only">{t('common:loading')}</span>
+            <Skeleton className="h-21 rounded-[var(--radius-card)]" />
+          </div>
         )}
-        {tickets.map((tk) => (
-          <Link key={tk.token} to={`/${tk.token}`} className="block">
-            <Card className="flex items-center justify-between">
-              <span className="num text-4xl font-black">{tk.displayNumber}</span>
-              <span className="text-lg">{t(`common:status.${tk.status}`)}</span>
-            </Card>
-          </Link>
-        ))}
+        {mineQ.isSuccess && tickets.length === 0 && (
+          // No order yet: the ring waits, open, for the ticket the staff will hand over.
+          <div className="flex items-center gap-4 rounded-[var(--radius-card)] bg-surface p-5 shadow-card">
+            <OrderRing token="" progress={0.08} className="w-16 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-display text-lg leading-snug font-bold">{t('venue.noTickets')}</p>
+              <p className="mt-1 text-ink-2">{t('venue.askStaff')}</p>
+            </div>
+          </div>
+        )}
+        {tickets.length > 0 && (
+          <div data-motion="stagger" className="flex flex-col gap-3">
+            {tickets.map((tk) => (
+              <TicketCard key={tk.token} token={tk.token} displayNumber={tk.displayNumber} status={tk.status} />
+            ))}
+          </div>
+        )}
         {venueQ.data.claimsMode !== 'off' && (
-          <Card>
+          <section className="mt-4 rounded-[var(--radius-card)] border border-line bg-surface p-5">
             <ClaimForm venueCode={venueQ.data.venue.venueCode} mode={venueQ.data.claimsMode} />
-          </Card>
+          </section>
         )}
       </main>
       <VenueFooter venue={venueQ.data.venue} />

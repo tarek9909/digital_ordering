@@ -19,7 +19,7 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const [announce, setAnnounce] = useState('');
   return (
-    <PageShell title={t('settings.title')}>
+    <PageShell eyebrow={t('layout.groups.platform')} title={t('settings.title')} description={t('settings.description')}>
       <LiveRegion text={announce} />
       <div className="flex flex-col gap-8">
         <PlatformSettings onSaved={(k) => setAnnounce(t('settings.savedKey', { key: k }))} />

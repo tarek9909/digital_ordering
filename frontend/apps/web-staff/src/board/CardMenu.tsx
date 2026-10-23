@@ -5,12 +5,12 @@ import type { ReactNode } from 'react';
 import { Icon } from '../components/Icon';
 import { useStaff } from '../lib/store';
 import { canReopen, isOpenStatus } from '../lib/ticketState';
-import { AlertLevelLabel } from './TicketCard';
+import { AlertLevelLabel, StatusLabel } from './TicketCard';
 import type { TransitionTo } from './useTicketActions';
 
 function Item({ children, onClick, danger, off }: { children: ReactNode; onClick: () => void; danger?: boolean; off: boolean }) {
   return (
-    <Button variant={danger ? 'danger' : 'secondary'} className="w-full justify-start" disabled={off} onClick={onClick}>
+    <Button variant="secondary" className={`w-full justify-start ${danger ? 'text-danger hover:border-danger/40 hover:bg-danger-bg' : ''}`} disabled={off} onClick={onClick}>
       {children}
     </Button>
   );
@@ -39,10 +39,10 @@ export function CardMenu({ ticket, now, disabled, onClose, onQr, onTransition, o
 
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} title={t('menu.title', { number: ticket.displayNumber })}>
-      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted">
-        <span className="font-semibold text-ink">{t(`common:status.${ticket.status}`)}</span>
+      <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-2">
+        <StatusLabel status={ticket.status} className="rounded-full bg-canvas px-3 py-1 font-semibold text-ink ring-1 ring-line" />
         <AlertLevelLabel ticket={ticket} />
-        {ticket.waitMinutes !== null && waiting && <span>{t('waitMinutes', { count: ticket.waitMinutes })}</span>}
+        {ticket.waitMinutes !== null && waiting && <span className="num">{t('waitMinutes', { count: ticket.waitMinutes })}</span>}
       </div>
       <div className="flex flex-col gap-2">
         <Button variant="secondary" className="w-full justify-start" onClick={onQr}>

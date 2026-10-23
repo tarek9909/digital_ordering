@@ -1,9 +1,10 @@
 import { useTranslation } from '@dop/i18n';
-import { LiveRegion, Spinner } from '@dop/ui';
+import { Banner, LiveRegion, Spinner } from '@dop/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { FormCard, FormError } from '../components/FormCard';
+import { pillLink, textLink } from '../components/PageHeader';
 import { authApi } from '../lib/api';
 import { errorText, isApiError } from '../lib/errors';
 
@@ -13,7 +14,9 @@ export function VerifyEmailPage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const sent = useRef(false);
-  const m = useMutation({ mutationFn: (tk: string) => authApi.post<void>('/email/verify', { token: tk }) });
+  const m = useMutation({
+    mutationFn: (tk: string) => authApi.post<void>('/email/verify', { token: tk }),
+  });
   const { mutate } = m;
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export function VerifyEmailPage() {
       <FormCard title={t('verify.title')}>
         <FormError text={text} />
         <p>{t('verify.expiredHelp')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center underline">
+        <Link to="/sign-in" className={textLink}>
           {t('common:signIn')}
         </Link>
       </FormCard>
@@ -38,11 +41,8 @@ export function VerifyEmailPage() {
     return (
       <FormCard title={t('verify.title')}>
         <LiveRegion text={t('verify.done')} />
-        <p className="font-semibold text-ok">
-          <span aria-hidden="true">✓ </span>
-          {t('verify.done')}
-        </p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 font-semibold text-on-primary">
+        <Banner tone="ok">{t('verify.done')}</Banner>
+        <Link to="/sign-in" className={pillLink.primary}>
           {t('verify.continue')}
         </Link>
       </FormCard>

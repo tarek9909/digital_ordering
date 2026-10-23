@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router';
 import { FormCard, FormError } from '../components/FormCard';
+import { pillLink, textLink } from '../components/PageHeader';
 import { authApi } from '../lib/api';
 import { errorText, fieldMessage } from '../lib/errors';
 
@@ -31,7 +32,7 @@ export function ForgotPasswordPage() {
       <FormCard title={t('password.forgotTitle')}>
         <LiveRegion text={t('password.forgotSent')} />
         <p>{t('password.forgotSent')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center underline">
+        <Link to="/sign-in" className={textLink}>
           {t('common:signIn')}
         </Link>
       </FormCard>
@@ -83,7 +84,7 @@ export function ResetPasswordPage() {
     return (
       <FormCard title={t('password.resetTitle')}>
         <FormError text={t('password.linkExpired')} />
-        <Link to="/forgot-password" className="inline-flex min-h-12 items-center underline">
+        <Link to="/forgot-password" className={textLink}>
           {t('password.requestNew')}
         </Link>
       </FormCard>
@@ -94,7 +95,7 @@ export function ResetPasswordPage() {
       <FormCard title={t('password.resetTitle')}>
         <LiveRegion text={t('password.resetDone')} />
         <p>{t('password.resetDone')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 font-semibold text-on-primary">
+        <Link to="/sign-in" className={pillLink.primary}>
           {t('common:signIn')}
         </Link>
       </FormCard>
@@ -121,7 +122,7 @@ export function ResetPasswordPage() {
         />
         <FormError text={formError} />
         {formError && (
-          <Link to="/forgot-password" className="inline-flex min-h-12 items-center underline">
+          <Link to="/forgot-password" className={textLink}>
             {t('password.requestNew')}
           </Link>
         )}
