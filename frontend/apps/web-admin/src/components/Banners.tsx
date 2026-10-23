@@ -11,13 +11,22 @@ import { errorText } from '../lib/errors';
 import { useMe, useTenant } from '../lib/me';
 import type { Announcement } from '../lib/types';
 import { fetchSupportSessions, supportSessionsKey } from '../pages/Support';
+import { linkClass } from './common';
 
 /** "Platform support is viewing this account — End session" (FR-SUP-04, TR-FE-22); polled every 30 s. */
 function SupportBanner({ isSupport }: { isSupport: boolean }) {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: supportSessionsKey, queryFn: fetchSupportSessions, refetchInterval: 30_000, staleTime: 15_000 });
-  const end = useMutation({ mutationFn: (id: string) => api.post(`/support-sessions/${id}/end`), onSuccess: () => qc.invalidateQueries({ queryKey: supportSessionsKey }) });
+  const q = useQuery({
+    queryKey: supportSessionsKey,
+    queryFn: fetchSupportSessions,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+  const end = useMutation({
+    mutationFn: (id: string) => api.post(`/support-sessions/${id}/end`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: supportSessionsKey }),
+  });
   const active = (q.data ?? []).filter((s) => s.status === 'active');
   const requested = (q.data ?? []).filter((s) => s.status === 'requested');
   return (
@@ -35,7 +44,13 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
           }
         >
           {isSupport ? t('banners.youAreSupport') : t('banners.supportActive', { name: s.agentName })}
-          {s.expiresAt && <span className="ms-2 font-normal">{t('banners.supportUntil', { date: formatDateTime(s.expiresAt, i18n.language) })}</span>}
+          {s.expiresAt && (
+            <span className="ms-2 font-normal">
+              {t('banners.supportUntil', {
+                date: formatDateTime(s.expiresAt, i18n.language),
+              })}
+            </span>
+          )}
           {end.error ? <span className="ms-2">{errorText(t, end.error)}</span> : null}
         </Banner>
       ))}
@@ -43,7 +58,7 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
         <Banner
           tone="info"
           action={
-            <Link to="/support" className="inline-flex min-h-12 items-center rounded-lg bg-surface px-4 font-semibold text-ink underline">
+            <Link to="/support" className={linkClass('quiet')}>
               {t('banners.reviewSupport')}
             </Link>
           }
@@ -58,7 +73,12 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
 
 function Announcements() {
   const { t, i18n } = useTranslation();
-  const q = useQuery({ queryKey: ['announcements'], queryFn: async () => (await api.get<{ items: Announcement[] }>('/announcements')).items, staleTime: 5 * 60_000, refetchInterval: 10 * 60_000 });
+  const q = useQuery({
+    queryKey: ['announcements'],
+    queryFn: async () => (await api.get<{ items: Announcement[] }>('/announcements')).items,
+    staleTime: 5 * 60_000,
+    refetchInterval: 10 * 60_000,
+  });
   const [dismissed, setDismissed] = useState(readDismissed);
   const dismiss = (id: string) => {
     const next = [...dismissed, id];
@@ -94,25 +114,32 @@ export function Banners() {
   const tenant = useTenant().data;
   const isOwner = me?.currentRole === 'owner';
   const isSupport = me?.support === true;
-  const resend = useMutation({ mutationFn: () => authApi.post('/email/resend') });
+  const resend = useMutation({
+    mutationFn: () => authApi.post('/email/resend'),
+  });
   const date = (iso: string) => formatDateTime(iso, i18n.language);
   if (!me) return null;
 
   const billingLink = isOwner ? (
-    <Link to="/billing" className="inline-flex min-h-12 items-center rounded-lg bg-surface px-4 font-semibold text-ink underline">
+    <Link to="/billing" className={linkClass('quiet')}>
       {t('banners.goToBilling')}
     </Link>
   ) : undefined;
 
   return (
-    <div className="flex flex-col">
+    // Padded only when a banner shows (live regions are visually hidden).
+    <div className="mx-auto flex max-w-5xl flex-col gap-2 has-[>:not(.sr-only)]:px-4 has-[>:not(.sr-only)]:pt-4 sm:has-[>:not(.sr-only)]:px-6">
       {!isSupport && <Announcements />}
       <SupportBanner isSupport={isSupport} />
       {tenant && (
         <>
           {tenant.status === 'past_due' && (
             <Banner tone="warn" action={billingLink}>
-              {tenant.grace_ends_at ? t('banners.pastDueUntil', { date: date(tenant.grace_ends_at) }) : t('banners.pastDue')}
+              {tenant.grace_ends_at
+                ? t('banners.pastDueUntil', {
+                    date: date(tenant.grace_ends_at),
+                  })
+                : t('banners.pastDue')}
             </Banner>
           )}
           {tenant.status === 'suspended' && (
@@ -132,7 +159,10 @@ export function Banners() {
           )}
           {tenant.status === 'trial' && !tenant.complimentary && tenant.trial_ends_at && (
             <Banner tone="info" action={billingLink}>
-              {t('banners.trial', { count: daysUntil(tenant.trial_ends_at), date: date(tenant.trial_ends_at) })}
+              {t('banners.trial', {
+                count: daysUntil(tenant.trial_ends_at),
+                date: date(tenant.trial_ends_at),
+              })}
             </Banner>
           )}
           {tenant.deletion_requested_at && (
@@ -140,13 +170,15 @@ export function Banners() {
               tone="warn"
               action={
                 isOwner ? (
-                  <Link to="/settings#deletion" className="inline-flex min-h-12 items-center rounded-lg bg-surface px-4 font-semibold text-ink underline">
+                  <Link to="/settings#deletion" className={linkClass('quiet')}>
                     {t('banners.cancelDeletion')}
                   </Link>
                 ) : undefined
               }
             >
-              {t('banners.deletionRequested', { date: date(tenant.deletion_requested_at) })}
+              {t('banners.deletionRequested', {
+                date: date(tenant.deletion_requested_at),
+              })}
             </Banner>
           )}
         </>

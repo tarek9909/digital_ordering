@@ -12,7 +12,16 @@ import { ADDRESS_FIELDS, type VenueAddress, type VenueAdmin } from '../../lib/ty
 import { venueKey, venuesKey } from '../../lib/venue';
 
 const addressSchema = z.object(Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, z.string().trim().max(200)])) as Record<(typeof ADDRESS_FIELDS)[number], z.ZodString>);
-const generalSchema = venuePatch.pick({ name: true, timeZone: true, locales: true, resetTime: true, autoCloseTime: true }).required().extend({ address: addressSchema });
+const generalSchema = venuePatch
+  .pick({
+    name: true,
+    timeZone: true,
+    locales: true,
+    resetTime: true,
+    autoCloseTime: true,
+  })
+  .required()
+  .extend({ address: addressSchema });
 type GeneralValues = z.infer<typeof generalSchema>;
 
 /** Form values from the venue; pending zone and times show what applies from the next business day. */
@@ -29,14 +38,25 @@ export function generalValues(v: VenueAdmin): GeneralValues {
 
 /** The address as the API stores it: empty fields left out, null when nothing is set (W10, FR-ADM-03). */
 export function addressBody(a: GeneralValues['address']): VenueAddress | null {
-  const out = Object.fromEntries(Object.entries(a).filter(([, v]) => v.trim() !== '').map(([k, v]) => [k, v.trim()]));
+  const out = Object.fromEntries(
+    Object.entries(a)
+      .filter(([, v]) => v.trim() !== '')
+      .map(([k, v]) => [k, v.trim()]),
+  );
   return Object.keys(out).length ? out : null;
 }
 
-const LANGUAGE_SETS: Record<string, string[]> = { ar: ['ar'], en: ['en'], 'ar,en': ['ar', 'en'], 'en,ar': ['en', 'ar'] };
+const LANGUAGE_SETS: Record<string, string[]> = {
+  ar: ['ar'],
+  en: ['en'],
+  'ar,en': ['ar', 'en'],
+  'en,ar': ['en', 'ar'],
+};
 
 function timeZones(current: string): string[] {
-  const intl = Intl as unknown as { supportedValuesOf?: (k: string) => string[] };
+  const intl = Intl as unknown as {
+    supportedValuesOf?: (k: string) => string[];
+  };
   const list = intl.supportedValuesOf?.('timeZone') ?? ['Asia/Riyadh', 'Asia/Dubai', 'Asia/Kuwait', 'Asia/Qatar', 'Asia/Bahrain', 'Asia/Muscat', 'Africa/Cairo', 'Europe/London'];
   return list.includes(current) ? list : [current, ...list];
 }
@@ -46,7 +66,10 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const zones = useMemo(() => timeZones(venue.timeZone), [venue.timeZone]);
-  const form = useForm<GeneralValues>({ resolver: zodResolver(generalSchema), defaultValues: generalValues(venue) });
+  const form = useForm<GeneralValues>({
+    resolver: zodResolver(generalSchema),
+    defaultValues: generalValues(venue),
+  });
   const { errors, isSubmitting, isDirty } = form.formState;
   const save = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.patch<VenueAdmin>(`/venues/${venue.id}`, body),
@@ -74,11 +97,17 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-4" noValidate>
       <Field label={t('venue.general.name')} error={errors.name ? t('form.required') : undefined} {...form.register('name')} />
-      <div className="flex flex-col gap-1">
-        <label htmlFor="tz" className="font-medium">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="tz" className="text-sm font-semibold text-ink-2">
           {t('venue.general.timeZone')}
         </label>
-        <input id="tz" list="tz-list" className="min-h-12 rounded-lg border border-line bg-surface px-3" aria-invalid={errors.timeZone ? true : undefined} {...form.register('timeZone')} />
+        <input
+          id="tz"
+          list="tz-list"
+          className={`min-h-12 rounded-input border bg-surface px-3.5 text-base hover:border-ink-2/30 ${errors.timeZone ? 'border-danger' : 'border-line'}`}
+          aria-invalid={errors.timeZone ? true : undefined}
+          {...form.register('timeZone')}
+        />
         <datalist id="tz-list">
           {zones.map((z) => (
             <option key={z} value={z} />
@@ -98,7 +127,10 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
             label={t('venue.general.languages')}
             value={field.value.join(',')}
             onChange={(e) => field.onChange(LANGUAGE_SETS[e.target.value] ?? ['ar'])}
-            options={Object.keys(LANGUAGE_SETS).map((k) => ({ value: k, label: t(`venue.general.languageSets.${k}`) }))}
+            options={Object.keys(LANGUAGE_SETS).map((k) => ({
+              value: k,
+              label: t(`venue.general.languageSets.${k}`),
+            }))}
           />
         )}
       />
@@ -108,10 +140,26 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
         <Field label={t('venue.general.autoCloseTime')} type="time" error={errors.autoCloseTime ? t('form.time') : undefined} {...form.register('autoCloseTime')} />
       </div>
       <p className="text-sm text-muted">{t('venue.general.nextDayNote')}</p>
-      {venue.pendingFromDate && <Banner tone="info">{t('venue.general.pending', { date: venue.pendingFromDate, reset: venue.pendingResetTime ?? venue.resetTime, close: venue.pendingAutoCloseTime ?? venue.autoCloseTime })}</Banner>}
-      {venue.pendingFromDate && venue.pendingTimeZone && <Banner tone="info">{t('venue.general.pendingZone', { date: venue.pendingFromDate, zone: venue.pendingTimeZone, current: venue.timeZone })}</Banner>}
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 font-medium">{t('venue.general.address')}</legend>
+      {venue.pendingFromDate && (
+        <Banner tone="info">
+          {t('venue.general.pending', {
+            date: venue.pendingFromDate,
+            reset: venue.pendingResetTime ?? venue.resetTime,
+            close: venue.pendingAutoCloseTime ?? venue.autoCloseTime,
+          })}
+        </Banner>
+      )}
+      {venue.pendingFromDate && venue.pendingTimeZone && (
+        <Banner tone="info">
+          {t('venue.general.pendingZone', {
+            date: venue.pendingFromDate,
+            zone: venue.pendingTimeZone,
+            current: venue.timeZone,
+          })}
+        </Banner>
+      )}
+      <fieldset className="mt-2 flex flex-col gap-3 border-t border-line pt-5">
+        <legend className="float-start mb-1 w-full font-display text-base font-bold">{t('venue.general.address')}</legend>
         <Field label={t('venue.general.addressLine1')} autoComplete="address-line1" {...form.register('address.line1')} />
         <Field label={t('venue.general.addressLine2')} autoComplete="address-line2" {...form.register('address.line2')} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -120,7 +168,11 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
           <Field label={t('venue.general.postcode')} autoComplete="postal-code" dir="ltr" {...form.register('address.postcode')} />
           <Field label={t('venue.general.country')} autoComplete="country-name" {...form.register('address.country')} />
         </div>
-        {errors.address && <p role="alert" className="text-sm text-danger">{t('venue.general.addressTooLong')}</p>}
+        {errors.address && (
+          <p role="alert" className="text-sm text-danger">
+            {t('venue.general.addressTooLong')}
+          </p>
+        )}
       </fieldset>
       {error && <Banner tone="danger">{error}</Banner>}
       <div>

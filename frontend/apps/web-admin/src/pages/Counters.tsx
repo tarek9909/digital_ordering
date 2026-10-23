@@ -1,11 +1,11 @@
 import { counterCreateBody, type VenueSettings } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Field, LiveRegion, Modal } from '@dop/ui';
+import { Button, EmptyState, Field, LiveRegion, Modal, PageShell, useFlip } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, Table, Td } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, Table, Td, usePageEyebrow } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, isCode } from '../lib/errors';
 import type { Counter, VenueAdmin } from '../lib/types';
@@ -53,12 +53,18 @@ function useServerError(form: UseFormReturn<CounterFormValues>) {
 function AddCounter({ venueId, nextOrder }: { venueId: string; nextOrder: number }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const form = useForm<CounterFormValues>({ resolver: zodResolver(counterForm), defaultValues: { name: '', prefix: null } });
+  const form = useForm<CounterFormValues>({
+    resolver: zodResolver(counterForm),
+    defaultValues: { name: '', prefix: null },
+  });
   const { error, setError, handle } = useServerError(form);
   const submit = form.handleSubmit(async (body) => {
     setError(null);
     try {
-      await api.post(`/venues/${venueId}/counters`, { ...body, sortOrder: nextOrder });
+      await api.post(`/venues/${venueId}/counters`, {
+        ...body,
+        sortOrder: nextOrder,
+      });
       form.reset({ name: '', prefix: null });
       await qc.invalidateQueries({ queryKey: countersKey(venueId) });
     } catch (e) {
@@ -68,7 +74,7 @@ function AddCounter({ venueId, nextOrder }: { venueId: string; nextOrder: number
   return (
     <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
       <CounterFields form={form} />
-      <div className="pt-7">
+      <div className="sm:pt-7">
         <Button type="submit" busy={form.formState.isSubmitting}>
           {t('counters.add')}
         </Button>
@@ -86,12 +92,18 @@ function EditCounter({ counter, venueId }: { counter: Counter; venueId: string }
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const form = useForm<CounterFormValues>({ resolver: zodResolver(counterForm), defaultValues: { name: counter.name, prefix: counter.prefix } });
+  const form = useForm<CounterFormValues>({
+    resolver: zodResolver(counterForm),
+    defaultValues: { name: counter.name, prefix: counter.prefix },
+  });
   const { error, setError, handle } = useServerError(form);
   const submit = form.handleSubmit(async (body) => {
     setError(null);
     try {
-      await api.patch(`/counters/${counter.id}`, { name: body.name, prefix: body.prefix ?? null });
+      await api.patch(`/counters/${counter.id}`, {
+        name: body.name,
+        prefix: body.prefix ?? null,
+      });
       await qc.invalidateQueries({ queryKey: countersKey(venueId) });
       setOpen(false);
     } catch (e) {
@@ -134,7 +146,10 @@ function PrefixSwitch({ venue }: { venue: VenueAdmin }) {
   const qc = useQueryClient();
   const save = useMutation({
     mutationFn: (on: boolean) => {
-      const s: VenueSettings = { ...venue.settings, numbering: { ...venue.settings.numbering, prefixesEnabled: on } };
+      const s: VenueSettings = {
+        ...venue.settings,
+        numbering: { ...venue.settings.numbering, prefixesEnabled: on },
+      };
       return api.put<VenueAdmin>(`/venues/${venue.id}/settings`, s);
     },
     onSuccess: (v) => qc.setQueryData(venueKey(venue.id), v),
@@ -165,7 +180,10 @@ export function CountersPage() {
     enabled: Boolean(venueId),
   });
   const refresh = () => qc.invalidateQueries({ queryKey: countersKey(venueId ?? '') });
-  const archive = useMutation({ mutationFn: (id: string) => api.post(`/counters/${id}/archive`), onSuccess: refresh });
+  const archive = useMutation({
+    mutationFn: (id: string) => api.post(`/counters/${id}/archive`),
+    onSuccess: refresh,
+  });
   // Reorder: swap two neighbours and renumber the list in steps of 10.
   const move = useMutation({
     mutationFn: async ({ list, from, to }: { list: Counter[]; from: number; to: number }) => {
@@ -177,66 +195,95 @@ export function CountersPage() {
     },
     onSettled: refresh,
   });
-  if (!venueId) return null;
+  const eyebrow = usePageEyebrow('venue');
   const active = (q.data ?? []).filter((c) => !c.archived);
+  // Reordered rows glide to their new place (FLIP); reduced motion skips it.
+  const list = useRef<HTMLTableSectionElement>(null);
+  useFlip(list, [active.map((c) => c.id).join()]);
+  if (!venueId) return null;
 
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.counters')}</h1>
+    <PageShell eyebrow={eyebrow} title={t('nav.counters')} description={t('counters.description')}>
       <Section title={t('counters.addTitle')} description={t('counters.addHint')}>
         <AddCounter venueId={venueId} nextOrder={active.length * 10} />
       </Section>
       <Section title={t('counters.prefixesTitle')} description={t('counters.prefixesHint')}>
         <QueryView q={venue}>{(v) => <PrefixSwitch venue={v} />}</QueryView>
       </Section>
-      <ErrorNote error={archive.error ?? move.error} />
-      <QueryView q={q}>
+      <div className="mb-3 empty:hidden">
+        <ErrorNote error={archive.error ?? move.error} />
+      </div>
+      <QueryView q={q} skeleton="table">
         {() =>
           active.length === 0 ? (
-            <p className="text-muted">{t('counters.none')}</p>
+            <EmptyState title={t('counters.none')}>{t('counters.noneBody')}</EmptyState>
           ) : (
-            <Table caption={t('nav.counters')} head={[t('counters.order'), t('counters.name'), t('counters.prefix'), '']}>
-              {active.map((c, i) => (
-                <tr key={c.id}>
-                  <Td className="num">{i + 1}</Td>
-                  <Td className="font-medium">{c.name}</Td>
-                  <Td>
-                    <span dir="ltr" className="font-mono">
-                      {c.prefix ?? '—'}
-                    </span>
-                  </Td>
-                  <Td>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="secondary" aria-label={t('counters.moveUp', { name: c.name })} disabled={i === 0 || move.isPending} onClick={() => move.mutate({ list: active, from: i, to: i - 1 })}>
-                        <span aria-hidden="true">↑</span>
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        aria-label={t('counters.moveDown', { name: c.name })}
-                        disabled={i === active.length - 1 || move.isPending}
-                        onClick={() => move.mutate({ list: active, from: i, to: i + 1 })}
-                      >
-                        <span aria-hidden="true">↓</span>
-                      </Button>
-                      <EditCounter counter={c} venueId={venueId} />
-                      <ConfirmButton
-                        label={t('counters.archive')}
-                        title={t('counters.archiveTitle', { name: c.name })}
-                        description={t('counters.archiveBody')}
-                        confirmLabel={t('counters.archive')}
-                        variant="danger"
-                        busy={archive.isPending && archive.variables === c.id}
-                        onConfirm={() => archive.mutateAsync(c.id).catch(() => undefined)}
-                      />
-                    </div>
-                  </Td>
-                </tr>
-              ))}
+            <Table raised bodyRef={list} caption={t('nav.counters')} head={[t('counters.order'), t('counters.name'), t('counters.prefix'), '']}>
+              <CounterRows active={active} venueId={venueId} move={move} archive={archive} />
             </Table>
           )
         }
       </QueryView>
       <LiveRegion text={archive.isSuccess ? t('counters.archived') : ''} />
+    </PageShell>
+  );
+}
+
+type MoveMutation = {
+  isPending: boolean;
+  mutate: (v: { list: Counter[]; from: number; to: number }) => void;
+};
+type ArchiveMutation = {
+  isPending: boolean;
+  variables: string | undefined;
+  mutateAsync: (id: string) => Promise<unknown>;
+};
+
+/** Rows carry data-flip-id so a reorder glides inside the table body. */
+function CounterRows({ active, venueId, move, archive }: { active: Counter[]; venueId: string; move: MoveMutation; archive: ArchiveMutation }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {active.map((c, i) => (
+        <tr key={c.id} data-flip-id={c.id}>
+          <Td className="num w-16 font-display text-base font-bold text-muted">{i + 1}</Td>
+          <Td className="font-semibold">{c.name}</Td>
+          <Td>
+            {c.prefix ? (
+              <span dir="ltr" className="inline-grid min-w-9 place-items-center rounded-input bg-canvas px-2 py-1 font-mono text-sm font-semibold ring-1 ring-line">
+                {c.prefix}
+              </span>
+            ) : (
+              <span className="text-muted">—</span>
+            )}
+          </Td>
+          <Td>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="ghost" aria-label={t('counters.moveUp', { name: c.name })} disabled={i === 0 || move.isPending} onClick={() => move.mutate({ list: active, from: i, to: i - 1 })}>
+                <span aria-hidden="true">↑</span>
+              </Button>
+              <Button
+                variant="ghost"
+                aria-label={t('counters.moveDown', { name: c.name })}
+                disabled={i === active.length - 1 || move.isPending}
+                onClick={() => move.mutate({ list: active, from: i, to: i + 1 })}
+              >
+                <span aria-hidden="true">↓</span>
+              </Button>
+              <EditCounter counter={c} venueId={venueId} />
+              <ConfirmButton
+                label={t('counters.archive')}
+                title={t('counters.archiveTitle', { name: c.name })}
+                description={t('counters.archiveBody')}
+                confirmLabel={t('counters.archive')}
+                variant="danger"
+                busy={archive.isPending && archive.variables === c.id}
+                onConfirm={() => archive.mutateAsync(c.id).catch(() => undefined)}
+              />
+            </div>
+          </Td>
+        </tr>
+      ))}
     </>
   );
 }

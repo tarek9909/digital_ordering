@@ -1,12 +1,12 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { displayCreateBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, Field, LiveRegion, Modal } from '@dop/ui';
+import { Banner, Button, Card, EmptyState, Field, LiveRegion, Modal, PageShell } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, StatusPill } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, StatusPill, usePageEyebrow } from '../components/common';
 import { api } from '../lib/api';
 import { MAX_ANNOUNCE_LANGUAGES, MAX_QUIET_HOURS, displayToForm, validateDisplayForm, type DisplayForm, type DisplayFormField } from '../lib/displayForm';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -32,23 +32,23 @@ function PairingCodeView({ code, onNew, busy }: { code: PairingCode; onNew: () =
   const { t } = useTranslation();
   const left = useCountdown(code.expiresAt);
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border-2 border-primary p-4 text-center">
-      <p>{t('displays.pairingIntro')}</p>
+    <div className="ember-glow flex flex-col items-center gap-3 rounded-[var(--radius-card)] bg-ink p-5 text-center text-white">
+      <p className="text-white/80">{t('displays.pairingIntro')}</p>
       {left > 0 ? (
         <>
-          <p className="num text-6xl font-black tracking-[0.3em]" aria-label={code.code.split('').join(' ')}>
+          <p data-motion="pop" dir="ltr" className="num font-display text-6xl font-extrabold tracking-[0.3em] text-glow" aria-label={code.code.split('').join(' ')}>
             {code.code}
           </p>
-          <p className="text-muted">
+          <p className="text-white/70">
             {t('displays.expiresIn')} <span className="num font-semibold">{formatDuration(left)}</span>
           </p>
         </>
       ) : (
-        <p role="status" className="font-semibold text-danger">
+        <p role="status" className="font-semibold text-white">
           {t('displays.codeExpired')}
         </p>
       )}
-      <Button variant="secondary" busy={busy} onClick={onNew}>
+      <Button variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20" busy={busy} onClick={onNew}>
         {t('displays.newCode')}
       </Button>
     </div>
@@ -59,7 +59,10 @@ function RenameDialog({ display, venueId }: { display: DisplayItem; venueId: str
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const form = useForm({ resolver: zodResolver(nameSchema), defaultValues: { name: display.name } });
+  const form = useForm({
+    resolver: zodResolver(nameSchema),
+    defaultValues: { name: display.name },
+  });
   const submit = form.handleSubmit(async ({ name }) => {
     try {
       await api.patch(`/displays/${display.id}`, { name });
@@ -145,9 +148,13 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
         {t('displays.settings')}
       </Button>
       <Modal open={open} onOpenChange={setOpen} title={t('displays.settingsTitle', { name: display.name })}>
-        <form onSubmit={submit} className="flex max-h-[70dvh] flex-col gap-5 overflow-y-auto pe-1" noValidate>
+        <form
+          onSubmit={submit}
+          className="flex max-h-[70dvh] flex-col gap-5 overflow-y-auto pe-1 [&>fieldset+fieldset]:border-t [&>fieldset+fieldset]:border-line [&>fieldset+fieldset]:pt-5"
+          noValidate
+        >
           <fieldset className="flex flex-col gap-1">
-            <legend className="mb-1 font-semibold">{t('displays.counterFilter')}</legend>
+            <legend className="mb-1 font-display text-base font-bold">{t('displays.counterFilter')}</legend>
             <Checkbox label={t('displays.allCounters')} checked={f.allCounters} onChange={(e) => patch({ allCounters: e.target.checked })} />
             {!f.allCounters &&
               (active.length === 0 ? (
@@ -158,7 +165,11 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
                     key={c.id}
                     label={c.prefix ? `${c.name} (${c.prefix})` : c.name}
                     checked={f.counterIds.includes(c.id)}
-                    onChange={(e) => patch({ counterIds: toggle(f.counterIds, c.id, e.target.checked) })}
+                    onChange={(e) =>
+                      patch({
+                        counterIds: toggle(f.counterIds, c.id, e.target.checked),
+                      })
+                    }
                   />
                 ))
               ))}
@@ -166,7 +177,7 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
           </fieldset>
 
           <fieldset className="flex flex-col gap-1">
-            <legend className="mb-1 font-semibold">{t('displays.announce')}</legend>
+            <legend className="mb-1 font-display text-base font-bold">{t('displays.announce')}</legend>
             <Checkbox label={t('displays.announceEnabled')} checked={f.announceEnabled} onChange={(e) => patch({ announceEnabled: e.target.checked })} />
             <p className="text-sm text-muted">{t('displays.languagesHint', { max: MAX_ANNOUNCE_LANGUAGES })}</p>
             {locales.map((l) => (
@@ -182,7 +193,7 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 font-semibold">{t('displays.quietHours')}</legend>
+            <legend className="mb-1 font-display text-base font-bold">{t('displays.quietHours')}</legend>
             <p className="text-sm text-muted">{t('displays.quietHoursHint')}</p>
             {f.quietHours.map((q, i) => (
               <div key={i} className="flex flex-wrap items-end gap-3">
@@ -191,23 +202,47 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
                   type="time"
                   dir="ltr"
                   value={q.from}
-                  onChange={(e) => patch({ quietHours: f.quietHours.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)) })}
+                  onChange={(e) =>
+                    patch({
+                      quietHours: f.quietHours.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)),
+                    })
+                  }
                 />
                 <Field
                   label={t('displays.quietTo', { n: i + 1 })}
                   type="time"
                   dir="ltr"
                   value={q.to}
-                  onChange={(e) => patch({ quietHours: f.quietHours.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)) })}
+                  onChange={(e) =>
+                    patch({
+                      quietHours: f.quietHours.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)),
+                    })
+                  }
                 />
-                <Button type="button" variant="secondary" onClick={() => patch({ quietHours: f.quietHours.filter((_, j) => j !== i) })}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    patch({
+                      quietHours: f.quietHours.filter((_, j) => j !== i),
+                    })
+                  }
+                >
                   {t('displays.quietRemove')}
                 </Button>
               </div>
             ))}
             {f.quietHours.length < MAX_QUIET_HOURS && (
               <div>
-                <Button type="button" variant="secondary" onClick={() => patch({ quietHours: [...f.quietHours, { from: '22:00', to: '06:00' }] })}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    patch({
+                      quietHours: [...f.quietHours, { from: '22:00', to: '06:00' }],
+                    })
+                  }
+                >
                   {t('displays.quietAdd')}
                 </Button>
               </div>
@@ -216,7 +251,7 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 font-semibold">{t('displays.promo')}</legend>
+            <legend className="mb-1 font-display text-base font-bold">{t('displays.promo')}</legend>
             <p className="text-sm text-muted">{t('displays.promoHint')}</p>
             <Checkbox label={t('displays.promoEnabled')} checked={f.promoEnabled} onChange={(e) => patch({ promoEnabled: e.target.checked })} />
             {f.promoEnabled && (
@@ -224,12 +259,18 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
                 {Object.keys(f.promoText).map((l) => (
                   <Field
                     key={l}
-                    label={t('displays.promoText', { language: t(`languages.${l}`, { defaultValue: l }) })}
+                    label={t('displays.promoText', {
+                      language: t(`languages.${l}`, { defaultValue: l }),
+                    })}
                     lang={l}
                     dir={l === 'ar' ? 'rtl' : 'ltr'}
                     maxLength={280}
                     value={f.promoText[l] ?? ''}
-                    onChange={(e) => patch({ promoText: { ...f.promoText, [l]: e.target.value } })}
+                    onChange={(e) =>
+                      patch({
+                        promoText: { ...f.promoText, [l]: e.target.value },
+                      })
+                    }
                   />
                 ))}
                 {fieldError('promoText')}
@@ -267,29 +308,50 @@ function DisplayCard({ d, venueId }: { d: DisplayItem; venueId: string }) {
   const qc = useQueryClient();
   const [code, setCode] = useState<PairingCode | null>(null);
   const support = useRole() === 'support';
-  const pairing = useMutation({ mutationFn: () => api.post<PairingCode>(`/displays/${d.id}/pairing-code`), onSuccess: setCode });
-  const remove = useMutation({ mutationFn: () => api.delete(`/displays/${d.id}`), onSuccess: () => qc.invalidateQueries({ queryKey: displaysKey(venueId) }) });
+  const pairing = useMutation({
+    mutationFn: () => api.post<PairingCode>(`/displays/${d.id}/pairing-code`),
+    onSuccess: setCode,
+  });
+  const remove = useMutation({
+    mutationFn: () => api.delete(`/displays/${d.id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: displaysKey(venueId) }),
+  });
   return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-lg font-bold">{d.name}</h3>
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-input bg-canvas ring-1 ring-line">
+            <span className="h-4 w-6 rounded-[3px] border-2 border-ink-2" />
+          </span>
+          <h2 className="truncate text-lg font-bold">{d.name}</h2>
+        </div>
         <div className="flex flex-wrap gap-2">
           {d.paired ? (
-            d.online ? <StatusPill tone="ok">{t('displays.online')}</StatusPill> : <StatusPill tone="danger">{t('displays.offline')}</StatusPill>
+            d.online ? (
+              <StatusPill tone="ok">{t('displays.online')}</StatusPill>
+            ) : (
+              <StatusPill tone="danger">{t('displays.offline')}</StatusPill>
+            )
           ) : (
-            <StatusPill tone="info">{t('displays.notPaired')}</StatusPill>
+            <StatusPill tone="neutral">{t('displays.notPaired')}</StatusPill>
           )}
           {d.paired && !d.soundEnabled && <StatusPill tone="warn">{t('displays.soundOff')}</StatusPill>}
         </div>
       </div>
       {d.paired && !d.soundEnabled && <Banner tone="warn">{t('displays.soundOffHelp')}</Banner>}
-      {d.lastSeenAt && <p className="text-sm text-muted">{t('displays.lastSeen', { date: formatDateTime(d.lastSeenAt, i18n.language) })}</p>}
+      {d.lastSeenAt && (
+        <p className="text-sm text-muted">
+          {t('displays.lastSeen', {
+            date: formatDateTime(d.lastSeenAt, i18n.language),
+          })}
+        </p>
+      )}
       {code && <PairingCodeView code={code} busy={pairing.isPending} onNew={() => pairing.mutate()} />}
       <ErrorNote error={pairing.error ?? remove.error} />
       <div className="flex flex-wrap gap-2">
         {/* Pairing creates a long-lived display session: not available to a support session (M-13). */}
         {!code && !support && (
-          <Button busy={pairing.isPending} onClick={() => pairing.mutate()}>
+          <Button variant="ink" busy={pairing.isPending} onClick={() => pairing.mutate()}>
             {d.paired ? t('displays.repair') : t('displays.pair')}
           </Button>
         )}
@@ -312,7 +374,10 @@ function DisplayCard({ d, venueId }: { d: DisplayItem; venueId: string }) {
 function CreateDisplay({ venueId }: { venueId: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const form = useForm({ resolver: zodResolver(nameSchema), defaultValues: { name: '' } });
+  const form = useForm({
+    resolver: zodResolver(nameSchema),
+    defaultValues: { name: '' },
+  });
   const submit = form.handleSubmit(async ({ name }) => {
     try {
       await api.post(`/venues/${venueId}/displays`, { name });
@@ -323,11 +388,19 @@ function CreateDisplay({ venueId }: { venueId: string }) {
     }
   });
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-end gap-3" noValidate>
-      <Field className="min-w-60 flex-1" label={t('displays.name')} placeholder={t('displays.namePlaceholder')} error={form.formState.errors.name ? t('form.required') : undefined} {...form.register('name')} />
-      <Button type="submit" busy={form.formState.isSubmitting}>
-        {t('displays.add')}
-      </Button>
+    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
+      <Field
+        className="min-w-60 flex-1"
+        label={t('displays.name')}
+        placeholder={t('displays.namePlaceholder')}
+        error={form.formState.errors.name ? t('form.required') : undefined}
+        {...form.register('name')}
+      />
+      <div className="sm:pt-7">
+        <Button type="submit" busy={form.formState.isSubmitting}>
+          {t('displays.add')}
+        </Button>
+      </div>
       {form.formState.errors.root && (
         <div className="w-full">
           <Banner tone="danger">{form.formState.errors.root.message}</Banner>
@@ -348,21 +421,21 @@ export function DisplaysPage() {
     enabled: Boolean(venueId),
     refetchInterval: 30_000,
   });
+  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.displays')}</h1>
+    <PageShell eyebrow={eyebrow} title={t('nav.displays')} description={t('displays.description')}>
       {role !== 'support' && (
         <Section title={t('displays.addTitle')} description={t('displays.addHint')}>
           <CreateDisplay venueId={venueId} />
         </Section>
       )}
-      <QueryView q={q}>
+      <QueryView q={q} skeleton="cards">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-muted">{t('displays.none')}</p>
+            <EmptyState title={t('displays.none')}>{t('displays.noneBody')}</EmptyState>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div data-motion="stagger" className="grid gap-4 md:grid-cols-2">
               {items.map((d) => (
                 <DisplayCard key={d.id} d={d} venueId={venueId} />
               ))}
@@ -370,6 +443,6 @@ export function DisplaysPage() {
           )
         }
       </QueryView>
-    </>
+    </PageShell>
   );
 }

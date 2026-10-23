@@ -2,7 +2,7 @@ import { useTranslation } from '@dop/i18n';
 import { Banner, LiveRegion } from '@dop/ui';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Loading } from '../components/common';
+import { Loading, textLinkClass } from '../components/common';
 import { authApi } from '../lib/api';
 import { errorText } from '../lib/errors';
 import type { SignInResponse } from '../lib/types';
@@ -27,7 +27,9 @@ export function HandoffPage() {
     }
     (async () => {
       try {
-        const r = await authApi.post<SignInResponse>('/handoff/exchange', { code });
+        const r = await authApi.post<SignInResponse>('/handoff/exchange', {
+          code,
+        });
         if (r.mfaRequired && r.mfaToken) return setMfaToken(r.mfaToken);
         if (!(await finish())) setError(t('signIn.notMember'));
       } catch (e) {
@@ -43,7 +45,7 @@ export function HandoffPage() {
       ) : error ? (
         <div className="flex flex-col gap-4">
           <Banner tone="danger">{error}</Banner>
-          <Link to="/sign-in" className="inline-flex min-h-12 items-center text-primary underline">
+          <Link to="/sign-in" className={textLinkClass}>
             {t('handoff.signInInstead')}
           </Link>
         </div>
