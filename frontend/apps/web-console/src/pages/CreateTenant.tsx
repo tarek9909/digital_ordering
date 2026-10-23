@@ -110,7 +110,8 @@ export function CreateTenantPage() {
 
   return (
     <PageShell wide eyebrow={t('layout.groups.tenants')} title={t('create.title')} description={t('create.description')}>
-      <form onSubmit={submit} noValidate className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      {/* The summary moves beside the steps only on xl: next to the sidebar on lg it would leave the form ~18rem. */}
+      <form onSubmit={submit} noValidate className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex flex-col gap-5">
           <ErrorNote error={error} />
           <Step n={1} title={t('createUx.restaurant')} hint={t('createUx.restaurantHint')}>
@@ -217,7 +218,7 @@ export function CreateTenantPage() {
           </Step>
         </div>
 
-        <aside aria-labelledby="summary-h" className="flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-5 shadow-card lg:sticky lg:top-6">
+        <aside aria-labelledby="summary-h" className="flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-5 shadow-card xl:sticky xl:top-6">
           <h2 id="summary-h" className="eyebrow">
             {t('createUx.summary')}
           </h2>
@@ -249,7 +250,7 @@ function Step({ n, title, hint, children }: { n: number; title: string; hint: st
       <legend className="sr-only">{title}</legend>
       <div className="flex items-start gap-3" aria-hidden="true">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">{n}</span>
-        <span className="flex flex-col">
+        <span className="flex min-w-0 flex-col">
           <span className="font-display text-lg font-bold">{title}</span>
           <span className="text-sm text-muted">{hint}</span>
         </span>
@@ -262,6 +263,6 @@ function Step({ n, title, hint, children }: { n: number; title: string; hint: st
 const SummaryStep = ({ children }: { children: ReactNode }) => (
   <li className="flex gap-3">
     <span aria-hidden="true" className="mt-1.5 size-1.5 shrink-0 rounded-full bg-ink" />
-    <span className="text-ink-2">{children}</span>
+    <span className="min-w-0 break-words text-ink-2">{children}</span>
   </li>
 );

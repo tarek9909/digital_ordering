@@ -174,16 +174,14 @@ describe('announcements', () => {
 });
 
 describe('roles', () => {
-  it('owner-only integrations; support sees billing and integrations read-only', () => {
-    expect(canReach('integrations', 'active', 'manager')).toBe(false);
-    expect(canReach('integrations', 'active', 'owner')).toBe(true);
-    expect(canReach('integrations', 'active', 'support')).toBe(true);
-    expect(canManage('integrations', 'support')).toBe(false);
+  it('owner-only billing; support sees billing read-only and never team', () => {
+    expect(canReach('billing', 'active', 'manager')).toBe(false);
+    expect(canReach('billing', 'active', 'owner')).toBe(true);
+    expect(canReach('billing', 'active', 'support')).toBe(true);
     expect(canManage('billing', 'support')).toBe(false);
     expect(canManage('venue', 'support')).toBe(true);
     expect(canReach('team', 'active', 'support')).toBe(false);
-    expect(canReach('support', 'active', 'support')).toBe(false);
-    expect(canReach('support', 'suspended', 'manager')).toBe(true);
+    expect(canReach('team', 'suspended', 'manager')).toBe(true);
   });
   it('support mode flag survives blocked storage', () => {
     const s = memory();

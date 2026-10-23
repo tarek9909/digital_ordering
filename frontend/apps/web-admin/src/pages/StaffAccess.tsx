@@ -1,13 +1,13 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { staffPinBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, EmptyState, Field, LiveRegion } from '@dop/ui';
+import { Banner, Button, EmptyState, Field, LiveRegion, Modal } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ConfirmButton, CopyButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
+import { ConfirmButton, CopyButton, DialogActions, ErrorNote, TabPanel, QueryView, Section, SectionTabs, StatusPill, Table, Td } from '../components/common';
 import { StaffMembers } from '../components/StaffMembers';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -15,7 +15,7 @@ import type { Device, StaffAccess } from '../lib/types';
 import { useRole } from '../lib/me';
 import { useCurrentVenueId } from '../lib/venue';
 
-function PinForm({ venueId }: { venueId: string }) {
+function PinForm({ venueId, onDone }: { venueId: string; onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,6 @@ function PinForm({ venueId }: { venueId: string }) {
   const save = useMutation({
     mutationFn: (pin: string) => api.put(`/venues/${venueId}/staff-access/pin`, { pin }),
     onSuccess: () => {
-      form.reset({ pin: '' });
       void qc.invalidateQueries({ queryKey: ['staff-access', venueId] });
       void qc.invalidateQueries({ queryKey: ['devices', venueId] });
       void qc.invalidateQueries({ queryKey: ['onboarding'] });
@@ -37,13 +36,14 @@ function PinForm({ venueId }: { venueId: string }) {
     setError(null);
     try {
       await save.mutateAsync(pin);
+      onDone();
     } catch (e) {
       if (!applyFieldErrors(e, form.setError, ['pin'])) setError(errorText(t, e));
     }
   });
   const pinError = errors.pin ? (errors.pin.type === 'server' && errors.pin.message === 'weak' ? t('staff.pinWeak') : t('staff.pinFormat')) : undefined;
   return (
-    <form onSubmit={submit} className="flex max-w-sm flex-col gap-3" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <Field
         label={t('staff.newPin')}
         inputMode="numeric"
@@ -56,13 +56,24 @@ function PinForm({ venueId }: { venueId: string }) {
         {...form.register('pin')}
       />
       {error && <Banner tone="danger">{error}</Banner>}
-      <div>
-        <Button type="submit" variant="ink" busy={isSubmitting}>
-          {t('staff.changePin')}
-        </Button>
-      </div>
-      <LiveRegion text={save.isSuccess ? t('staff.pinChanged') : ''} />
+      <DialogActions onCancel={onDone} submitLabel={t('staff.changePin')} busy={isSubmitting} variant="ink" />
     </form>
+  );
+}
+
+/** The PIN is changed from a pop-up beside the link, so the page has one block fewer. */
+function PinDialog({ venueId }: { venueId: string }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {t('staff.changePin')}
+      </Button>
+      <Modal open={open} onOpenChange={setOpen} title={t('staff.pinTitle')} description={t('staff.pinSignsOut')}>
+        <PinForm venueId={venueId} onDone={() => setOpen(false)} />
+      </Modal>
+    </>
   );
 }
 
@@ -137,13 +148,20 @@ export function StaffAccessPage() {
   });
   if (!venueId) return null;
   return (
-    <Page title={t('nav.staff')} description={t('staff.description')}>
+    <TabPanel description={t('staff.description')}>
       {support ? (
         <div className="mb-5">
           <Banner tone="info">{t('staff.supportNoCredentials')}</Banner>
         </div>
-      ) : (
-        <>
+      ) : null}
+      <SectionTabs
+        label={t('staff.description')}
+        idPrefix="staff"
+        sections={[
+          !support && {
+            key: 'link',
+            label: t('staff.linkTitle'),
+            node: (
           <Section title={t('staff.linkTitle')} description={t('staff.linkHint')}>
             <QueryView q={q}>
               {(s) => (
@@ -158,6 +176,7 @@ export function StaffAccessPage() {
                     </code>
                     <div className="flex flex-wrap gap-2">
                       <CopyButton text={s.link} label={t('staff.copy')} variant="primary" />
+                      <PinDialog venueId={venueId} />
                       <ConfirmButton
                         label={t('staff.rotate')}
                         title={t('staff.rotateTitle')}
@@ -185,13 +204,12 @@ export function StaffAccessPage() {
               )}
             </QueryView>
           </Section>
-          <Section title={t('staff.pinTitle')} description={t('staff.pinSignsOut')}>
-            <PinForm venueId={venueId} />
-          </Section>
-        </>
-      )}
-      <Devices venueId={venueId} />
-      <StaffMembers venueId={venueId} />
-    </Page>
+            ),
+          },
+          { key: 'devices', label: t('staff.devices'), node: <Devices venueId={venueId} /> },
+          { key: 'members', label: t('staffMembers.title'), node: <StaffMembers venueId={venueId} /> },
+        ]}
+      />
+    </TabPanel>
   );
 }

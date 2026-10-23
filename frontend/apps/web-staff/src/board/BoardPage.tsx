@@ -1,9 +1,11 @@
 import type { CancelReason, StaffTicket } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, BrandMark, Button, LiveRegion, OfflineBar, Spinner, Toasts, useToasts } from '@dop/ui';
+import { Banner, BrandMark, Button, LiveRegion, OfflineBar, Spinner, Toasts, useToasts, useVenueFavicon } from '@dop/ui';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router';
 import { Notice } from '../components/Notice';
-import { errorText, isApiError } from '../lib/api';
+import { errorText, isApiError, venueId } from '../lib/api';
+import { storedStaffKey } from '../lib/lang';
 import { useNow } from '../lib/hooks';
 import { useOffline, useStaff } from '../lib/store';
 import { liveClaims } from '../lib/claims';
@@ -50,8 +52,11 @@ interface Qr {
   claimCode: string | null;
 }
 
+/** A signed-out device goes back to the PIN pad of the staff link it last used; otherwise it asks for the link. */
 export function SignedOut() {
   const { t } = useTranslation();
+  const staffKey = storedStaffKey();
+  if (staffKey) return <Navigate to={`/${staffKey}`} replace />;
   return <Notice title={t('signedOut.title')}>{t('signedOut.body')}</Notice>;
 }
 
@@ -60,7 +65,19 @@ export function BoardPage({ kitchen = false }: { kitchen?: boolean }) {
   const { t } = useTranslation();
   const query = useBoardQuery();
   const signedOut = useStaff((s) => s.signedOut);
-  const unauth = signedOut || isApiError(query.error, 'UNAUTHENTICATED');
+  // Without a device cookie an owner's own session can still answer, but it needs ?venueId=: that is signed out too.
+  const navigate = useNavigate();
+  const err = query.error;
+  // A refused board load (401/403/other 4xx) on a device that has signed in before means the session is gone: the PIN pad
+  // is the way back. Network failures and 5xx stay on the retry screen.
+  const refused = isApiError(err) && err.status >= 400 && err.status < 500 && storedStaffKey() !== '';
+  const unauth = signedOut || refused || isApiError(err, 'UNAUTHENTICATED') || (!venueId && isApiError(err, 'VALIDATION_FAILED'));
+  // "Try again" that still fails with anything but a dropped connection also lands on the PIN pad.
+  const retry = async () => {
+    const r = await query.refetch();
+    const key = storedStaffKey();
+    if (r.error && key && !(isApiError(r.error) && (r.error.status === 0 || r.error.status >= 500))) navigate(`/${key}`, { replace: true });
+  };
   useBoardSocket(Boolean(query.data) && !unauth);
 
   if (unauth) return <SignedOut />;
@@ -69,7 +86,7 @@ export function BoardPage({ kitchen = false }: { kitchen?: boolean }) {
     return (
       <Notice title={t('common:somethingWrong')}>
         <p className="mb-4">{errorText(t, query.error)}</p>
-        <Button onClick={() => void query.refetch()}>{t('common:retry')}</Button>
+        <Button onClick={() => void retry()}>{t('common:retry')}</Button>
       </Notice>
     );
   return (
@@ -108,6 +125,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
 
   const showReceived = showReceivedColumn(board.venue.settings);
   const columns = useMemo(() => toColumns(board.open, showReceived), [board.open, showReceived]);
+  useVenueFavicon(board.venue.logoUrl);
   // Recent uses the server's 30-minute window, so live closures age out as a reload would; the Collected total is
   // the server's business-date count kept live by applyTicket (W16, FR-STF-01/05).
   const recent = useMemo(() => pruneRecent(board.recent, now, closedSeenAt), [board.recent, now]);
@@ -178,7 +196,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
   if (kitchen) {
     // Kitchen mode (FR-STF-11): Preparing cards with one Ready action; the Undo bar is the only other control.
     return (
-      <div className="flex min-h-dvh flex-col bg-ink">
+      <div className="flex min-h-dvh flex-col bg-ink px-[max(env(safe-area-inset-left),env(safe-area-inset-right))]">
         {offline && <OfflineBar text={offlineText} />}
         {status === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
         <KitchenBoard
@@ -195,7 +213,7 @@ function Board({ board, forceKitchen }: { board: Board; forceKitchen: boolean })
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
+    <div className="flex min-h-dvh flex-col bg-canvas px-[max(env(safe-area-inset-left),env(safe-area-inset-right))]">
       {offline && <OfflineBar text={offlineText} />}
       {status === 'suspended' && (
         <div className="px-3 pt-3">

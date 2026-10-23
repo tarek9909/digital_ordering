@@ -1,13 +1,17 @@
 import { useTranslation } from '@dop/i18n';
-import { EmptyState, Pill } from '@dop/ui';
+import { formatDateTime } from '@dop/client-sdk';
+import { Button, EmptyState, Modal, Pill } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { Figures, LoadingShape, Page, QueryView, Section, Stat, Table, Td, linkClass } from '../components/common';
+import { Figures, LoadingShape, Page, QueryView, Section, linkClass } from '../components/common';
+import { LATE_MINUTES, PaceChart, PassLane, ServiceRing, Spark } from '../components/TodayCharts';
+import { daysUntil } from '../lib/access';
 import { api } from '../lib/api';
 import { formatDuration, pct } from '../lib/format';
+import { useMe, useTenant } from '../lib/me';
 import { useCurrentVenueId } from '../lib/venue';
-import type { Onboarding, OnboardingKey, Reach, TodayReport, WaitingTicket } from '../lib/types';
+import type { Onboarding, OnboardingKey, Reach, TodayReport, TrendsReport, WaitingTicket } from '../lib/types';
 
 const STEP_LINKS: Record<OnboardingKey, string> = {
   verify_email: '/account',
@@ -22,6 +26,55 @@ const STEP_LINKS: Record<OnboardingKey, string> = {
 
 /** Staff board link for owners and managers (FR-STF-17); the board is a separate app on the same host. */
 export const staffBoardUrl = (venueId: string | null) => `/staff${venueId ? `?venueId=${encodeURIComponent(venueId)}` : ''}`;
+
+/** A button that opens a notice in a pop-up, so set-up and plan notices stay out of the dashboard's way. */
+function NoticeDialog({ label, badge, title, description, children }: { label: string; badge?: string; title: string; description?: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {label}
+        {badge && <span className="num rounded-full bg-panel px-2 py-0.5 text-xs font-bold text-white">{badge}</span>}
+      </Button>
+      <Modal open={open} onOpenChange={setOpen} title={title} description={description}>
+        {children}
+      </Modal>
+    </>
+  );
+}
+
+/** The free trial: days left in a pop-up, with the way to billing for owners. Hidden for paid and complimentary accounts. */
+function TrialNotice() {
+  const { t, i18n } = useTranslation();
+  const tenant = useTenant().data;
+  const isOwner = useMe().data?.currentRole === 'owner';
+  if (!tenant || tenant.status !== 'trial' || tenant.complimentary || !tenant.trial_ends_at) return null;
+  const count = daysUntil(tenant.trial_ends_at);
+  return (
+    <NoticeDialog label={t('banners.trialButton', { count })} title={t('banners.trialTitle')}>
+      <div className="flex flex-col gap-4">
+        <p>{t('banners.trial', { count, date: formatDateTime(tenant.trial_ends_at, i18n.language) })}</p>
+        {isOwner && (
+          <div>
+            <Link className={linkClass('primary')} to="/billing">
+              {t('banners.goToBilling')}
+            </Link>
+          </div>
+        )}
+      </div>
+    </NoticeDialog>
+  );
+}
+
+/** Set-up and trial notices as a row of buttons; nothing shows when there is nothing to say. */
+function Notices() {
+  return (
+    <div className="mb-6 flex flex-wrap gap-3 empty:hidden">
+      <Checklist />
+      <TrialNotice />
+    </div>
+  );
+}
 
 /** "What to do next": the set-up steps with a progress track; the first open step is the one to do now. */
 function Checklist() {
@@ -42,7 +95,9 @@ function Checklist() {
         const done = o.steps.filter((s) => s.done).length;
         const next = o.steps.find((s) => !s.done)?.key;
         return (
-          <Section
+          <NoticeDialog
+            label={t('onboarding.title')}
+            badge={`${done}/${o.steps.length}`}
             title={t('onboarding.title')}
             description={t('onboarding.progress', {
               done,
@@ -65,7 +120,7 @@ function Checklist() {
                     <span className="flex min-w-0 items-center gap-3">
                       <span
                         aria-hidden="true"
-                        className={`grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold ${s.done ? 'bg-ok-bg text-ok' : isNext ? 'bg-ink text-white' : 'border border-line text-muted'}`}
+                        className={`grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold ${s.done ? 'bg-ok-bg text-ok' : isNext ? 'bg-panel text-white' : 'border border-line text-muted'}`}
                       >
                         {s.done ? '✓' : i + 1}
                       </span>
@@ -87,7 +142,7 @@ function Checklist() {
                 );
               })}
             </ol>
-          </Section>
+          </NoticeDialog>
         );
       }}
     </QueryView>
@@ -130,98 +185,136 @@ function ReachBar({ reach }: { reach: Reach }) {
   );
 }
 
-/**
- * The live board first, then (optionally) what to do next, then how alerts reached customers beside the orders
- * waiting longest. Open orders lead the board as the page's one ember figure.
- */
-export function TodayStats({ r, next }: { r: TodayReport; next?: ReactNode }) {
+type Tone = 'ok' | 'warn' | 'flat';
+interface Compare {
+  text: string;
+  tone: Tone;
+}
+
+const dayBefore = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10);
+
+/** Today's figures against the same day last week, from the daily roll-ups. */
+function useWeekComparison(venueId: string, date: string) {
+  return useQuery({
+    queryKey: ['today-trends', venueId, date],
+    queryFn: () => api.get<TrendsReport>('/reports/trends', { venueId, from: dayBefore(date, 8), to: date }),
+    refetchInterval: 300_000,
+  });
+}
+
+function Figure({ label, value, compare, spark }: { label: string; value: string; compare?: Compare; spark: number[] }) {
   const { t } = useTranslation();
-  const statuses = Object.entries(r.byStatus ?? {});
   return (
-    <>
-      <Figures className="mb-6 grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
-        <Stat
-          lead
-          className="col-span-2 lg:col-span-1 lg:row-span-2 lg:justify-between"
-          label={
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
-              {t('today.open')}
-            </span>
-          }
-          value={r.open}
-          hint={t('today.openHint')}
-        />
-        <Stat label={t('today.tickets')} value={r.tickets} />
-        <Stat label={t('today.prep')} value={formatDuration(r.prepSecondsP50)} hint={t('reports.prepNote')} />
-        <Stat className="col-span-2 lg:col-span-1" label={t('today.pickup')} value={formatDuration(r.pickupSecondsP50)} hint={t('reports.pickupNote')} />
-        <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-2 bg-surface px-5 py-4 lg:col-span-3">
-          <span className="eyebrow me-1">{t('today.byStatus')}</span>
-          {statuses.length > 0 ? (
-            <ul className="flex flex-wrap gap-2" aria-label={t('today.byStatus')}>
-              {statuses.map(([s, n]) => (
-                <li key={s}>
-                  <Pill tone="neutral">
-                    {t(`common:status.${s}`, { defaultValue: s })} <span className="num">{n}</span>
-                  </Pill>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <span className="text-sm text-muted">—</span>
-          )}
-        </div>
-      </Figures>
-      {next}
-      <div className="grid items-start gap-6 xl:grid-cols-2">
-        <Section className="m-0" title={t('today.reachTitle')} description={t('reports.wordingNote')}>
-          <ReachBar reach={r.alertReach} />
-          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-5">
-            <div className="flex flex-col gap-1">
-              <span className="eyebrow">{t('today.reachPct')}</span>
-              <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
-                {pct(r.reachPushOrLivePct)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="eyebrow">{t('today.ackPct')}</span>
-              <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
-                {pct(r.acknowledgedPct)}
-              </span>
-            </div>
-          </div>
-        </Section>
-        <LongestWaiting items={r.longestWaiting ?? []} />
+    <div className="@container flex min-w-0 flex-col gap-1.5 bg-surface p-4 sm:p-5">
+      <span className="text-sm text-muted">{label}</span>
+      <div className="flex items-end justify-between gap-2">
+        <span data-motion="count" className="num font-display text-[length:clamp(1.5rem,24cqi,1.875rem)] leading-tight font-bold tracking-tight">
+          {value}
+        </span>
+        <Spark values={spark} label={`${label}, ${t('today.vsLabel')}`} />
       </div>
-    </>
+      <span className={`text-sm font-medium ${compare?.tone === 'ok' ? 'text-ok' : compare?.tone === 'warn' ? 'text-warn' : 'text-muted'}`}>{compare?.text ?? t('today.vsNone')}</span>
+    </div>
   );
 }
 
-/** Open tickets waiting longest, oldest first (FR-RPT-01). Waiting time counts from ticket creation. */
-export function LongestWaiting({ items }: { items: WaitingTicket[] }) {
+/** Five figures with a seven-day line each and what changed since the same day last week. */
+function Comparison({ r, venueId }: { r: TodayReport; venueId: string }) {
   const { t } = useTranslation();
+  const q = useWeekComparison(venueId, r.businessDate);
+  const series = q.data?.series ?? [];
+  const lastWeek = series.find((s) => s.date === dayBefore(r.businessDate, 7));
+  const before = series.filter((s) => s.date < r.businessDate).slice(-6);
+  const arrow = (d: number) => (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '');
+  const count = (cur: number, prev: number | undefined): Compare | undefined => {
+    if (prev === undefined) return undefined;
+    const d = cur - prev;
+    return { tone: 'flat', text: d === 0 ? t('today.vsSame') : arrow(d) + t(d > 0 ? 'today.vsMore' : 'today.vsFewer', { n: Math.abs(d) }) };
+  };
+  const duration = (cur: number | null, prev: number | null | undefined): Compare | undefined => {
+    if (cur === null || prev === null || prev === undefined) return undefined;
+    const d = Math.round(cur - prev);
+    if (Math.abs(d) < 5) return { tone: 'flat', text: t('today.vsSame') };
+    return { tone: d < 0 ? 'ok' : 'warn', text: arrow(d) + t(d < 0 ? 'today.vsFaster' : 'today.vsSlower', { n: formatDuration(Math.abs(d)) }) };
+  };
+  const points = (cur: number | null, prev: number | null | undefined): Compare | undefined => {
+    if (cur === null || prev === null || prev === undefined) return undefined;
+    const d = cur - prev;
+    return { tone: d > 0 ? 'ok' : 'flat', text: d === 0 ? t('today.vsSame') : arrow(d) + t('today.vsPoints', { n: Math.abs(d) }) };
+  };
+  const line = (pick: (s: TrendsReport['series'][number]) => number | null, today: number | null) => [...before.map(pick), today].filter((v): v is number => v !== null);
   return (
-    <Section className="m-0" title={t('today.longestTitle')} description={t('today.longestNote')}>
-      {items.length === 0 ? (
-        <p className="text-muted">{t('today.longestEmpty')}</p>
-      ) : (
-        <Table caption={t('today.longestTitle')} head={[t('today.longestNumber'), t('today.longestStatus'), t('today.longestWaiting')]}>
-          {items.map((w) => (
-            <tr key={w.id}>
-              <Td>
-                <span dir="ltr" className="num font-display text-base font-bold">
-                  {w.displayNumber}
-                </span>
-              </Td>
-              <Td>
-                <span className={w.status === 'ready' ? 'font-semibold text-ok' : 'text-ink-2'}>{t(`common:status.${w.status}`, { defaultValue: w.status })}</span>
-              </Td>
-              <Td className="num font-semibold">{formatDuration(w.waitingSeconds)}</Td>
-            </tr>
-          ))}
-        </Table>
-      )}
-    </Section>
+    <Figures flat className="mb-6 grid-cols-2 lg:grid-cols-5" label={t('today.vsLabel')}>
+      <Figure label={t('today.tickets')} value={String(r.tickets)} compare={count(r.tickets, lastWeek?.tickets)} spark={line((s) => s.tickets, r.tickets)} />
+      <Figure label={t('today.prep')} value={formatDuration(r.prepSecondsP50)} compare={duration(r.prepSecondsP50, lastWeek?.prepSecondsP50)} spark={line((s) => s.prepSecondsP50, r.prepSecondsP50)} />
+      <Figure label={t('today.pickup')} value={formatDuration(r.pickupSecondsP50)} compare={duration(r.pickupSecondsP50, lastWeek?.pickupSecondsP50)} spark={line((s) => s.pickupSecondsP50, r.pickupSecondsP50)} />
+      <Figure label={t('today.reachPct')} value={pct(r.reachPushOrLivePct)} compare={points(r.reachPushOrLivePct, lastWeek?.reachPushOrLivePct)} spark={line((s) => s.reachPushOrLivePct, r.reachPushOrLivePct)} />
+      <Figure label={t('today.uncollected')} value={String(r.byStatus?.ready ?? 0)} spark={line((s) => s.uncollected, r.byStatus?.ready ?? 0)} />
+    </Figures>
+  );
+}
+
+/** Names the open tickets past the late line, worst first, with a way to find them on the board. */
+function LateBanner({ items, venueId }: { items: WaitingTicket[]; venueId: string | null }) {
+  const { t } = useTranslation();
+  const late = items.filter((w) => w.waitingSeconds > LATE_MINUTES * 60);
+  const worst = late[0];
+  if (!worst) return null;
+  return (
+    <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-input bg-danger-bg px-4 py-3 text-danger">
+      <p className="text-sm">
+        {t('today.passAlert', { number: worst.displayNumber, duration: formatDuration(worst.waitingSeconds) })}
+        {late.length > 1 && <> {t('today.passAlertMore', { count: late.length - 1, n: LATE_MINUTES })}</>}
+      </p>
+      <a className={linkClass('secondary')} href={staffBoardUrl(venueId)}>
+        {t('today.passBoard')}
+      </a>
+    </div>
+  );
+}
+
+/**
+ * The Tanbeeh ring first (service so far, with open orders in the middle), then the pass, five figures against last
+ * week, kitchen pace and how alerts reached customers. The ring's ember dot is the page's one ember element.
+ */
+export function TodayStats({ r, next, venueId }: { r: TodayReport; next?: ReactNode; venueId?: string | null }) {
+  const { t } = useTranslation();
+  const open = r.openTickets ?? r.longestWaiting ?? [];
+  const notDrawn = r.openTickets ? Math.max(0, r.open - open.length) : 0;
+  const called = r.alertReach.push + r.alertReach.live + r.alertReach.closed + r.alertReach.none;
+  return (
+    <>
+      {next}
+      <div className="mb-6 grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)]">
+        <section aria-labelledby="ring-h" className="ember-glow flex flex-col gap-2 rounded-[var(--radius-card)] bg-panel p-5 text-white sm:p-6">
+          <h2 id="ring-h" className="font-display text-lg font-semibold">
+            {t('today.ringTitle')}
+          </h2>
+          <p className="text-sm text-white/70">{t('today.ringNote')}</p>
+          <ServiceRing hourly={r.hourly ?? Array.from({ length: 24 }, () => 0)} open={r.open} tickets={r.tickets} localMinutes={r.localMinutes} />
+        </section>
+        <Section className="m-0" title={t('today.passTitle')} description={t('today.passNote', { n: LATE_MINUTES })}>
+          <div className="flex flex-col gap-4">
+            {open.length === 0 ? <p className="text-muted">{t('today.passEmpty')}</p> : <PassLane items={open} />}
+            {notDrawn > 0 && <p className="text-sm text-muted">{t('today.passMore', { n: notDrawn })}</p>}
+            <LateBanner items={open} venueId={venueId ?? null} />
+          </div>
+        </Section>
+      </div>
+      {venueId && <Comparison r={r} venueId={venueId} />}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Section className="m-0" title={t('today.paceTitle')} description={t('today.paceNote')}>
+          <PaceChart pace={r.pace ?? []} todayMedian={r.prepSecondsP50} />
+        </Section>
+        <Section className="m-0" title={t('today.reachTitle')} description={t('today.reachSub', { n: called })}>
+          <ReachBar reach={r.alertReach} />
+          <p className="num mt-5 border-t border-line pt-5 font-display text-lg font-semibold">
+            {t('today.ackLine', { pct: pct(r.acknowledgedPct) })}
+          </p>
+          <p className="mt-3 text-sm text-muted">{t('reports.wordingNote')}</p>
+        </Section>
+      </div>
+    </>
   );
 }
 
@@ -238,7 +331,7 @@ function Today({ venueId }: { venueId: string }) {
         {(r) =>
           r.tickets === 0 ? (
             <>
-              <Checklist />
+              <Notices />
               <EmptyState
                 title={t('today.empty')}
                 action={
@@ -251,7 +344,7 @@ function Today({ venueId }: { venueId: string }) {
               </EmptyState>
             </>
           ) : (
-            <TodayStats r={r} next={<Checklist />} />
+            <TodayStats r={r} venueId={venueId} next={<Notices />} />
           )
         }
       </QueryView>

@@ -147,7 +147,7 @@ export function InfoRow({ label, children }: { label: ReactNode; children: React
   return (
     <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:items-center sm:gap-4">
       <dt className="w-44 shrink-0 text-sm text-muted">{label}</dt>
-      <dd className="min-w-0 font-medium">{children}</dd>
+      <dd className="min-w-0 font-medium break-words">{children}</dd>
     </div>
   );
 }
@@ -198,9 +198,11 @@ export function ListField<T extends string | number>({
       </label>
       <div className="flex flex-wrap items-center gap-1.5 rounded-input border border-line bg-surface p-1.5 focus-within:border-ink-2/40">
         {values.map((v, i) => (
-          <span key={`${String(v)}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-canvas py-1 ps-3 pe-1 text-sm font-semibold ring-1 ring-line">
-            <span dir="ltr">{format(v)}</span>
-            <button type="button" className="grid size-7 place-items-center rounded-full text-muted hover:bg-line hover:text-ink" aria-label={t('list.remove', { item: format(v) })} onClick={() => onChange(values.filter((_, j) => j !== i))}>
+          <span key={`${String(v)}-${i}`} className="inline-flex max-w-full items-center gap-1 rounded-full bg-canvas py-1 ps-3 pe-1 text-sm font-semibold ring-1 ring-line">
+            <span dir="ltr" className="min-w-0 break-all">
+              {format(v)}
+            </span>
+            <button type="button" className="grid size-7 shrink-0 place-items-center rounded-full text-muted hover:bg-line hover:text-ink" aria-label={t('list.remove', { item: format(v) })} onClick={() => onChange(values.filter((_, j) => j !== i))}>
               <span aria-hidden="true">×</span>
             </button>
           </span>
@@ -310,9 +312,9 @@ export function PagerControls({ page, canPrev, nextCursor, onPrev, onNext }: { p
   );
 }
 
-export function Table({ caption, head, children }: { caption: string; head: string[]; children: ReactNode }) {
+export function Table({ caption, head, children, className }: { caption: string; head: string[]; children: ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface shadow-card">
+    <div className={`overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface shadow-card ${className ?? ''}`}>
       <table className="w-full border-collapse text-sm [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-primary-wash">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -358,7 +360,7 @@ export function TableSkeleton({ label, rows = 6 }: { label: string; rows?: numbe
 export function FormButtons({ onCancel, busy, label, danger }: { onCancel: () => void; busy: boolean; label: string; danger?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <Button type="button" variant="secondary" onClick={onCancel}>
         {t('common:cancel')}
       </Button>

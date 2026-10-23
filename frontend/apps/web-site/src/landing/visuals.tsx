@@ -20,7 +20,7 @@ export function AlertRings({ active, className = '' }: { active: boolean; classN
 export function PhoneFrame({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div className={`relative w-[15rem] shrink-0 rounded-[2.4rem] border-[7px] border-ink bg-surface shadow-[var(--shadow-card)] ${className}`}>
-      <div aria-hidden="true" className="absolute top-2 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-ink" />
+      <div aria-hidden="true" className="absolute inset-x-0 top-2 z-10 mx-auto h-5 w-20 rounded-full bg-ink" />
       <div className="relative flex min-h-[25rem] flex-col overflow-hidden rounded-[1.9rem] bg-canvas pt-9">{children}</div>
     </div>
   );

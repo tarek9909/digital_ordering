@@ -1,3 +1,4 @@
+import { defaultVenueMessages } from '@dop/contracts';
 import type { Deps } from './deps.js';
 
 // Setup checklist that ticks itself (FR-ADM-02), ending with a test ticket.
@@ -13,10 +14,12 @@ export async function onboarding(deps: Deps, tenantId: string, userId: string) {
     db.selectFrom('staff_devices').select('id').limit(1).execute(),
   ]);
   const messages = (venue?.messages ?? {}) as Record<string, Record<string, string>>;
+  const defaults = defaultVenueMessages(['ar', 'en']);
   const steps = [
     { key: 'verify_email', done: Boolean(user?.email_verified_at) },
     { key: 'branding', done: Boolean(venue && (venue.logo_key || venue.brand_color !== '#1F6FEB')) },
-    { key: 'messages', done: Object.values(messages).some((m) => Object.values(m).some(Boolean)) },
+    // New venues start with default wording, so the step ticks once the owner changes any of it.
+    { key: 'messages', done: Object.entries(messages).some(([l, m]) => Object.entries(m).some(([k, val]) => Boolean(val) && val !== (defaults[l] as Record<string, string> | undefined)?.[k])) },
     { key: 'staff_pin', done: Boolean(venue && venue.pin_changed_at.getTime() - venue.created_at.getTime() > 1000) },
     { key: 'staff_device', done: devices.length > 0 },
     { key: 'display', done: displays.length > 0 },

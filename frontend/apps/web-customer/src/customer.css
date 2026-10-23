@@ -11,6 +11,14 @@
   --color-glow: color-mix(in srgb, var(--brand-band) 60%, white);
 }
 
+/* index.html asks for viewport-fit=cover, so content keeps clear of the notch and rounded corners on landscape
+   phones (and in the installed app) while backgrounds still run edge to edge. Safe-area insets are physical, and the
+   padding is symmetric, so physical properties are right here. Replaces px-4 on full-width rows. */
+.safe-x {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
 /* ---- The call ring (ticket page signature). Geometry lives in OrderRing.tsx; motion in the shared runtime. */
 .ring-svg {
   overflow: visible;

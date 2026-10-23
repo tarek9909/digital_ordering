@@ -83,5 +83,14 @@ export async function seedDemo(deps: Deps): Promise<SeedResult> {
     const link = (await staffAccessInfo(deps, r.tenantId, r.venueId)).link;
     out.tenants.push({ slug: t.slug, status: t.status, ownerEmail: email, staffLink: link, venueId: r.venueId });
   }
+
+  // The flagship demo venue wears the Tanbeeh Ember colour, so demos show the platform identity end to end. Also
+  // applied to an already-seeded database, but only while the venue still has the default colour.
+  const brand: Record<string, string> = { 'burger-house': '#C2410C' };
+  for (const [slug, color] of Object.entries(brand)) {
+    const tenant = await pdb.selectFrom('tenants').select('id').where('slug', '=', slug).executeTakeFirst();
+    if (!tenant) continue;
+    await deps.db.forTenant(tenant.id).updateTable('venues').set({ brand_color: color }).where('brand_color', '=', '#1F6FEB').execute();
+  }
   return out;
 }

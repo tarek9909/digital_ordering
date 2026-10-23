@@ -34,13 +34,13 @@ export function ReadyScreen({
   if (needsTap && !ticket.acknowledged) {
     return (
       <button
-        className="flash fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 p-6 text-center"
+        className="flash fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto p-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center"
         onClick={async () => {
           await unlockAudio();
           onTapToHear();
         }}
       >
-        <span className="num font-display leading-none font-bold tracking-tight" style={{ fontSize: 'min(40vw, 14rem)' }}>
+        <span className="num font-display leading-none font-bold tracking-tight" style={{ fontSize: 'min(40vw, 14rem, 40vh)' }}>
           {ticket.displayNumber}
         </span>
         <span className="inline-flex min-h-16 w-full max-w-sm items-center justify-center gap-3 rounded-control px-6 py-3 font-display text-xl font-bold ring-2 ring-current">
@@ -53,16 +53,16 @@ export function ReadyScreen({
   const flashing = alerting && !ticket.acknowledged;
   return (
     <main className={`flex flex-1 flex-col ${flood ? 'ready-flood' : ''}`} style={{ background: 'var(--brand)', color: 'var(--on-brand)' }}>
-      <div className={`flex flex-1 flex-col items-center justify-center gap-6 px-4 pt-8 pb-6 text-center ${flashing ? 'flash' : ''}`}>
+      <div className={`safe-x flex flex-1 flex-col items-center justify-center gap-6 pt-8 pb-6 text-center ${flashing ? 'flash' : ''}`}>
         <h1 className="font-display text-[1.75rem] leading-tight font-semibold tracking-tight text-balance">
           {ticket.acknowledged ? t('status.readyAck') : t('status.ready')}
         </h1>
-        <OrderRing token={ticket.token} progress={1} ready tone="current" className="w-[min(78vw,20rem)]">
+        <OrderRing token={ticket.token} progress={1} ready tone="current" className="w-[min(78vw,20rem,50vh)]">
           <div className="num font-display leading-[0.95] font-bold tracking-tight tabular-nums" style={{ fontSize: numberSize(ticket.displayNumber) }}>
             {ticket.displayNumber}
           </div>
         </OrderRing>
-        {collection && <p className="max-w-sm text-lg font-medium text-balance opacity-90">{collection}</p>}
+        {collection && <p className="max-w-sm text-lg font-medium text-balance break-words opacity-90">{collection}</p>}
         {ticket.checkCode && ticket.acknowledged && (
           <div className="flex flex-col items-center gap-1">
             <p className="text-sm font-medium opacity-80">{t('checkCode')}</p>

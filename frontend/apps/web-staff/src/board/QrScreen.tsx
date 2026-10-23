@@ -32,13 +32,13 @@ export function QrScreen({ ticketId, number, url, claimCode, onClose }: Props) {
 
   return (
     <FullScreen label={t('qr.label', { number })} className="cursor-pointer bg-surface text-ink">
-      <button type="button" onClick={onClose} className="flex w-full max-w-5xl flex-col items-center gap-6 lg:flex-row lg:justify-center lg:gap-16" aria-label={t('qr.tapToClose')}>
-        <span className="flex flex-col items-center gap-3 text-center lg:items-start lg:text-start">
+      <button type="button" onClick={onClose} className="flex w-full max-w-5xl flex-col items-center gap-6 landscape:flex-row landscape:justify-center landscape:gap-10 lg:landscape:gap-16" aria-label={t('qr.tapToClose')}>
+        <span className="flex min-w-0 flex-col items-center gap-3 text-center landscape:items-start landscape:text-start">
           <span className="flex items-center gap-2.5 font-display text-xl font-bold text-ink-2 sm:text-2xl">
             <BrandMark className="size-9" />
             {t('qr.scan')}
           </span>
-          <span data-motion="pop" className="num font-display text-[5.5rem] leading-[0.9] font-extrabold tracking-tight sm:text-[8rem]">
+          <span data-motion="pop" className="num max-w-full font-display text-[clamp(4rem,min(22vw,24dvh),8rem)] leading-[0.9] font-extrabold tracking-tight break-words">
             {number}
           </span>
           {claimCode && (
@@ -49,15 +49,15 @@ export function QrScreen({ ticketId, number, url, claimCode, onClose }: Props) {
               </span>
             </span>
           )}
-          <span className="mt-2 hidden items-center gap-2 text-muted lg:inline-flex">
+          <span className="mt-2 hidden items-center gap-2 text-muted landscape:inline-flex">
             <Icon name="close" className="size-4" />
             {t('qr.tapToClose')}
           </span>
         </span>
         <span className="rounded-[2rem] bg-surface p-4 shadow-card ring-1 ring-line">
-          <QRCodeSVG value={url} size={512} level="M" marginSize={1} style={{ width: 'min(78vw, 56vh)', height: 'min(78vw, 56vh)', display: 'block' }} />
+          <QRCodeSVG value={url} size={512} level="M" marginSize={1} className="block size-[min(78vw,56dvh)] landscape:size-[min(46vw,72dvh)]" />
         </span>
-        <span className="inline-flex items-center gap-2 text-muted lg:hidden">
+        <span className="inline-flex items-center gap-2 text-muted landscape:hidden">
           <Icon name="close" className="size-4" />
           {t('qr.tapToClose')}
         </span>

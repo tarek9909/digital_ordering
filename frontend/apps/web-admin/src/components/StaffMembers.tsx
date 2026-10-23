@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Field, LiveRegion } from '@dop/ui';
+import { EmptyState, Field, LiveRegion } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { api } from '../lib/api';
 import { applyFieldErrors } from '../lib/errors';
 import type { StaffMember } from '../lib/types';
-import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td } from './common';
+import { AddDialog, ConfirmButton, DialogActions, ErrorNote, QueryView, Section, StatusPill, Table, Td } from './common';
 
 // Named staff (R2, FR-ACC-07): each person gets a personal 4–6 digit PIN; the board asks for it before actions.
 
@@ -17,7 +17,7 @@ const memberSchema = z.object({
   pin: z.string().regex(/^\d{4,6}$/),
 });
 
-function AddMember({ venueId }: { venueId: string }) {
+function AddMember({ venueId, onDone }: { venueId: string; onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [error, setError] = useState<unknown>(null);
@@ -30,8 +30,8 @@ function AddMember({ venueId }: { venueId: string }) {
     setError(null);
     try {
       await api.post(`/venues/${venueId}/staff-members`, body);
-      form.reset({ name: '', pin: '' });
       await qc.invalidateQueries({ queryKey: ['staff-members', venueId] });
+      onDone();
     } catch (e) {
       if (!applyFieldErrors(e, form.setError, ['name', 'pin'])) setError(e);
     }
@@ -44,10 +44,10 @@ function AddMember({ venueId }: { venueId: string }) {
         : t('staff.pinFormat')
     : undefined;
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
-      <Field className="min-w-52 flex-1" label={t('staffMembers.name')} autoComplete="off" error={errors.name ? t('form.required') : undefined} {...form.register('name')} />
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <Field label={t('staffMembers.name')} autoComplete="off" error={errors.name ? t('form.required') : undefined} {...form.register('name')} />
       <Field
-        className="w-44 [&_input]:font-mono [&_input]:tracking-[0.3em]"
+        className="[&_input]:font-mono [&_input]:tracking-[0.3em]"
         label={t('staffMembers.pin')}
         inputMode="numeric"
         autoComplete="off"
@@ -57,15 +57,8 @@ function AddMember({ venueId }: { venueId: string }) {
         error={pinError}
         {...form.register('pin')}
       />
-      <div className="sm:pt-7">
-        <Button type="submit" variant="ink" busy={form.formState.isSubmitting}>
-          {t('staffMembers.add')}
-        </Button>
-      </div>
-      <div className="w-full">
-        <ErrorNote error={error} />
-      </div>
-      <LiveRegion text={form.formState.isSubmitSuccessful && !error ? t('staffMembers.added') : ''} />
+      <ErrorNote error={error} />
+      <DialogActions onCancel={onDone} submitLabel={t('staffMembers.add')} busy={form.formState.isSubmitting} variant="ink" />
     </form>
   );
 }
@@ -83,9 +76,16 @@ export function StaffMembers({ venueId }: { venueId: string }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
   return (
-    <Section title={t('staffMembers.title')} description={t('staffMembers.hint')}>
-      <AddMember venueId={venueId} />
-      <div className="mt-4">
+    <Section
+      title={t('staffMembers.title')}
+      description={t('staffMembers.hint')}
+      actions={
+        <AddDialog label={t('staffMembers.add')} title={t('staffMembers.title')} description={t('staffMembers.hint')}>
+          {(close) => <AddMember venueId={venueId} onDone={close} />}
+        </AddDialog>
+      }
+    >
+      <div>
         <ErrorNote error={deactivate.error} />
         <QueryView q={q} skeleton="table">
           {(items) =>

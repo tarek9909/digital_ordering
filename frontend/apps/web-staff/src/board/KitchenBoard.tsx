@@ -31,9 +31,9 @@ function KitchenCard({ ticket, now, disabled, onReady }: { ticket: StaffTicket; 
       aria-busy={busy || undefined}
       className={`flex flex-col gap-4 rounded-[var(--radius-card)] bg-white/[0.06] p-5 ring-inset ${f.late ? 'ring-2 ring-warn-bg/80' : pos ? 'ring-2 ring-info-bg/80' : 'ring-1 ring-white/10'}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <span className="num font-display text-7xl leading-[0.9] font-extrabold tracking-tight">{ticket.displayNumber}</span>
-        <span className="num inline-flex items-center gap-1.5 pt-1 text-xl font-semibold text-white/80">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <span className="num min-w-0 font-display text-6xl leading-[0.9] font-extrabold tracking-tight break-words sm:text-7xl">{ticket.displayNumber}</span>
+        <span className="num inline-flex shrink-0 items-center gap-1.5 pt-1 text-xl font-semibold text-white/80">
           <Icon name="clock" className="size-5" />
           {t('ageMinutes', { count: f.ageMinutes })}
         </span>
@@ -60,7 +60,7 @@ function KitchenCard({ ticket, now, disabled, onReady }: { ticket: StaffTicket; 
         disabled={disabled || busy}
         aria-busy={busy || undefined}
         onClick={() => onReady(ticket)}
-        className="mt-auto inline-flex min-h-24 w-full items-center justify-center gap-3 rounded-control bg-white font-display text-3xl font-extrabold tracking-tight text-ink shadow-button transition-[transform,background-color] duration-150 enabled:hover:bg-primary-wash enabled:active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-auto inline-flex min-h-20 w-full items-center justify-center gap-3 rounded-control bg-white px-4 font-display text-2xl sm:min-h-24 sm:text-3xl font-extrabold tracking-tight text-ink shadow-button transition-[transform,background-color] duration-150 enabled:hover:bg-primary-wash enabled:active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? <span className="inline-block size-8 animate-spin rounded-full border-4 border-current border-e-transparent" /> : <Icon name="check" className="size-9" />}
         {t('actions.ready')}
@@ -76,7 +76,7 @@ export function KitchenBoard({ venueName, tickets, now, disabled, showSound, onR
   useFlip(gridRef, [tickets]);
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-ink text-white">
-      <header className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-white/10 px-3 py-2.5 sm:px-4">
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-white/10 px-3 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 sm:px-4">
         <div className="me-auto flex min-w-0 items-center gap-3">
           <BrandMark tone="light" className="size-10" />
           <div className="flex min-w-0 flex-col">
@@ -88,7 +88,7 @@ export function KitchenBoard({ venueName, tickets, now, disabled, showSound, onR
         </div>
         <span className="flex items-center gap-2 px-2 text-white/80">
           <StatusGlyph status="preparing" className="size-5" />
-          <span className="text-sm font-semibold">{t('common:status.preparing')}</span>
+          <span className="text-sm font-semibold max-sm:sr-only">{t('common:status.preparing')}</span>
           <span className="num font-display text-3xl leading-none font-extrabold text-white">{tickets.length}</span>
         </span>
         <MemberChip dark />
@@ -104,7 +104,11 @@ export function KitchenBoard({ venueName, tickets, now, disabled, showSound, onR
           <p className="font-display text-2xl font-bold text-white/70">{t('kitchen.empty')}</p>
         </div>
       ) : (
-        <main ref={gridRef} className="grid flex-1 content-start gap-4 p-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(17rem, 1fr))' }}>
+        <main
+          ref={gridRef}
+          className="grid flex-1 content-start gap-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:gap-4 sm:p-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(17rem, 100%), 1fr))' }}
+        >
           {tickets.map((tk) => (
             <KitchenCard key={tk.id} ticket={tk} now={now} disabled={disabled} onReady={onReady} />
           ))}

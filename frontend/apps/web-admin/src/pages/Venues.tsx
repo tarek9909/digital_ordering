@@ -1,11 +1,12 @@
 import { useTranslation } from '@dop/i18n';
 import { Button, EmptyState, Field, LiveRegion } from '@dop/ui';
+import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td, linkClass } from '../components/common';
+import { AddDialog, ConfirmButton, DialogActions, ErrorNote, Page, QueryView, StatusPill, Table, Td, linkClass } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, isCode } from '../lib/errors';
 import { useRole } from '../lib/me';
@@ -17,7 +18,7 @@ import { staffBoardUrl } from './Home';
 
 const venueCreate = z.object({ name: z.string().trim().min(1).max(120) });
 
-function AddVenue() {
+function AddVenue({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const setVenue = useVenueStore((s) => s.setVenueId);
@@ -30,25 +31,18 @@ function AddVenue() {
     setError(null);
     try {
       const r = await api.post<{ id: string }>('/venues', { name });
-      form.reset({ name: '' });
       await qc.invalidateQueries({ queryKey: venuesKey });
       setVenue(r.id);
+      onDone();
     } catch (e) {
       if (!applyFieldErrors(e, form.setError, ['name'])) setError(e);
     }
   });
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
-      <Field className="min-w-60 flex-1" label={t('venues.name')} error={form.formState.errors.name ? t('form.required') : undefined} {...form.register('name')} />
-      <div className="sm:pt-7">
-        <Button type="submit" busy={form.formState.isSubmitting}>
-          {t('venues.add')}
-        </Button>
-      </div>
-      <div className="w-full">
-        <ErrorNote error={error} />
-      </div>
-      <LiveRegion text={form.formState.isSubmitSuccessful && !error ? t('venues.added') : ''} />
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <Field label={t('venues.name')} error={form.formState.errors.name ? t('form.required') : undefined} {...form.register('name')} />
+      <ErrorNote error={error} />
+      <DialogActions onCancel={onDone} submitLabel={t('venues.add')} busy={form.formState.isSubmitting} />
     </form>
   );
 }
@@ -66,13 +60,23 @@ export function VenuesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: venuesKey }),
   });
   return (
-    <Page title={t('nav.venues')} description={t('venues.description')}>
-      {/* A venue changes what the tenant pays, so only the owner adds one (M-9). */}
-      {isOwner && (
-        <Section title={t('venues.addTitle')} description={t('venues.addHint')}>
-          <AddVenue />
-        </Section>
-      )}
+    <Page
+      title={t('nav.venues')}
+      description={t('venues.description')}
+      actions={
+        <>
+          <Link to="/venue" className={linkClass('secondary')}>
+            {t('venues.settings')}
+          </Link>
+          {/* A venue changes what the tenant pays, so only the owner adds one (M-9). */}
+          {isOwner && (
+            <AddDialog label={t('venues.add')} title={t('venues.addTitle')} description={t('venues.addHint')}>
+              {(close) => <AddVenue onDone={close} />}
+            </AddDialog>
+          )}
+        </>
+      }
+    >
       {isCode(archive.error, 'INVALID_TRANSITION') ? (
         <p role="alert" className="mb-3 font-semibold text-danger">
           {t('venues.archiveOpenTickets')}

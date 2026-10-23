@@ -1,5 +1,6 @@
 import { brandTokens, dirOf } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
+import { BrandMark } from '@dop/ui';
 import { useState, type CSSProperties } from 'react';
 
 /**
@@ -21,7 +22,7 @@ export function CustomerPreview({ name, brandColor, logoUrl, welcome, locale }: 
             type="button"
             aria-pressed={status === s}
             onClick={() => setStatus(s)}
-            className={`min-h-12 rounded-control px-4 font-semibold transition-colors ${status === s ? 'bg-ink text-white shadow-button' : 'text-ink-2 hover:bg-canvas'}`}
+            className={`min-h-12 rounded-control px-4 font-semibold transition-colors ${status === s ? 'bg-panel text-white shadow-button' : 'text-ink-2 hover:bg-canvas'}`}
           >
             {t(`common:status.${s}`)}
           </button>
@@ -32,10 +33,10 @@ export function CustomerPreview({ name, brandColor, logoUrl, welcome, locale }: 
         dir={dirOf(locale)}
         lang={locale}
         aria-label={t('venue.preview.title')}
-        className="flex w-64 flex-col overflow-hidden rounded-[2rem] border-8 border-ink bg-surface text-ink shadow-dialog"
+        className="flex w-64 max-w-full flex-col overflow-hidden rounded-[2rem] border-8 border-ink bg-surface text-ink shadow-dialog"
       >
         <div className="flex items-center gap-2 border-b border-line px-3 py-3">
-          {logoUrl ? <img src={logoUrl} alt="" className="size-10 rounded object-contain" /> : <span aria-hidden="true" className="size-10 rounded bg-[var(--brand)]" />}
+          {logoUrl ? <img src={logoUrl} alt="" className="size-10 rounded object-contain" /> : <BrandMark className="size-10" />}
           <span className="truncate font-bold">{name || '—'}</span>
         </div>
         <div className="flex flex-col items-center gap-1 px-3 py-6">

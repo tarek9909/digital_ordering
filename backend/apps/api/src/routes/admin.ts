@@ -10,6 +10,7 @@ import {
   displayCreateBody,
   displayPatch,
   invitationBody,
+  memberCreateBody,
   mePatch,
   ownershipTransferBody,
   reportRangeQuery,
@@ -21,6 +22,7 @@ import {
   venueSettingsBody,
 } from '@dop/contracts';
 import {
+  addMember,
   archiveCounter,
   billingOverview,
   cancelDeletion,
@@ -35,6 +37,7 @@ import {
   requestEmailChange,
   setMemberPreferences,
   createDisplay,
+  downloadExport,
   exportStatus,
   getVenueAdmin,
   inviteMember,
@@ -416,6 +419,17 @@ export const adminRoutes = defineRoutes('/api/admin/v1', [
     handler: async (c) => inviteMember(c.deps, userActor(c), userActor(c).tenantId, c.body.email, 'manager'),
   }),
   route({
+    method: 'post',
+    path: '/members',
+    surfaces: ['tenant'],
+    permission: 'team.manage',
+    body: memberCreateBody,
+    status: 201,
+    limitedAccessOk: true,
+    rateLimit: { name: 'member-add', points: 20, durationSec: 3600, key: 'actor' },
+    handler: async (c) => addMember(c.deps, userActor(c), userActor(c).tenantId, c.body),
+  }),
+  route({
     method: 'delete',
     path: '/invitations/:id',
     surfaces: ['tenant'],
@@ -480,6 +494,20 @@ export const adminRoutes = defineRoutes('/api/admin/v1', [
     limitedAccessOk: true,
     rateLimit: { name: 'export', points: 3, durationSec: 3600, key: 'actor' },
     handler: async (c) => requestExport(c.deps, userActor(c), userActor(c).tenantId),
+  }),
+  // Immediate ZIP download (Reports); registered before /exports/:id so "download" is not read as an id.
+  route({
+    method: 'get',
+    path: '/exports/download',
+    surfaces: ['tenant'],
+    permission: 'tenant.export',
+    limitedAccessOk: true,
+    rateLimit: { name: 'export-download', points: 10, durationSec: 3600, key: 'actor' },
+    handler: async (c) => {
+      const zip = await downloadExport(c.deps, userActor(c), userActor(c).tenantId);
+      c.res.type('application/zip').setHeader('Content-Disposition', `attachment; filename="tanbeeh-export-${c.deps.now().toISOString().slice(0, 10)}.zip"`);
+      c.res.send(zip);
+    },
   }),
   route({
     method: 'get',

@@ -20,9 +20,20 @@ export const buildSourcemap: boolean | 'hidden' = env.DOP_SOURCEMAP === 'hidden'
  */
 const devHost = env.DOP_DEV_HOST?.trim() || '127.0.0.1';
 
+/**
+ * The tenant-host apps share one host in production (deploy/Caddyfile), so they link to each other by path, e.g. the
+ * admin's "Open board" → /staff. Locally each runs its own server, so each forwards the others' base paths to theirs.
+ */
+const tenantApps: Record<string, number> = { '/staff': 5174, '/display': 5175, '/admin': 5176 };
+
 export function devProxy(port: number) {
   const target = env.DOP_API ?? 'http://127.0.0.1:4000';
   const rt = env.DOP_RT ?? 'http://127.0.0.1:4001';
+  const siblings = Object.fromEntries(
+    Object.entries(tenantApps)
+      .filter(([, p]) => p !== port)
+      .map(([base, p]) => [`^${base}(/|$|\\?)`, { target: `http://127.0.0.1:${p}`, ws: true, changeOrigin: false, xfwd: true }]),
+  );
   return {
     port,
     strictPort: true,
@@ -32,6 +43,7 @@ export function devProxy(port: number) {
       '/api': { target, changeOrigin: false, xfwd: true },
       '/m/': { target, changeOrigin: false, xfwd: true },
       '/rt': { target: rt, ws: true, changeOrigin: false, xfwd: true },
+      ...siblings,
     },
   };
 }

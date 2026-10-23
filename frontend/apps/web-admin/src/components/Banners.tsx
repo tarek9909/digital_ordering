@@ -4,14 +4,15 @@ import { Banner, Button, LiveRegion } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { daysUntil } from '../lib/access';
 import { SEVERITY_TONE, pickMessage, readDismissed, visibleAnnouncements, writeDismissed } from '../lib/announcements';
 import { api, authApi } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { useMe, useTenant } from '../lib/me';
-import type { Announcement } from '../lib/types';
-import { fetchSupportSessions, supportSessionsKey } from '../pages/Support';
+import type { Announcement, SupportSession } from '../lib/types';
 import { linkClass } from './common';
+
+const supportSessionsKey = ['support-sessions'] as const;
+const fetchSupportSessions = async () => (await api.get<{ items: SupportSession[] }>('/support-sessions')).items;
 
 /** "Platform support is viewing this account — End session" (FR-SUP-04, TR-FE-22); polled every 30 s. */
 function SupportBanner({ isSupport }: { isSupport: boolean }) {
@@ -28,7 +29,6 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: supportSessionsKey }),
   });
   const active = (q.data ?? []).filter((s) => s.status === 'active');
-  const requested = (q.data ?? []).filter((s) => s.status === 'requested');
   return (
     <>
       {active.map((s) => (
@@ -54,18 +54,6 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
           {end.error ? <span className="ms-2">{errorText(t, end.error)}</span> : null}
         </Banner>
       ))}
-      {!isSupport && requested.length > 0 && (
-        <Banner
-          tone="info"
-          action={
-            <Link to="/support" className={linkClass('quiet')}>
-              {t('banners.reviewSupport')}
-            </Link>
-          }
-        >
-          {t('banners.supportRequested', { name: requested[0]!.agentName })}
-        </Banner>
-      )}
       <LiveRegion text={end.isSuccess ? t('banners.supportEnded') : ''} />
     </>
   );
@@ -157,14 +145,6 @@ export function Banners() {
               {t('banners.cancelled')}
             </Banner>
           )}
-          {tenant.status === 'trial' && !tenant.complimentary && tenant.trial_ends_at && (
-            <Banner tone="info" action={billingLink}>
-              {t('banners.trial', {
-                count: daysUntil(tenant.trial_ends_at),
-                date: date(tenant.trial_ends_at),
-              })}
-            </Banner>
-          )}
           {tenant.deletion_requested_at && (
             <Banner
               tone="warn"
@@ -192,7 +172,8 @@ export function Banners() {
             </Button>
           }
         >
-          {t('banners.verifyEmail', { email: me.user.email })}
+          {/* The address can be one long word: let it break on a phone. */}
+          <span className="break-words">{t('banners.verifyEmail', { email: me.user.email })}</span>
           {resend.error ? <span className="ms-2">{errorText(t, resend.error)}</span> : null}
         </Banner>
       )}

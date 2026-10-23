@@ -2,6 +2,7 @@ import { randomInt } from 'node:crypto';
 import { SESSION_TTL, decrypt, encrypt, hashSecret, tokenHash, verifySecret, type Actor } from '@dop/auth';
 import {
   AppError,
+  defaultVenueMessages,
   defaultVenueSettings,
   displaySettingsSchema,
   venueMessagesSchema,
@@ -62,7 +63,7 @@ export async function createVenueRow(
       venue_code: await uniqueVenueCode(tx),
       time_zone: v.timeZone,
       locales: json(v.locales),
-      messages: json({}),
+      messages: json(defaultVenueMessages(v.locales)),
       settings: json(v.settings ?? defaultVenueSettings()),
       reset_time: normaliseTime(v.resetTime),
       auto_close_time: normaliseTime(v.autoCloseTime),

@@ -432,14 +432,14 @@ function TicketView({ token }: { token: string }) {
   return (
     <div className="flex min-h-dvh flex-col overflow-x-clip bg-canvas">
       {!connected && open && (
-        <div role="status" className="sticky top-0 z-30 flex items-center justify-center gap-2 bg-ink px-4 py-2 text-center text-sm font-medium text-white">
+        <div role="status" className="safe-x sticky top-0 z-30 flex items-center justify-center gap-2 bg-ink pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 text-center text-sm font-medium text-white">
           <Spinner />
           {t('reconnecting')}
         </div>
       )}
       <VenueHeader venue={ticket.venue} />
       {notices && (
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-2 px-4 pt-3">
+        <div className="safe-x mx-auto flex w-full max-w-xl flex-col gap-2 pt-3">
           {ticket.tenantStatus === 'suspended' && <Banner tone="warn">{t('suspended')}</Banner>}
           {followFailed && open && <Banner tone="warn">{t('followFailed')}</Banner>}
           {undoNotice && <Banner tone="info">{t('undoNotice')}</Banner>}
@@ -500,9 +500,9 @@ function TicketBody({
   const progress = ringProgress(ticket.token, ticket.status, open ? wait : null);
   const hint = delivery === 'push' ? t('alertsPushOn') : delivery === 'live' ? t('keepOpenLive') : t('keepOpen');
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center px-4 pt-10 pb-4 text-center">
+    <main className="safe-x mx-auto flex w-full max-w-xl flex-1 flex-col items-center pt-10 pb-4 text-center md:justify-center md:pt-6 md:pb-10">
       {/* The call ring closes around the number as the order moves on; Ready closes it (ReadyScreen). */}
-      <OrderRing token={ticket.token} progress={progress} idle={idle} className="w-[min(82vw,21rem)]">
+      <OrderRing token={ticket.token} progress={progress} idle={idle} className="w-[min(82vw,21rem,52vh)]">
         <p className="text-sm font-medium text-muted">{t('yourOrder')}</p>
         {/* At least one third of the screen width (FR-CUS-02, TR-FE-11). */}
         <div
@@ -515,21 +515,21 @@ function TicketBody({
         {ticket.counterName && <p className="mt-1 max-w-[12rem] truncate text-sm font-medium text-ink-2">{ticket.counterName}</p>}
       </OrderRing>
 
-      <h1 className="mt-8 font-display text-2xl leading-tight font-semibold tracking-tight text-balance">{t(`status.${ticket.status}`)}</h1>
+      <h1 className="mt-8 max-w-full font-display text-2xl leading-tight font-semibold tracking-tight text-balance break-words">{t(`status.${ticket.status}`)}</h1>
       {open && wait && (
         <p className="mt-1.5 inline-flex items-center gap-1.5 text-base text-muted">
           <ClockIcon className="size-4" />
           {wait.late ? t('wait.late') : t('wait.about', { count: wait.minutes })}
         </p>
       )}
-      {open && msgs.welcome && <p className="mt-3 max-w-sm text-ink-2">{msgs.welcome}</p>}
-      {ticket.status === 'cancelled' && msgs.cancelled && <p className="mt-3 max-w-sm text-lg text-ink-2">{msgs.cancelled}</p>}
-      {ticket.status === 'collected' && msgs.afterCollection && <p className="mt-3 max-w-sm text-lg text-ink-2">{msgs.afterCollection}</p>}
+      {open && msgs.welcome && <p className="mt-3 max-w-sm text-ink-2 break-words">{msgs.welcome}</p>}
+      {ticket.status === 'cancelled' && msgs.cancelled && <p className="mt-3 max-w-sm text-lg text-ink-2 break-words">{msgs.cancelled}</p>}
+      {ticket.status === 'collected' && msgs.afterCollection && <p className="mt-3 max-w-sm text-lg text-ink-2 break-words">{msgs.afterCollection}</p>}
 
       {/* Actions sit low, within reach of a thumb. */}
-      <div className="min-h-8 flex-1" />
+      <div className="min-h-8 flex-1 md:flex-none" />
       {open && (
-        <div className="flex w-full flex-col gap-3">
+        <div className="flex w-full max-w-md flex-col gap-3">
           {alertsOn ? (
             <div className="flex flex-col items-center gap-0.5">
               <p className="inline-flex items-center gap-1.5 font-semibold text-ok">
@@ -556,7 +556,7 @@ function TicketBody({
         </div>
       )}
       {ticket.status === 'collected' && ticket.ratingAllowed && (
-        <div className="w-full border-t border-line pt-5">
+        <div className="w-full max-w-md border-t border-line pt-5">
           <RatingForm token={ticket.token} />
         </div>
       )}
@@ -564,10 +564,10 @@ function TicketBody({
         // A closed ticket links back to the venue page (FR-CUS-11).
         <Link
           to={`/v/${encodeURIComponent(ticket.venue.venueCode)}`}
-          className="mt-4 inline-flex min-h-12 items-center gap-1 rounded-control px-4 font-medium text-ink-2 transition-colors hover:text-ink"
+          className="mt-4 inline-flex min-h-12 max-w-full items-center gap-1 rounded-control px-4 font-medium text-ink-2 transition-colors hover:text-ink"
         >
-          {t('backToVenue', { venue: ticket.venue.name })}
-          <ChevronIcon className="size-4 text-muted" />
+          <span className="min-w-0 break-words">{t('backToVenue', { venue: ticket.venue.name })}</span>
+          <ChevronIcon className="size-4 shrink-0 text-muted" />
         </Link>
       )}
     </main>

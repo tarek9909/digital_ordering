@@ -113,23 +113,40 @@ export function watch(root: HTMLElement) {
   return () => mo.disconnect();
 }
 
-/** FLIP step for useFlip(): items glide from their previous rects; new items settle in. */
-export function flip(items: HTMLElement[], prev: Map<string, DOMRect>, next: Map<string, DOMRect>) {
+/**
+ * FLIP step for useFlip(): items glide from their previous rects; new items fade up into place. `carry` holds the
+ * offset an item still had from a glide that was interrupted, so the new glide starts from where it is drawn
+ * instead of jumping. Calm, single-direction easing (no overshoot): cards on a busy board should never wobble.
+ */
+export function flip(items: HTMLElement[], prev: Map<string, DOMRect>, next: Map<string, DOMRect>, carry = new Map<string, { x: number; y: number }>()) {
   for (const item of items) {
     const id = item.dataset.flipId!;
     const a = prev.get(id);
     const b = next.get(id);
     if (!b) continue;
     if (!a) {
-      gsap.fromTo(item, { scale: 0.92, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.45, ease: EASE_SETTLE, clearProps: 'transform,opacity,visibility' });
+      gsap.killTweensOf(item);
+      gsap.fromTo(item, { y: 10, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.35, ease: 'power2.out', clearProps: 'transform,opacity,visibility' });
       continue;
     }
-    const dx = a.left - b.left;
-    const dy = a.top - b.top;
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+    const c = carry.get(id) ?? { x: 0, y: 0 };
+    const dx = a.left - b.left + c.x;
+    const dy = a.top - b.top + c.y;
+    // Same layout spot as last time: a glide already running there just carries on.
+    if (Math.abs(a.left - b.left) < 1 && Math.abs(a.top - b.top) < 1) continue;
+    gsap.killTweensOf(item, 'x,y');
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+      gsap.set(item, { clearProps: 'transform,zIndex,position' });
+      continue;
+    }
     // The item that travels furthest (the one that changed column) passes over neighbours that only shift.
-    const z = 2 + Math.min(50, Math.round(Math.hypot(dx, dy) / 24));
-    gsap.fromTo(item, { x: dx, y: dy, zIndex: z, position: 'relative' }, { x: 0, y: 0, duration: 0.55, ease: 'power3.inOut', clearProps: 'transform,zIndex,position' });
+    const dist = Math.hypot(dx, dy);
+    const z = 2 + Math.min(50, Math.round(dist / 24));
+    gsap.fromTo(
+      item,
+      { x: dx, y: dy, zIndex: z, position: 'relative' },
+      { x: 0, y: 0, duration: Math.min(0.5, 0.28 + dist / 2400), ease: 'expo.out', clearProps: 'transform,zIndex,position' },
+    );
   }
 }
 

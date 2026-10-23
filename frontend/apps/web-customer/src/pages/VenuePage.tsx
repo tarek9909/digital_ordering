@@ -66,7 +66,7 @@ export function VenuePage() {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       <VenueHeader venue={venueQ.data.venue} />
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-4 pt-8 pb-6">
+      <main className="safe-x mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 pt-8 pb-6 md:pt-12">
         <h1 className="font-display text-[1.875rem] leading-tight font-bold tracking-tight">{t('venue.yourTickets')}</h1>
         {mineFailed && (
           <div role="alert" className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] bg-danger-bg p-4">

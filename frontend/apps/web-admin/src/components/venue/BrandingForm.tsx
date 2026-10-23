@@ -43,7 +43,7 @@ function LogoUpload({ venue }: { venue: VenueAdmin }) {
         type="file"
         accept={LOGO_TYPES.join(',')}
         aria-describedby="logo-hint"
-        className="min-h-12 rounded-input border border-dashed border-line bg-canvas p-2 text-sm file:me-3 file:min-h-10 file:cursor-pointer file:rounded-control file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-white hover:border-ink-2/30"
+        className="min-h-12 rounded-input border border-dashed border-line bg-canvas p-2 text-sm file:me-3 file:min-h-10 file:cursor-pointer file:rounded-control file:border-0 file:bg-panel file:px-4 file:font-semibold file:text-white hover:border-ink-2/30"
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = '';
@@ -94,7 +94,8 @@ export function BrandingForm({ venue }: { venue: VenueAdmin }) {
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      <div className="flex flex-col gap-6">
+      {/* min-w-0: the file and text inputs shrink to a 320px phone instead of widening the column. */}
+      <div className="flex min-w-0 flex-col gap-6">
         <LogoUpload venue={venue} />
         <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
           <div className="flex items-end gap-3">
@@ -115,7 +116,7 @@ export function BrandingForm({ venue }: { venue: VenueAdmin }) {
                 }
               />
             </div>
-            <Field className="flex-1" label={t('venue.branding.colour')} dir="ltr" error={errors.brandColor ? t('venue.branding.colourInvalid') : undefined} {...form.register('brandColor')} />
+            <Field className="min-w-0 flex-1" label={t('venue.branding.colour')} dir="ltr" error={errors.brandColor ? t('venue.branding.colourInvalid') : undefined} {...form.register('brandColor')} />
           </div>
           <p className="text-sm text-muted">{t('venue.branding.contrastNote')}</p>
           {error && <Banner tone="danger">{error}</Banner>}

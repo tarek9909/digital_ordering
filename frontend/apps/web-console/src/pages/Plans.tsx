@@ -112,7 +112,7 @@ function PlanCard({ plan, onDialog }: { plan: Plan; onDialog: (d: Dialog) => voi
             {plan.name}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
-            <span dir="ltr" className="font-mono text-xs text-muted">
+            <span dir="ltr" className="font-mono text-xs break-all text-muted">
               {plan.code}
             </span>
             {plan.isPublic ? <Pill tone="ok">{t('plans.public')}</Pill> : <Pill>{t('plans.hidden')}</Pill>}
@@ -132,10 +132,11 @@ function PlanCard({ plan, onDialog }: { plan: Plan; onDialog: (d: Dialog) => voi
         <div className="flex flex-col gap-5">
           <div>
             <h3 className="eyebrow mb-2">{t('plans.limits')}</h3>
-            <dl className="grid grid-cols-2 gap-2">
+            {/* As many 8rem tiles per row as fit: one on a 320px phone, two or three on wider cards. */}
+            <dl className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
               {LIMIT_KEYS.map((k) => (
-                <div key={k} className="flex flex-col gap-0.5 rounded-input bg-canvas px-3 py-2">
-                  <dt className="text-xs text-muted">{t(`limits.${k}`)}</dt>
+                <div key={k} className="flex min-w-0 flex-col gap-0.5 rounded-input bg-canvas px-3 py-2">
+                  <dt className="text-xs break-words text-muted">{t(`limits.${k}`)}</dt>
                   <dd className="num font-display text-lg font-bold">{limits[k] ?? '—'}</dd>
                 </div>
               ))}
@@ -173,7 +174,7 @@ function PlanCard({ plan, onDialog }: { plan: Plan; onDialog: (d: Dialog) => voi
                     <span className="num font-display text-lg font-bold">{formatMoney(x.amountMinor, x.currency, i18n.language)}</span>
                     <span className="text-xs text-muted">{t(`period.${x.period}`)}</span>
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex flex-wrap items-center gap-1">
                     {x.active ? <Pill tone="ok">{t('plans.active')}</Pill> : <Pill>{t('plans.inactive')}</Pill>}
                     {x.active && (
                       <Button variant="ghost" className="text-sm" onClick={() => onDialog({ kind: 'deactivate', plan, price: x })}>
@@ -254,7 +255,7 @@ function PlanForm({ plan, knownFeatures, onCancel, onDone }: { plan?: Plan; know
           <span className="font-semibold">{t('plans.limits')}</span>
           <span className="text-sm text-muted">{t('plansUx.limitsHint')}</span>
         </legend>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {LIMIT_KEYS.map((k) => (
             <Field
               key={k}
@@ -284,7 +285,7 @@ function PlanForm({ plan, knownFeatures, onCancel, onDone }: { plan?: Plan; know
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-muted">{t('plansUx.suggestions')}</span>
             {suggestions.map((f) => (
-              <button key={f} type="button" dir="ltr" className="min-h-9 rounded-full px-2.5 font-mono text-xs text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink" onClick={() => setV({ ...v, features: [...v.features, f] })}>
+              <button key={f} type="button" dir="ltr" className="min-h-12 rounded-full px-2.5 font-mono break-all lg:min-h-9 text-xs text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink" onClick={() => setV({ ...v, features: [...v.features, f] })}>
                 + {f}
               </button>
             ))}

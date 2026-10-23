@@ -39,3 +39,22 @@ export function storeDeviceName(name: string) {
     /* storage blocked */
   }
 }
+
+const LINK_KEY = 'dop.staff.staffKey';
+
+/** The staff link this device last signed in with, so a signed-out device can go straight back to its PIN pad. */
+export function storedStaffKey(): string {
+  try {
+    return localStorage.getItem(LINK_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function storeStaffKey(key: string) {
+  try {
+    localStorage.setItem(LINK_KEY, key);
+  } catch {
+    /* storage blocked */
+  }
+}

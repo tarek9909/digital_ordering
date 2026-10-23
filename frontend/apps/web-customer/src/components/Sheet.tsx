@@ -34,7 +34,7 @@ export function Sheet({ title, onClose, leaving, children }: { title: string; on
       <div className="px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <span aria-hidden="true" className="mx-auto mb-2 block h-1.5 w-10 rounded-full bg-line sm:hidden" />
         <div className="mb-1 flex items-center justify-between gap-3">
-          <h2 id="sheet-title" className="font-display text-xl font-bold tracking-tight">
+          <h2 id="sheet-title" className="min-w-0 font-display text-xl font-bold tracking-tight break-words">
             {title}
           </h2>
           <button className="-me-2 grid min-h-12 min-w-12 place-items-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink" aria-label="×" onClick={onClose}>

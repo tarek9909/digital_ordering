@@ -12,11 +12,18 @@
   --color-line: #d1d5db;
   --color-surface: #ffffff;
   --color-canvas: #f4f5f7;
+  /* The page behind the cards, a step deeper than canvas so white panels read as panels. */
+  --color-backdrop: #eceef1;
+  /* Always-dark panels (hero tiles, ink buttons) that carry white text; unlike ink they stay dark in dark mode. */
+  --color-panel: #111827;
+  --color-panel-2: #374151;
   --color-primary: #1f6feb;
   --color-primary-hover: #1858c4;
   --color-primary-soft: #dbe7fd;
   --color-primary-wash: #eff5ff;
   --color-glow: #60a5fa;
+  /* The Tanbeeh mark's dot: the platform logo, so it never follows a venue's colour. */
+  --color-ember: #c2410c;
   --color-ink-2: #374151;
   --color-on-primary: #ffffff;
   --color-ok: #0f7b3e;
@@ -63,6 +70,13 @@ html {
   color: var(--color-ink);
   background: var(--color-canvas);
   -webkit-text-size-adjust: 100%;
+  /* Long unbroken strings (emails, URLs, IDs) wrap instead of pushing the page sideways on phones. */
+  overflow-wrap: break-word;
+}
+
+/* Safety net: nothing may scroll the whole page sideways. `clip`, unlike `hidden`, keeps position: sticky working. */
+body {
+  overflow-x: clip;
 }
 
 /* Visible focus everywhere (TR-A11Y-01). */
@@ -114,7 +128,7 @@ html {
 /* Loading placeholder: a slow sheen. */
 @keyframes dop-sheen { to { background-position: -200% 0; } }
 .skeleton {
-  background-image: linear-gradient(90deg, transparent 0, rgb(255 255 255 / 0.55) 50%, transparent 100%);
+  background-image: linear-gradient(90deg, transparent 0, var(--sheen, rgb(255 255 255 / 0.55)) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: dop-sheen 1.6s linear infinite;
 }

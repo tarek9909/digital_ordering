@@ -76,10 +76,13 @@ export function TicketCard({ ticket, now, disabled, showCheckCode, onAction, onM
       data-flip-id={ticket.id}
       aria-label={`${ticket.displayNumber} ${t(`common:status.${ticket.status}`)}`}
       aria-busy={busy || undefined}
-      className={`relative flex flex-col gap-3 rounded-[var(--radius-card)] p-4 shadow-card ${tone}`}
+      className={`@container relative flex min-w-0 flex-col gap-3 rounded-[var(--radius-card)] p-4 shadow-card ${tone}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className={`num font-display text-[3.25rem] leading-[0.95] font-extrabold tracking-tight ${f.callOut ? 'text-danger' : 'text-ink'}`}>{ticket.displayNumber}</span>
+        {/* Scales down in a narrow card (container width) rather than pushing the menu out; a long number wraps. */}
+        <span className={`num min-w-0 font-display text-[min(3.25rem,24cqi)] leading-[0.95] font-extrabold tracking-tight break-words ${f.callOut ? 'text-danger' : 'text-ink'}`}>
+          {ticket.displayNumber}
+        </span>
         <button
           type="button"
           onClick={() => onMenu(ticket)}
@@ -112,7 +115,7 @@ export function TicketCard({ ticket, now, disabled, showCheckCode, onAction, onM
       {showCheckCode && ticket.status === 'ready' && (
         <div className="flex items-center justify-between gap-2 rounded-input bg-canvas px-3 py-2 text-sm text-ink-2">
           {t('checkCode.label')}
-          <span className="num font-mono text-lg font-medium tracking-[0.12em] text-ink" dir="ltr">
+          <span className="num shrink-0 font-mono text-lg font-medium tracking-[0.12em] text-ink" dir="ltr">
             {ticket.checkCode}
           </span>
         </div>
@@ -175,8 +178,8 @@ export function CollectedTile({ ticket, now, onMenu }: { ticket: StaffTicket; no
       className="flex min-h-14 w-full items-center gap-3 rounded-input bg-surface/70 px-3 text-start ring-1 ring-line ring-inset transition-colors hover:bg-surface"
     >
       <StatusGlyph status="collected" className="size-5 text-ok" />
-      <span className="num font-display text-2xl font-bold tracking-tight text-ink-2">{ticket.displayNumber}</span>
-      <span className="num ms-auto text-sm whitespace-nowrap text-muted">{t('agoMinutes', { count: mins })}</span>
+      <span className="num min-w-0 truncate font-display text-2xl font-bold tracking-tight text-ink-2">{ticket.displayNumber}</span>
+      <span className="num ms-auto shrink-0 text-sm whitespace-nowrap text-muted">{t('agoMinutes', { count: mins })}</span>
     </button>
   );
 }

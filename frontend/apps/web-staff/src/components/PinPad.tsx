@@ -11,9 +11,9 @@ export const PIN_MAX = 6;
 export function PinPad({ pin, labelId, disabled, busy, onPress, onBack, large }: { pin: string; labelId?: string; disabled: boolean; busy: boolean; onPress: (d: string) => void; onBack: () => void; large?: boolean }) {
   const { t } = useTranslation();
   const slots = Math.min(PIN_MAX, Math.max(4, pin.length + (pin.length >= 4 && pin.length < PIN_MAX ? 1 : 0)));
-  const key = `num inline-flex items-center justify-center rounded-2xl font-display font-semibold transition-[background-color,transform] duration-100 enabled:active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${large ? 'h-[4.5rem] text-3xl' : 'h-16 text-2xl'}`;
+  const key = `num inline-flex items-center justify-center rounded-2xl font-display font-semibold transition-[background-color,transform] duration-100 enabled:active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${large ? 'h-16 text-3xl [@media(min-width:40rem)_and_(min-height:32rem)]:h-[4.5rem]' : 'h-16 text-2xl'} [@media(max-height:32rem)]:h-14 [@media(max-height:32rem)]:text-2xl`;
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 [@media(max-height:32rem)]:gap-3">
       <div className="flex flex-col items-center gap-2">
         <output
           {...(labelId ? { 'aria-labelledby': labelId } : { 'aria-label': t('signIn.pin') })}
@@ -34,7 +34,7 @@ export function PinPad({ pin, labelId, disabled, busy, onPress, onBack, large }:
           {t('signIn.pinHint')}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-2.5" dir="ltr">
+      <div className="grid grid-cols-3 gap-2.5 [@media(max-height:32rem)]:gap-2" dir="ltr">
         {KEYS.map((d) => (
           <button key={d} type="button" className={`${key} bg-canvas text-ink ring-1 ring-line ring-inset enabled:hover:bg-primary-wash`} disabled={busy || disabled} onClick={() => onPress(d)}>
             {d}

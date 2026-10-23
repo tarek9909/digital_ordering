@@ -74,7 +74,7 @@ export function PilotReportPage() {
               <button
                 key={n}
                 type="button"
-                className="min-h-10 rounded-full px-3 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink"
+                className="min-h-12 rounded-full px-3 lg:min-h-10 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink"
                 onClick={() => setRange({ from: isoDay(new Date(Date.now() - (n - 1) * 86_400_000)), to: isoDay(new Date()) })}
               >
                 {t('pilotUx.lastDays', { count: n })}
@@ -104,7 +104,8 @@ export function Results({ items }: { items: ConsolePilotItem[] }) {
   const reachOk = sum((s) => (s.alertReach.push ?? 0) + (s.alertReach.live ?? 0));
   return (
     <div className="flex flex-col gap-6">
-      <section aria-label={t('pilot.summary')} data-motion="stagger" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Four across only from xl: next to the sidebar a quarter is too narrow for the large figures. */}
+      <section aria-label={t('pilot.summary')} data-motion="stagger" className="grid gap-3 *:min-w-0 *:break-words sm:grid-cols-2 xl:grid-cols-4">
         <Stat accent label={t('pilot.reachPct')} value={fmtPct(reachAll ? Math.round((reachOk / reachAll) * 1000) / 10 : null)} hint={t('pilot.summary')} />
         <Stat label={t('pilot.tickets')} value={String(sum((s) => s.tickets))} />
         <Stat label={t('pilot.ready')} value={String(sum((s) => s.readyTickets))} />

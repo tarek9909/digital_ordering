@@ -79,3 +79,34 @@ it('plays the venue chime and speaks with the board voice map', async () => {
   expect(f.findVoice).toHaveBeenCalledWith('en', voices);
   expect(f.speak).toHaveBeenCalledWith('Order 11 is ready', 'en', voices);
 });
+
+it('chimes as soon as a ticket turns Ready, without waiting for the worker, and skips the worker’s first alert', async () => {
+  setup([]);
+  const t2 = { id: 't2', displayNumber: '12', status: 'ready', version: 2, seq: 2, counterId: null, readyAt: null };
+  await act(async () => {
+    f.events['ticket.updated']!({ ticket: t2, change: 'status' });
+    await vi.advanceTimersByTimeAsync(1_100);
+  });
+  expect(f.chime).toHaveBeenCalledOnce();
+  await act(async () => {
+    f.events['ticket.alert']!({ id: 't2', displayNumber: '12', round: 1, attempt: 1, manual: false });
+    await vi.advanceTimersByTimeAsync(3_100);
+  });
+  expect(f.chime).toHaveBeenCalledOnce();
+  // "Alert again" still plays.
+  await act(async () => {
+    f.events['ticket.alert']!({ id: 't2', displayNumber: '12', round: 1, attempt: 1, manual: true });
+    await vi.advanceTimersByTimeAsync(3_100);
+  });
+  expect(f.chime).toHaveBeenCalledTimes(2);
+});
+
+it('a reopened ticket (Collected → Ready) is shown but not announced', async () => {
+  setup([]);
+  const t3 = { id: 't3', displayNumber: '13', status: 'ready', version: 2, seq: 2, counterId: null, readyAt: null };
+  await act(async () => {
+    f.events['ticket.updated']!({ ticket: t3, change: 'status', reason: 'reopen' });
+    await vi.advanceTimersByTimeAsync(3_100);
+  });
+  expect(f.chime).not.toHaveBeenCalled();
+});

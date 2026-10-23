@@ -58,7 +58,8 @@ function Results({ data }: { data: PlatformReportResponse }) {
   const lastDay = days[days.length - 1]!;
   return (
     <div className="flex flex-col gap-6">
-      <div data-motion="stagger" className={`grid gap-3 sm:grid-cols-2 ${mrrCurrency ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+      {/* Four across only from xl: next to the sidebar a quarter is too narrow for the large figures. */}
+      <div data-motion="stagger" className={`grid gap-3 *:min-w-0 *:break-words sm:grid-cols-2 ${mrrCurrency ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
         {mrrCurrency && (
           <Stat
             accent
@@ -236,7 +237,7 @@ export function ReportSkeleton({ label }: { label: string }) {
   return (
     <div role="status" className="flex flex-col gap-6">
       <span className="sr-only">{label}</span>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-32 rounded-[var(--radius-card)]" />
         ))}

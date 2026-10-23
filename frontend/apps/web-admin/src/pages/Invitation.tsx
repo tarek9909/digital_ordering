@@ -108,7 +108,7 @@ export function InvitationPage() {
         <Loading />
       ) : (
         <>
-          <p className="mb-2 text-ink-2">
+          <p className="mb-2 break-words text-ink-2">
             {t('invitation.intro', {
               tenant: q.data.tenantName,
               email: q.data.email,

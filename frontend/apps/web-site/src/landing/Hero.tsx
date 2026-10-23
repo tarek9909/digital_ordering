@@ -42,11 +42,11 @@ function LiveDemo() {
   const preparing = [n + 1, n + 2];
   const readyList = ready ? [n, n - 1, n - 2] : [n - 1, n - 2];
   return (
-    <figure className="relative" data-anim="demo">
+    <figure className="@container relative" data-anim="demo">
       <figcaption className="sr-only">{t('landing.demo.label')}</figcaption>
-      <div className="relative grid grid-cols-[1fr_auto] items-end gap-4 sm:gap-6">
+      <div className="relative grid grid-cols-[1fr_auto] items-end gap-4 @lg:gap-6">
         {/* Pickup TV, behind */}
-        <div className="col-span-2 sm:col-span-1" data-anim="demo-tv">
+        <div className="col-span-2 min-w-0 @lg:col-span-1" data-anim="demo-tv">
           <p className="eyebrow mb-2">{t('landing.demo.tv')}</p>
           <TvFrame>
             <div className="grid h-full grid-cols-[2fr_3fr] gap-2 p-3">
@@ -75,7 +75,7 @@ function LiveDemo() {
         </div>
 
         {/* Customer phone, in front */}
-        <div className="row-start-1 -mb-6 justify-self-end sm:col-start-2 sm:row-span-2" data-anim="demo-phone">
+        <div className="row-start-1 -mb-6 justify-self-end @lg:col-start-2 @lg:row-span-2" data-anim="demo-phone">
           <p className="eyebrow mb-2">{t('landing.demo.phone')}</p>
           <PhoneFrame className={ready ? 'phone-ring' : ''}>
             <div className="flex flex-1 flex-col gap-3 px-4 pb-5">
@@ -100,10 +100,10 @@ function LiveDemo() {
         </div>
 
         {/* Staff tablet, the one button */}
-        <div className="col-span-2 sm:col-span-1" data-anim="demo-tablet">
+        <div className="col-span-2 min-w-0 @lg:col-span-1" data-anim="demo-tablet">
           <p className="eyebrow mb-2">{t('landing.demo.tablet')}</p>
           <TabletFrame>
-            <div className="flex items-center gap-3 p-3 text-white">
+            <div className="flex flex-wrap items-center gap-3 p-3 text-white">
               <span className="num font-display text-4xl font-bold">{n}</span>
               <span className="min-w-0 flex-1 truncate text-sm text-white/70">{ready ? t('landing.demo.ready') : t('landing.demo.preparing')}</span>
               <button
@@ -136,14 +136,14 @@ export function Hero() {
           <span aria-hidden="true" className="live-dot size-2 rounded-full bg-primary" />
           {t('landing.hero.kicker')}
         </p>
-        <h1 id="hero" className="hero-title max-w-[14ch] font-display text-5xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl lg:text-7xl" data-anim="hero-title">
+        <h1 id="hero" className="hero-title max-w-[14ch] font-display text-[2.5rem] leading-[1.05] font-extrabold tracking-tight text-balance min-[25rem]:text-5xl sm:text-6xl lg:text-6xl xl:text-7xl" data-anim="hero-title">
           {t('landing.hero.title')}
         </h1>
         <p className="max-w-[52ch] text-lg leading-relaxed text-ink-2" data-anim="hero-item">
           {t('landing.hero.body')}
         </p>
         <div className="flex flex-wrap items-center gap-4" data-anim="hero-item">
-          <Link to="/contact" className="inline-flex min-h-14 items-center rounded-full bg-primary px-8 text-lg font-semibold text-on-primary hover:bg-primary-hover active:scale-[.98]">
+          <Link to="/contact" className="inline-flex min-h-14 items-center justify-center rounded-full bg-primary px-8 text-center text-lg font-semibold text-on-primary hover:bg-primary-hover active:scale-[.98] max-sm:w-full">
             {t('landing.hero.cta')}
           </Link>
           <a href="#how" className="inline-flex min-h-12 items-center px-1 text-lg font-semibold text-ink underline decoration-line decoration-2 underline-offset-8 hover:decoration-ink">

@@ -44,7 +44,7 @@ export function MemberChip({ dark = false }: { dark?: boolean }) {
   const namedStaff = useMember((s) => s.namedStaff);
   if (!session && !namedStaff) return null;
   return (
-    <div className={`flex min-h-12 items-center gap-2 rounded-control ps-1.5 ring-1 ring-inset ${dark ? 'ring-white/20' : 'bg-surface ring-line'}`}>
+    <div className={`flex min-h-12 shrink-0 items-center gap-2 rounded-control ps-1.5 ring-1 ring-inset ${dark ? 'ring-white/20' : 'bg-surface ring-line'}`}>
       <span
         aria-hidden="true"
         className={`grid size-9 shrink-0 place-items-center rounded-full font-display text-sm font-bold ${session ? (dark ? 'bg-white text-ink' : 'bg-ink text-white') : dark ? 'bg-white/10' : 'bg-canvas text-muted'}`}
@@ -57,7 +57,7 @@ export function MemberChip({ dark = false }: { dark?: boolean }) {
       <button
         type="button"
         onClick={switchMember}
-        className={`min-h-12 rounded-e-full px-4 text-sm font-semibold transition-colors ${dark ? 'text-white hover:bg-white/10' : 'text-ink hover:bg-canvas'}`}
+        className={`min-h-12 rounded-e-full px-3 text-sm font-semibold whitespace-nowrap sm:px-4 transition-colors ${dark ? 'text-white hover:bg-white/10' : 'text-ink hover:bg-canvas'}`}
       >
         {session ? t('member.switch') : t('member.enterPin')}
       </button>
@@ -71,19 +71,20 @@ export function SoundButton({ dark = false }: { dark?: boolean }) {
   const on = useStaff((s) => s.soundEnabled);
   if (on)
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2 text-sm font-medium ${dark ? 'text-white/80' : 'text-ink-2'}`} role="status">
+      <span className={`inline-flex min-h-12 items-center gap-1.5 px-2 text-sm font-medium ${dark ? 'text-white/80' : 'text-ink-2'}`} role="status">
         <Icon name="sound" className="size-4" />
-        {t('pos.soundOn')}
+        {/* Phones: the icon alone keeps the bar compact; the words stay for screen readers. */}
+        <span className="max-sm:sr-only">{t('pos.soundOn')}</span>
       </span>
     );
   return (
     <button
       type="button"
-      className={`inline-flex min-h-12 items-center gap-2 rounded-control px-4 font-semibold ring-1 ring-inset transition-colors ${dark ? 'text-white ring-white/25 hover:bg-white/10' : 'bg-surface text-ink ring-line hover:bg-canvas'}`}
+      className={`inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center gap-2 rounded-control px-3 font-semibold ring-1 ring-inset transition-colors sm:px-4 ${dark ? 'text-white ring-white/25 hover:bg-white/10' : 'bg-surface text-ink ring-line hover:bg-canvas'}`}
       onClick={() => void unlockChime().then((ok) => ok && useStaff.getState().setSoundEnabled(true))}
     >
       <Icon name="sound" />
-      {t('pos.enableSound')}
+      <span className="max-sm:sr-only">{t('pos.enableSound')}</span>
     </button>
   );
 }
@@ -126,7 +127,7 @@ export function TopBar({ venueName, claimCount, showSound, canCreate, disabled, 
     setQ('');
   };
   return (
-    <header className="border-b border-line bg-surface/95 px-3 py-2.5 backdrop-blur sm:px-4">
+    <header className="border-b border-line bg-surface/95 px-3 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 backdrop-blur sm:px-4">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2.5">
         <div className="me-auto flex min-w-0 flex-1 basis-40 items-center gap-3 sm:flex-none sm:basis-auto">
           <BrandMark className="size-10" />
@@ -148,7 +149,7 @@ export function TopBar({ venueName, claimCount, showSound, canCreate, disabled, 
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('search.placeholder')}
             enterKeyHint="search"
-            className="min-h-12 w-44 rounded-control border border-line bg-canvas ps-11 pe-4 text-base placeholder:text-muted hover:border-ink-2/30 lg:w-56"
+            className="min-h-12 w-40 rounded-control border border-line bg-canvas ps-11 pe-4 text-base placeholder:text-muted hover:border-ink-2/30 md:w-44 lg:w-56"
           />
           <button type="submit" className="sr-only">
             {t('search.go')}

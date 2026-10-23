@@ -113,8 +113,8 @@ function Legal({ onAnnounce }: { onAnnounce: (s: string) => void }) {
                   <ul className="flex flex-col divide-y divide-line">
                     {list.map((d) => (
                       <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span dir="ltr" className="font-mono text-sm font-semibold">
+                        <span className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span dir="ltr" className="font-mono text-sm font-semibold break-all">
                             {d.version}
                           </span>
                           <span className="text-sm text-muted">{t(`lang.${d.locale}`, { defaultValue: d.locale })}</span>
@@ -222,7 +222,8 @@ function EmailTemplates({ onAnnounce }: { onAnnounce: (s: string) => void }) {
       <div className="grid items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <nav aria-label={t('content.email.template')} className="flex flex-col gap-2 rounded-[var(--radius-card)] bg-surface p-3 shadow-card lg:sticky lg:top-6">
           <Field label={t('contentUx.findEmail')} type="search" value={filter} onChange={(e) => setFilter(e.target.value)} className="[&>label]:sr-only" placeholder={t('contentUx.findEmail')} />
-          <ul className="flex max-h-[60vh] flex-col gap-0.5 overflow-auto">
+          {/* Stacked above the editor on narrow screens, so the list scrolls in a shorter box there. */}
+          <ul className="flex max-h-64 flex-col gap-0.5 overflow-auto lg:max-h-[60vh]">
             {shown.map((k) => (
               <li key={k}>
                 <button
@@ -231,8 +232,8 @@ function EmailTemplates({ onAnnounce }: { onAnnounce: (s: string) => void }) {
                   onClick={() => setKey(k)}
                   className={`flex min-h-11 w-full flex-col items-start justify-center rounded-input px-3 py-1.5 text-start text-sm transition-colors ${k === key ? 'bg-ink text-white' : 'text-ink-2 hover:bg-canvas hover:text-ink'}`}
                 >
-                  <span className="font-semibold">{name(k)}</span>
-                  <span dir="ltr" className={`font-mono text-[0.6875rem] ${k === key ? 'text-white/60' : 'text-muted'}`}>
+                  <span className="max-w-full font-semibold break-words">{name(k)}</span>
+                  <span dir="ltr" className={`max-w-full font-mono text-[0.6875rem] break-all ${k === key ? 'text-white/60' : 'text-muted'}`}>
                     {k}
                   </span>
                 </button>
@@ -331,7 +332,7 @@ function TemplateForm({ path, locale, initial, onSaved }: { path: string; locale
           ))}
         </div>
       </details>
-      <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
         {dirty && <span className="me-auto text-sm font-semibold text-warn">{t('settingsForm.unsaved', { count: 1 })}</span>}
         <Button type="submit" busy={save.isPending} disabled={!dirty}>
           {t('common:save')}

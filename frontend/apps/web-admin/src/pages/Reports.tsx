@@ -1,11 +1,14 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, EmptyState, Field, LiveRegion, Select } from '@dop/ui';
+import { Button, EmptyState, Field, LiveRegion, Select } from '@dop/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ErrorNote, Figures, Page, QueryView, Section, Table, Tabs, Td } from '../components/common';
+import { DataExport } from '../components/DataExport';
+import { ErrorNote, Figures, Page, QueryView, Section, Stat, Table, Tabs, Td } from '../components/common';
+import { SubNav } from '../components/SubNav';
 import { api } from '../lib/api';
+import { useRole } from '../lib/me';
 import { formatDuration, isoDate, pct } from '../lib/format';
 import { ALL_VENUES, activeHours, csvQuery, delta, heatLevel, heatmapMax, heatmapRows, hourLabel, reportQuery, type ReportFilter } from '../lib/reports';
 import type { Counter, HeatmapReport, PilotReport, PilotSummary, TrendSummary, TrendsReport } from '../lib/types';
@@ -18,10 +21,18 @@ import { useCurrentVenueId, useVenues } from '../lib/venue';
 const REACH = ['push', 'live', 'closed', 'none'] as const;
 // Chart colours come from the theme tokens (CSS variables), so charts follow the Ember palette with no hex here.
 // Alert reach is an ink ramp, darkest for the alert that got furthest; the legend and table carry the meaning too.
-const COLORS: Record<(typeof REACH)[number], string> = { push: 'var(--color-ink)', live: 'var(--color-ink-2)', closed: 'var(--color-muted)', none: 'var(--color-line)' };
+const COLORS: Record<(typeof REACH)[number], string> = {
+  push: 'var(--color-ink)',
+  live: 'var(--color-ink-2)',
+  closed: 'var(--color-muted)',
+  none: 'var(--color-line)',
+};
 // Sequential warm ramp for heatmap levels 1–5 (ink mixed into the surface); level 0 stays the surface.
 const HEAT = ['', ...[12, 28, 46, 68, 90].map((p) => `color-mix(in oklab, var(--color-ink) ${p}%, var(--color-surface))`)] as const;
-const AXIS = { tick: { fill: 'var(--color-muted)', fontSize: 12 }, stroke: 'var(--color-line)' };
+const AXIS = {
+  tick: { fill: 'var(--color-muted)', fontSize: 12 },
+  stroke: 'var(--color-line)',
+};
 const TABS = ['trends', 'heatmap', 'daily'] as const;
 type Tab = (typeof TABS)[number];
 
@@ -228,98 +239,118 @@ function Trends({ f }: { f: ReportFilter }) {
   ];
   return (
     <QueryView q={q} skeleton="tiles">
-      {(r) => (
-        <>
-          <Section
-            title={t('trends.title')}
-            description={t('trends.comparedWith', {
-              from: r.previous.from,
-              to: r.previous.to,
-            })}
-          >
-            {/* Ten figures: five columns (two on small screens) fill every cell. The ticket count leads in ember. */}
-            <Figures flat className="grid-cols-2 lg:grid-cols-5">
-              {metrics.map((m, i) => {
-                const cur = r.current[m.key] as number | null;
-                const prev = r.previous[m.key] as number | null;
-                const lead = i === 0;
+      {(r) => {
+        const cell = (m: Metric) => ({ cur: r.current[m.key] as number | null, prev: r.previous[m.key] as number | null });
+        const lead = metrics.slice(0, 3);
+        const rest = metrics.slice(3);
+        return (
+          <>
+            <p className="mb-3 text-sm text-muted">{t('trends.comparedWith', { from: r.previous.from, to: r.previous.to })}</p>
+            {/* The three headline numbers, large; the ticket count leads in ember. */}
+            <Figures flat className="mb-6 grid-cols-1 sm:grid-cols-3">
+              {lead.map((m, i) => {
+                const { cur, prev } = cell(m);
                 return (
-                  <div key={m.key} className="flex flex-col gap-2 bg-surface p-4">
-                    <div className="text-sm text-muted">{m.label}</div>
-                    <div data-motion="count" className={`num font-display text-3xl leading-none font-extrabold tracking-tight ${lead ? 'text-primary' : ''}`}>
-                      {m.format(cur)}
-                    </div>
-                    <div className="mt-auto text-sm">
-                      <DeltaText cur={cur} prev={prev} m={m} />
-                    </div>
-                    <div className="text-xs text-muted">{t('trends.previous', { value: m.format(prev) })}</div>
-                  </div>
+                  <Stat
+                    key={m.key}
+                    lead={i === 0}
+                    label={m.label}
+                    value={m.format(cur)}
+                    hint={
+                      <span className="flex flex-col gap-0.5">
+                        <DeltaText cur={cur} prev={prev} m={m} />
+                        <span className="text-xs">{t('trends.previous', { value: m.format(prev) })}</span>
+                      </span>
+                    }
+                  />
                 );
               })}
             </Figures>
-            <p className="mt-3 text-sm text-muted">
+            <Section title={t('reports.secondaryTitle')} className="mb-6">
+              <dl className="-my-2 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
+                {rest.map((m) => {
+                  const { cur, prev } = cell(m);
+                  return (
+                    <div key={m.key} className="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+3)]:border-b-0">
+                      <div className="min-w-0">
+                        <dt className="text-sm text-ink-2">{m.label}</dt>
+                        <dd className="text-xs">
+                          <DeltaText cur={cur} prev={prev} m={m} />
+                        </dd>
+                      </div>
+                      <span className="num font-display text-xl font-extrabold tracking-tight whitespace-nowrap">{m.format(cur)}</span>
+                    </div>
+                  );
+                })}
+              </dl>
+            </Section>
+            <div className="grid items-start gap-6 xl:grid-cols-3">
+              <Section title={t('trends.seriesTitle')} className="mb-0 xl:col-span-2">
+                {r.series.length === 0 ? (
+                  <p className="text-muted">{t('reports.empty')}</p>
+                ) : (
+                  <>
+                    <div className="h-64" dir="ltr" role="img" aria-label={t('trends.seriesLabel')}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={r.series.map((s) => ({
+                            date: s.date.slice(5),
+                            collected: s.collected,
+                            cancelled: s.cancelled,
+                            uncollected: s.uncollected,
+                          }))}
+                          margin={{ top: 8, right: 8, bottom: 8, left: 0 }}
+                        >
+                          <defs>
+                            <pattern id="never-collected" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                              <rect width="6" height="6" fill="var(--color-danger-bg)" />
+                              <rect width="2.5" height="6" fill="var(--color-danger)" />
+                            </pattern>
+                          </defs>
+                          <CartesianGrid vertical={false} stroke="var(--color-line)" />
+                          <XAxis dataKey="date" {...AXIS} />
+                          <YAxis allowDecimals={false} {...AXIS} width={40} />
+                          <Tooltip cursor={{ fill: 'var(--color-primary-wash)' }} />
+                          <Legend />
+                          <Bar dataKey="collected" stackId="day" name={t('trends.stackCollected')} fill="var(--color-ink)" stroke="var(--color-surface)" strokeWidth={2} />
+                          <Bar dataKey="cancelled" stackId="day" name={t('trends.cancelled')} fill="var(--color-muted)" fillOpacity={0.55} stroke="var(--color-surface)" strokeWidth={2} />
+                          <Bar dataKey="uncollected" stackId="day" name={t('trends.stackNever')} fill="url(#never-collected)" stroke="var(--color-surface)" strokeWidth={2} radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <details className="mt-3">
+                      <summary className="inline-flex min-h-12 cursor-pointer items-center rounded-control px-2 font-semibold text-ink-2 hover:text-ink">{t('trends.showTable')}</summary>
+                      <Table
+                        caption={t('trends.seriesTitle')}
+                        head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.totalWait'), t('trends.cancelled'), t('trends.rating')]}
+                      >
+                        {r.series.map((s) => (
+                          <tr key={s.date}>
+                            <Td className="whitespace-nowrap">{s.date}</Td>
+                            <Td className="num">{s.tickets}</Td>
+                            <Td className="num">{pct(s.reachPushOrLivePct)}</Td>
+                            <Td className="num">{pct(s.acknowledgedPct)}</Td>
+                            <Td className="num">{formatDuration(s.prepSecondsP50)}</Td>
+                            <Td className="num">{formatDuration(s.pickupSecondsP50)}</Td>
+                            <Td className="num">{formatDuration(s.totalSecondsP50)}</Td>
+                            <Td className="num">{s.cancelled}</Td>
+                            <Td className="num">{s.ratingAvg ?? '—'}</Td>
+                          </tr>
+                        ))}
+                      </Table>
+                    </details>
+                  </>
+                )}
+              </Section>
+              <CancelReasons current={r.current} previous={r.previous} />
+            </div>
+            <aside className="mt-6 rounded-[var(--radius-card)] bg-canvas/60 px-5 py-4 text-sm text-muted">
+              <h2 className="eyebrow mb-1">{t('reports.notesTitle')}</h2>
               {t('reports.prepNote')} {t('reports.wordingNote')}
-            </p>
-          </Section>
-          <CancelReasons current={r.current} previous={r.previous} />
-          <Section title={t('trends.seriesTitle')}>
-            {r.series.length === 0 ? (
-              <p className="text-muted">{t('reports.empty')}</p>
-            ) : (
-              <>
-                <div className="h-64" dir="ltr" role="img" aria-label={t('trends.seriesLabel')}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={r.series.map((s) => ({
-                        date: s.date.slice(5),
-                        tickets: s.tickets,
-                      }))}
-                      margin={{ top: 8, right: 8, bottom: 8, left: 0 }}
-                    >
-                      <CartesianGrid vertical={false} stroke="var(--color-line)" />
-                      <XAxis dataKey="date" {...AXIS} />
-                      <YAxis allowDecimals={false} {...AXIS} width={40} />
-                      <Tooltip cursor={{ fill: 'var(--color-primary-wash)' }} />
-                      <Bar dataKey="tickets" name={t('trends.tickets')} fill="var(--color-ink-2)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <details className="mt-3">
-                  <summary className="inline-flex min-h-12 cursor-pointer items-center rounded-control px-2 font-semibold text-ink-2 hover:text-ink">{t('trends.showTable')}</summary>
-                  <Table
-                    caption={t('trends.seriesTitle')}
-                    head={[
-                      t('reports.day'),
-                      t('trends.tickets'),
-                      t('today.reachPct'),
-                      t('today.ackPct'),
-                      t('trends.prep'),
-                      t('today.pickup'),
-                      t('trends.totalWait'),
-                      t('trends.cancelled'),
-                      t('trends.rating'),
-                    ]}
-                  >
-                    {r.series.map((s) => (
-                      <tr key={s.date}>
-                        <Td className="whitespace-nowrap">{s.date}</Td>
-                        <Td className="num">{s.tickets}</Td>
-                        <Td className="num">{pct(s.reachPushOrLivePct)}</Td>
-                        <Td className="num">{pct(s.acknowledgedPct)}</Td>
-                        <Td className="num">{formatDuration(s.prepSecondsP50)}</Td>
-                        <Td className="num">{formatDuration(s.pickupSecondsP50)}</Td>
-                        <Td className="num">{formatDuration(s.totalSecondsP50)}</Td>
-                        <Td className="num">{s.cancelled}</Td>
-                        <Td className="num">{s.ratingAvg ?? '—'}</Td>
-                      </tr>
-                    ))}
-                  </Table>
-                </details>
-              </>
-            )}
-          </Section>
-        </>
-      )}
+            </aside>
+          </>
+        );
+      }}
     </QueryView>
   );
 }
@@ -329,7 +360,7 @@ function CancelReasons({ current, previous }: { current: TrendSummary; previous:
   const { t } = useTranslation();
   const reasons = [...new Set([...Object.keys(current.cancelReasons ?? {}), ...Object.keys(previous.cancelReasons ?? {})])];
   return (
-    <Section title={t('trends.cancelReasonsTitle')} description={t('trends.cancelReasonsHint', { n: current.cancelled })}>
+    <Section title={t('trends.cancelReasonsTitle')} description={t('trends.cancelReasonsHint', { n: current.cancelled })} className="mb-0">
       {current.cancelled === 0 && previous.cancelled === 0 ? (
         <p className="text-muted">{t('trends.noCancellations')}</p>
       ) : (
@@ -363,6 +394,11 @@ function Heatmap({ f }: { f: ReportFilter }) {
         const max = heatmapMax(rows);
         if (max === 0) return <EmptyState title={t('reports.emptyTitle')}>{t('reports.empty')}</EmptyState>;
         const hours = activeHours(rows);
+        let peak = { weekday: rows[0]!.weekday, hour: 0, n: 0 };
+        for (const row of rows)
+          row.cells.forEach((n, h) => {
+            if (n > peak.n) peak = { weekday: row.weekday, hour: h, n };
+          });
         return (
           <>
             <Section title={t('heatmap.title')} description={t('heatmap.hint')}>
@@ -381,7 +417,7 @@ function Heatmap({ f }: { f: ReportFilter }) {
                     </div>
                   ))}
                   {rows.map((row) => (
-                    <HeatRow key={row.weekday} label={day(row.weekday)} cells={row.cells} max={max} />
+                    <HeatRow key={row.weekday} label={day(row.weekday)} cells={row.cells} max={max} peakHour={row.weekday === peak.weekday ? peak.hour : -1} />
                   ))}
                 </div>
               </div>
@@ -392,6 +428,10 @@ function Heatmap({ f }: { f: ReportFilter }) {
                 ))}
                 <span>{t('heatmap.more')}</span>
               </div>
+              <p className="mt-4 flex items-center gap-3 text-ink-2">
+                <span aria-hidden="true" className="inline-block size-3.5 shrink-0 rounded-[4px] bg-ink ring-2 ring-primary ring-offset-2 ring-offset-surface" />
+                {t('heatmap.peak', { day: day(peak.weekday), hour: hourLabel(peak.hour), n: peak.n })}
+              </p>
             </Section>
             <Section title={t('heatmap.tableTitle')} description={t('heatmap.tableHint')}>
               <Table caption={t('heatmap.tableTitle')} head={[t('heatmap.day'), ...hours.map(hourLabel), t('reports.total')]}>
@@ -415,7 +455,7 @@ function Heatmap({ f }: { f: ReportFilter }) {
   );
 }
 
-function HeatRow({ label, cells, max }: { label: string; cells: number[]; max: number }): ReactNode {
+function HeatRow({ label, cells, max, peakHour }: { label: string; cells: number[]; max: number; peakHour: number }): ReactNode {
   return (
     <>
       <div className="flex items-center pe-2 text-xs font-medium">{label}</div>
@@ -425,7 +465,7 @@ function HeatRow({ label, cells, max }: { label: string; cells: number[]; max: n
           <div
             key={h}
             title={`${label} ${hourLabel(h)}: ${v}`}
-            className="h-7 rounded-[4px] border border-line/60"
+            className={`h-7 rounded-[4px] border border-line/60 ${h === peakHour ? "ring-2 ring-primary ring-offset-1 ring-offset-surface" : ""}`}
             style={{
               background: level ? HEAT[level] : 'transparent',
               color: level >= 3 ? 'var(--color-surface)' : 'inherit',
@@ -464,14 +504,11 @@ function CsvButton({ f }: { f: ReportFilter }) {
     },
   });
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:items-center sm:gap-4">
-      <div>
-        <Button variant="secondary" busy={dl.isPending} onClick={() => dl.mutate()}>
-          <span aria-hidden="true">↓</span>
-          {t('reports.csv')}
-        </Button>
-      </div>
-      <p className="text-sm text-muted">{t('reports.csvHint')}</p>
+    <div className="flex flex-col items-end gap-1">
+      <Button variant="secondary" busy={dl.isPending} onClick={() => dl.mutate()} title={t('reports.csvHint')}>
+        <span aria-hidden="true">↓</span>
+        {t('reports.csv')}
+      </Button>
       <ErrorNote error={dl.error} />
       <LiveRegion text={dl.isSuccess ? t('reports.csvReady') : ''} />
     </div>
@@ -480,6 +517,7 @@ function CsvButton({ f }: { f: ReportFilter }) {
 
 export function ReportsPage() {
   const { t } = useTranslation();
+  const isOwner = useRole() === 'owner';
   const [params, setParams] = useSearchParams();
   const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '') ? (params.get('tab') as Tab) : 'trends';
   const current = useCurrentVenueId();
@@ -502,12 +540,36 @@ export function ReportsPage() {
   }, [current]);
   const counters = useCounters(draft.venueId).data ?? [];
   const venueOptions = [...(venues.length > 1 ? [{ value: ALL_VENUES, label: t('reports.allVenues') }] : []), ...venues.map((v) => ({ value: v.id, label: v.name }))];
+  const presets = [7, 14, 30] as const;
+  const rangeFor = (days: number) => ({ from: isoDate(new Date(Date.now() - (days - 1) * 86_400_000)), to: isoDate(new Date()) });
+  const activePreset = presets.find((n) => {
+    const r = rangeFor(n);
+    return filter.from === r.from && filter.to === r.to;
+  });
+  const pickPreset = (n: number) => {
+    const r = rangeFor(n);
+    setDraft((d) => ({ ...d, ...r }));
+    setFilter((f) => ({ ...f, ...r }));
+  };
   return (
-    <Page title={t('reports.title')} description={t('reports.description')}>
-      <Card flat className="mb-5 flex flex-col gap-4 p-5 sm:p-6">
-        <h2 className="sr-only">{t('reports.filters')}</h2>
+    <Page title={t('reports.title')} description={t('reports.description')} tabs={<SubNav group="insights" />} actions={<CsvButton f={filter} />}>
+      <section aria-label={t('reports.filters')} className="mb-6 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.quickRange')}>
+          {presets.map((n) => (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={activePreset === n}
+              onClick={() => pickPreset(n)}
+              className={`min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors ${activePreset === n ? 'border-ink bg-ink text-surface' : 'border-line text-ink-2 hover:border-ink-2 hover:text-ink'}`}
+            >
+              {t(`reports.last${n}`)}
+            </button>
+          ))}
+        </div>
+        {/* Phones: filters grow to fill the rows they wrap onto; from sm they sit side by side at their natural width. */}
         <form
-          className="flex flex-wrap items-end gap-3"
+          className="flex flex-wrap items-end gap-3 *:grow sm:*:grow-0"
           onSubmit={(e) => {
             e.preventDefault();
             if (draft.from && draft.to && draft.from <= draft.to) setFilter(draft);
@@ -544,14 +606,18 @@ export function ReportsPage() {
             {t('reports.show')}
           </Button>
         </form>
-        <CsvButton f={filter} />
-      </Card>
+      </section>
       <Tabs label={t('reports.tabsLabel')} tabs={TABS} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} idPrefix="r" labelOf={(k) => t(`reports.tabs.${k}`)} />
-      <div role="tabpanel" id={`rpanel-${tab}`} aria-labelledby={`rtab-${tab}`}>
+      <div className="mb-8 [&>section]:mb-8 [&>section:last-child]:mb-0" role="tabpanel" id={`rpanel-${tab}`} aria-labelledby={`rtab-${tab}`}>
         {tab === 'trends' && <Trends f={filter} />}
         {tab === 'heatmap' && <Heatmap f={filter} />}
         {tab === 'daily' && <Daily f={filter} />}
       </div>
+      {isOwner && (
+        <Section title={t('settings.exportTitle')}>
+          <DataExport />
+        </Section>
+      )}
     </Page>
   );
 }

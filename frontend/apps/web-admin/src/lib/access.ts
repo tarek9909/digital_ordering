@@ -1,36 +1,22 @@
 import type { MemberRole, TenantStatus } from '@dop/contracts';
 
 // Which admin sections a user can reach (TRD §14.2). A suspended, expired or cancelled tenant keeps only billing,
-// team, settings (export, deletion), account and support access (EX-13, EX-14; the API's limitedAccessOk routes).
-// A platform support agent inside an approved session ("support") gets the venue, reports and view-only billing
-// and integrations; never team, account, settings or the support-access page (TR-AUTH-10).
+// team, settings (export, deletion) and account (EX-13, EX-14; the API's limitedAccessOk routes).
+// A platform support agent inside a support session ("support") gets the venue, reports and view-only billing;
+// never team, account or settings (TR-AUTH-10). Integrations and support access are run by the platform team in the
+// console, not here.
 
-export type Section =
-  | 'home'
-  | 'venues'
-  | 'venue'
-  | 'counters'
-  | 'staff'
-  | 'displays'
-  | 'posters'
-  | 'reports'
-  | 'ratings'
-  | 'team'
-  | 'integrations'
-  | 'support'
-  | 'billing'
-  | 'settings'
-  | 'account';
+export type Section = 'home' | 'venues' | 'venue' | 'counters' | 'staff' | 'displays' | 'posters' | 'reports' | 'ratings' | 'team' | 'billing' | 'settings' | 'account';
 
 /** Role of whoever uses the admin app: a member role, or a support agent. */
 export type ViewerRole = MemberRole | 'support';
 
 export const LIMITED_STATUSES: readonly TenantStatus[] = ['suspended', 'trial_expired', 'cancelled'];
-const LIMITED_SECTIONS: readonly Section[] = ['billing', 'team', 'settings', 'account', 'support'];
-const OWNER_ONLY: readonly Section[] = ['billing', 'integrations'];
-const SUPPORT_HIDDEN: readonly Section[] = ['team', 'account', 'settings', 'support'];
-/** Read-only for a support agent (billing view, integrations view). */
-const SUPPORT_VIEW: readonly Section[] = ['billing', 'integrations'];
+const LIMITED_SECTIONS: readonly Section[] = ['billing', 'team', 'settings', 'account'];
+const OWNER_ONLY: readonly Section[] = ['billing'];
+const SUPPORT_HIDDEN: readonly Section[] = ['team', 'account', 'settings'];
+/** Read-only for a support agent (billing view). */
+const SUPPORT_VIEW: readonly Section[] = ['billing'];
 
 export const isLimited = (status: TenantStatus | undefined) => status !== undefined && LIMITED_STATUSES.includes(status);
 
@@ -42,7 +28,7 @@ export function canReach(section: Section, status: TenantStatus | undefined, rol
   return true;
 }
 
-/** Can change things in this section (support agents see billing and integrations read-only). */
+/** Can change things in this section (support agents see billing read-only). */
 export function canManage(section: Section, role: ViewerRole | null): boolean {
   if (role === 'support') return !SUPPORT_VIEW.includes(section) && !SUPPORT_HIDDEN.includes(section);
   if (OWNER_ONLY.includes(section)) return role === 'owner';

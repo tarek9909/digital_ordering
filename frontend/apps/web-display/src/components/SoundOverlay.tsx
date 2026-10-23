@@ -38,7 +38,7 @@ export function SoundOverlay() {
         </svg>
       </span>
       <span className="font-display text-[6.4vmin] leading-tight font-extrabold tracking-tight">{t('sound.enable')}</span>
-      <span className="max-w-[80vmin] text-[2.8vmin] leading-snug text-white/65">{t('sound.hint')}</span>
+      <span className="max-w-[80vmin] text-[max(1rem,2.8vmin)] leading-snug text-white/65">{t('sound.hint')}</span>
     </button>
   );
 }

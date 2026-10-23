@@ -58,6 +58,7 @@ describe('authenticator changes re-prove the account (H-5)', () => {
   it('sends the password when starting enrolment', async () => {
     api.post.mockResolvedValue({ secret: 'JBSWY3DPEHPK3PXP', uri: 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP' });
     renderAccount(me(false));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Two-factor authentication' }));
     fireEvent.input(await screen.findByLabelText('Confirm with your password'), { target: { value: 'my-current-pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Set up two-factor' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/mfa/totp/enroll', { password: 'my-current-pass' }));
@@ -66,6 +67,7 @@ describe('authenticator changes re-prove the account (H-5)', () => {
   it('sends a current code when turning two-factor off, and does nothing without one', async () => {
     api.delete.mockResolvedValue(undefined);
     renderAccount(me(true));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Two-factor authentication' }));
     const confirm = async () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Turn off two-factor' }));
       const buttons = await screen.findAllByRole('button', { name: 'Turn off two-factor' });
@@ -117,6 +119,7 @@ describe('authenticator proof errors stay recoverable (AS11)', () => {
   it('shows a wrong password on the field and lets the user retry', async () => {
     api.post.mockRejectedValueOnce(problem(401, 'UNAUTHENTICATED')).mockResolvedValueOnce({ secret: 'JBSWY3DPEHPK3PXP', uri: 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP' });
     renderAccount(me(false));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Two-factor authentication' }));
     const field = await screen.findByLabelText('Confirm with your password');
     fireEvent.input(field, { target: { value: 'wrong-pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Set up two-factor' }));
@@ -138,6 +141,7 @@ describe('authenticator proof errors stay recoverable (AS11)', () => {
   it('explains the multi-venue rule when removal is refused', async () => {
     api.delete.mockRejectedValue(problem(403, 'FORBIDDEN'));
     renderAccount(me(true));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Two-factor authentication' }));
     fireEvent.input(await screen.findByLabelText('6-digit code'), { target: { value: '123456' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Turn off two-factor' }));
     fireEvent.click((await screen.findAllByRole('button', { name: 'Turn off two-factor' })).at(-1)!);

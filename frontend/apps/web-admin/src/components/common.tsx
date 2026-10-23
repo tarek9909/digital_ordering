@@ -13,7 +13,7 @@ const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean)
 type LinkVariant = 'primary' | 'secondary' | 'ink' | 'ghost' | 'quiet';
 const LINK_VARIANTS: Record<LinkVariant, string> = {
   primary: 'bg-primary text-on-primary shadow-button hover:bg-primary-hover hover:-translate-y-px',
-  ink: 'bg-ink text-white shadow-button hover:bg-ink-2 hover:-translate-y-px',
+  ink: 'bg-panel text-white shadow-button hover:bg-panel-2 hover:-translate-y-px',
   secondary: 'border border-line bg-surface text-ink hover:border-ink-2/30 hover:bg-canvas',
   ghost: 'text-ink hover:bg-canvas',
   // On a coloured banner: a white chip.
@@ -126,18 +126,37 @@ export function QueryView<T>({ q, children, skeleton }: { q: { isPending: boolea
  * A page: a large title over a hairline, an optional description and actions, then the content. The header is the
  * page's one entrance moment (data-motion="page"). Content lines up with the sidebar rather than floating centred.
  */
-export function Page({ title, description, actions, children }: { title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode }) {
+export function Page({ title, description, actions, tabs, children }: { title: string; description?: ReactNode; actions?: ReactNode; tabs?: ReactNode; children: ReactNode }) {
   return (
-    <main className="max-w-6xl px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
+    <main className="px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
       <header className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div data-motion="page" className="flex min-w-0 flex-col gap-2">
-          <h1 className="font-display text-[2rem] leading-[1.05] font-extrabold tracking-[-0.025em] sm:text-[2.5rem]">{title}</h1>
+          <h1 className="font-display text-[2rem] leading-[1.05] font-extrabold tracking-[-0.025em] break-words sm:text-[2.5rem]">{title}</h1>
           {description && <p className="max-w-2xl text-ink-2">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </header>
+      {tabs}
       {children}
     </main>
+  );
+}
+
+/**
+ * One tab of a TabbedPage: the page's title and tab bar sit above it, so a tab carries only its own description and
+ * actions in a quieter row before the content.
+ */
+export function TabPanel({ description, actions, children }: { description?: ReactNode; actions?: ReactNode; children: ReactNode }) {
+  return (
+    <>
+      {(description || actions) && (
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          {description && <p className="max-w-2xl min-w-0 text-ink-2">{description}</p>}
+          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      {children}
+    </>
   );
 }
 
@@ -162,10 +181,7 @@ export function Section({
 }) {
   const id = useId();
   return (
-    <section
-      className={cx('overflow-clip rounded-[var(--radius-card)] border bg-surface', tone === 'danger' ? 'border-danger/25' : 'border-line', className ?? 'mb-6')}
-      aria-labelledby={id}
-    >
+    <section className={cx('overflow-clip rounded-[var(--radius-card)] border bg-surface', tone === 'danger' ? 'border-danger/25' : 'border-line', className ?? 'mb-6')} aria-labelledby={id}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 pt-5 pb-4 sm:px-6">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 id={id} className={cx('text-lg leading-snug font-bold', tone === 'danger' && 'text-danger')}>
@@ -326,12 +342,18 @@ export function Figures({ children, className, label, flat }: { children: ReactN
   );
 }
 
-/** One cell of Figures, or a figure on its own. `lead` makes it the page's live number (the one ember element). */
+/**
+ * One cell of Figures, or a figure on its own. `lead` makes it the page's live number (the one ember element). The
+ * number scales with the cell (container units), so a duration like "1:05:30" still fits a half-width cell at 320px.
+ */
 export function Stat({ label, value, hint, lead, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; lead?: boolean; className?: string }) {
   return (
-    <div className={cx('flex flex-col gap-2 bg-surface p-5', className)}>
+    <div className={cx('@container flex min-w-0 flex-col gap-2 bg-surface p-4 sm:p-5', className)}>
       <span className="eyebrow">{label}</span>
-      <span data-motion="count" className={cx('num font-display leading-none font-extrabold tracking-tight', lead ? 'text-6xl text-primary' : 'text-[2.25rem]')}>
+      <span
+        data-motion="count"
+        className={cx('num font-display leading-none font-extrabold tracking-tight', lead ? 'text-[length:clamp(2.25rem,30cqi,3.75rem)] text-primary' : 'text-[length:clamp(1.5rem,26cqi,2.25rem)]')}
+      >
         {value}
       </span>
       {hint && <span className="text-sm text-muted">{hint}</span>}
@@ -426,7 +448,17 @@ export function CopyButton({ text, label, variant = 'secondary' }: { text: strin
   );
 }
 
-/** Tabs on a ruled line; the chosen one is underlined in ink. The caller renders the matching role="tabpanel". */
+/** Separate, rectangular white boxes with a thin grey border; the chosen one has brand text, lifts and glows in the brand colour. Shared by Tabs and SubNav. */
+export const tabBarClass = 'mb-8 flex flex-wrap items-end gap-3 pt-1';
+export const tabClass = (on: boolean) =>
+  cx(
+    'inline-flex min-h-10 shrink-0 items-center rounded-md border-2 border-line bg-surface px-5 text-sm font-semibold whitespace-nowrap transition-[color,transform,box-shadow] duration-300 ease-out motion-reduce:transition-none',
+    on
+      ? '-translate-y-0.5 text-primary shadow-[0_3px_6px_-4px_color-mix(in_srgb,var(--color-primary)_30%,transparent)]'
+      : 'text-muted hover:-translate-y-0.5 hover:text-primary hover:shadow-[0_3px_6px_-5px_color-mix(in_srgb,var(--color-primary)_18%,transparent)]',
+  );
+
+/** Tabs as brand-bordered boxes; the chosen one is filled. The caller renders the matching role="tabpanel". */
 export function Tabs<K extends string>({
   label,
   tabs,
@@ -443,7 +475,7 @@ export function Tabs<K extends string>({
   labelOf: (k: K) => string;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="mb-6 flex gap-6 overflow-x-auto border-b border-line">
+    <div role="tablist" aria-label={label} className={tabBarClass}>
       {tabs.map((k) => (
         <button
           key={k}
@@ -453,15 +485,68 @@ export function Tabs<K extends string>({
           aria-selected={value === k}
           aria-controls={`${idPrefix}panel-${k}`}
           onClick={() => onChange(k)}
-          className={cx(
-            'relative min-h-12 shrink-0 font-semibold whitespace-nowrap transition-colors',
-            'after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors',
-            value === k ? 'text-ink after:bg-ink' : 'text-muted after:bg-transparent hover:text-ink hover:after:bg-line',
-          )}
+          className={tabClass(value === k)}
         >
           {labelOf(k)}
         </button>
       ))}
+    </div>
+  );
+}
+
+export type TabSection = { key: string; label: string; node: ReactNode };
+
+/**
+ * A page of several containers shown one at a time as tabs. Falsy entries are skipped; with a single section the tab bar
+ * is dropped. A URL hash equal to a section key (e.g. #deletion) opens that section first.
+ */
+export function SectionTabs({ label, sections, idPrefix = 's' }: { label: string; sections: ReadonlyArray<TabSection | false | null | undefined>; idPrefix?: string }) {
+  const list = sections.filter((s): s is TabSection => Boolean(s));
+  const keys = list.map((s) => s.key);
+  const [picked, setPicked] = useState(() => {
+    const h = typeof window === 'undefined' ? '' : window.location.hash.slice(1);
+    return keys.includes(h) ? h : '';
+  });
+  const current = list.find((s) => s.key === picked) ?? list[0];
+  if (!current) return null;
+  if (list.length === 1) return <>{current.node}</>;
+  return (
+    <>
+      <Tabs label={label} tabs={keys} value={current.key} onChange={setPicked} idPrefix={idPrefix} labelOf={(k) => list.find((s) => s.key === k)?.label ?? k} />
+      <div role="tabpanel" id={`${idPrefix}panel-${current.key}`} aria-labelledby={`${idPrefix}tab-${current.key}`}>
+        {current.node}
+      </div>
+    </>
+  );
+}
+
+/** A "+ Add" button that opens a pop-up. The form gets `close`; the pop-up unmounts on close, so the form starts empty each time. */
+export function AddDialog({ label, title, description, children }: { label: string; title: string; description?: string; children: (close: () => void) => ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <span aria-hidden="true">+</span>
+        {label}
+      </Button>
+      <Modal open={open} onOpenChange={setOpen} title={title} description={description}>
+        {children(() => setOpen(false))}
+      </Modal>
+    </>
+  );
+}
+
+/** Cancel + submit row at the foot of a pop-up form. */
+export function DialogActions({ onCancel, submitLabel, busy, variant = 'primary' }: { onCancel: () => void; submitLabel: string; busy?: boolean; variant?: 'primary' | 'ink' | 'danger' }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-1 flex flex-wrap justify-end gap-3">
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        {t('common:cancel')}
+      </Button>
+      <Button type="submit" variant={variant} busy={busy}>
+        {submitLabel}
+      </Button>
     </div>
   );
 }

@@ -48,7 +48,7 @@ export function MyTicketsPage() {
   // Open orders first; the list keeps the newest-first order within each group.
   const sorted = [...tickets.filter((tk) => OPEN.has(tk.status)), ...tickets.filter((tk) => !OPEN.has(tk.status))];
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 bg-canvas px-4 pt-10 pb-8">
+    <main className="safe-x mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-5 bg-canvas pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] md:pt-16">
       <h1 className="font-display text-[1.875rem] leading-tight font-bold tracking-tight">{t('tickets.title')}</h1>
       {failed.length > 0 && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] bg-danger-bg p-4">

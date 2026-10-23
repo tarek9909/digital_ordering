@@ -14,7 +14,7 @@ export function Trust() {
         </h2>
         <ul className="flex flex-wrap justify-center gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <li key={i} className="flex h-14 w-36 items-center justify-center rounded-[var(--radius-input)] border-2 border-dashed border-line text-sm text-muted" data-logo-slot={i}>
+            <li key={i} className="flex h-14 w-32 items-center sm:w-36 justify-center rounded-[var(--radius-input)] border-2 border-dashed border-line text-sm text-muted" data-logo-slot={i}>
               {t('landing.trust.slot')}
             </li>
           ))}
@@ -127,8 +127,8 @@ export function Statement() {
   const words = t('landing.statement.text').split(' ');
   return (
     <section aria-label={t('landing.statement.scene')}>
-      <Scene kind="service" className="min-h-[34rem]">
-        <div className="relative mx-auto flex min-h-[34rem] max-w-7xl items-center px-4 sm:px-8 lg:px-12 py-20">
+      <Scene kind="service" className="min-h-[26rem] sm:min-h-[34rem]">
+        <div className="relative mx-auto flex min-h-[26rem] max-w-7xl sm:min-h-[34rem] items-center px-4 sm:px-8 lg:px-12 py-20">
           <p className="max-w-[24ch] font-display text-3xl leading-snug font-bold text-white sm:text-5xl" data-anim="statement">
             {words.map((w, i) => (
               <span key={i} className="statement-word">
@@ -152,10 +152,11 @@ export function Compare() {
       <h2 id="compare-h" className="mb-10 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
         {t('landing.compare.title')}
       </h2>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[40rem] border-separate border-spacing-0 text-start">
+      {/* A table from md up; on phones each row stacks into a small card (label, buzzer, then Tanbeeh). */}
+      <div className="md:overflow-x-auto">
+        <table className="w-full border-separate border-spacing-0 text-start max-md:block md:min-w-[40rem]">
           <caption className="sr-only">{t('landing.compare.title')}</caption>
-          <thead>
+          <thead className="max-md:sr-only">
             <tr>
               <th scope="col" className="w-1/5" />
               <th scope="col" className="px-5 pb-4 text-start font-display text-lg font-bold text-muted">
@@ -166,14 +167,20 @@ export function Compare() {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-md:flex max-md:flex-col">
             {rows.map((r, i) => (
-              <tr key={r.label}>
-                <th scope="row" className="border-t border-line py-4 pe-4 text-start align-top font-semibold text-ink">
+              <tr key={r.label} className="max-md:flex max-md:flex-col max-md:gap-2 max-md:border-t max-md:border-line max-md:py-5">
+                <th scope="row" className="border-t border-line py-4 pe-4 text-start align-top font-semibold text-ink max-md:border-0 max-md:p-0 max-md:font-display max-md:text-lg">
                   {r.label}
                 </th>
-                <td className="border-t border-line px-5 py-4 align-top text-muted">{r.buzzer}</td>
-                <td className={`border-t border-white/10 bg-ink px-5 py-4 align-top text-white ${i === rows.length - 1 ? 'rounded-b-[var(--radius-card)]' : ''}`}>
+                <td className="border-t border-line px-5 py-4 align-top text-muted max-md:border-0 max-md:p-0">
+                  <span className="block text-xs font-semibold md:hidden">{t('landing.compare.buzzer')}</span>
+                  {r.buzzer}
+                </td>
+                <td
+                  className={`border-t border-white/10 bg-ink px-5 py-4 align-top text-white max-md:rounded-[var(--radius-input)] max-md:border-0 max-md:px-4 max-md:py-3 ${i === rows.length - 1 ? 'md:rounded-b-[var(--radius-card)]' : ''}`}
+                >
+                  <span className="mb-1 block text-xs font-semibold text-white/60 md:hidden">{t('landing.compare.tanbeeh')}</span>
                   <span className="inline-flex items-start gap-2">
                     <svg viewBox="0 0 24 24" className="mt-1 size-4 shrink-0 text-glow" fill="none" stroke="currentColor" strokeWidth={3} aria-hidden="true">
                       <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />

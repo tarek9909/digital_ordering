@@ -67,6 +67,20 @@ export async function sendTicketAlert(
       .filter((r) => r.outcome !== 'retry')
       .map((r) => r.subscription_id),
   );
+  // Live pages and the display alert once per attempt, also when push delivery is retried. Published before the
+  // pushes, so the display's chime never waits behind slow or timing-out push services.
+  const live = await db.selectFrom('alert_attempts').select('live_published_at').where('ticket_id', '=', t.id).where('round', '=', d.round).where('attempt', '=', attemptKey).executeTakeFirst();
+  if (!live?.live_published_at) {
+    await publish(deps, {
+      topic: 'ticket.alert',
+      tenantId: d.tenantId,
+      venueId: t.venue_id,
+      ticketId: t.id,
+      token: t.token,
+      payload: { token: t.token, id: t.id, displayNumber: t.display_number, round: d.round, attempt: d.attempt, manual: d.manual },
+    });
+    await db.updateTable('alert_attempts').set({ live_published_at: deps.now() }).where('ticket_id', '=', t.id).where('round', '=', d.round).where('attempt', '=', attemptKey).execute();
+  }
   const ttlSec = 600;
   const followers = await db.selectFrom('ticket_followers').select(['client_id', 'push_subscription_id', 'locale']).where('ticket_id', '=', t.id).where('push_subscription_id', 'is not', null).execute();
   const subIds = followers.map((f) => f.push_subscription_id!);
@@ -135,19 +149,6 @@ export async function sendTicketAlert(
   }
   // TR-NFR-02: time from job start to hand-off, exported as push_handoff_seconds by the worker.
   deps.log.info({ metric: 'push_handoff_seconds', value: (Date.now() - started) / 1000, sent, failed, retry }, 'push sent');
-  // Live pages and the display alert once per attempt, also when push delivery is retried.
-  const live = await db.selectFrom('alert_attempts').select('live_published_at').where('ticket_id', '=', t.id).where('round', '=', d.round).where('attempt', '=', attemptKey).executeTakeFirst();
-  if (!live?.live_published_at) {
-    await publish(deps, {
-      topic: 'ticket.alert',
-      tenantId: d.tenantId,
-      venueId: t.venue_id,
-      ticketId: t.id,
-      token: t.token,
-      payload: { token: t.token, id: t.id, displayNumber: t.display_number, round: d.round, attempt: d.attempt, manual: d.manual },
-    });
-    await db.updateTable('alert_attempts').set({ live_published_at: deps.now() }).where('ticket_id', '=', t.id).where('round', '=', d.round).where('attempt', '=', attemptKey).execute();
-  }
   if (revoked) await recomputeAlertLevel(deps, d.tenantId, t.id);
   if (retry > 0) throw new RetryablePushError(retry);
   return { sent, failed };

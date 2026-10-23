@@ -59,7 +59,7 @@ export function ClaimForm({ venueCode, mode }: { venueCode: string; mode: 'code'
         <h2 className="font-display text-xl font-bold tracking-tight">{t('claim.title')}</h2>
         <p className="mt-1 text-ink-2">{t(mode === 'code' ? 'claim.introCode' : 'claim.introStaff')}</p>
       </div>
-      <div className={mode === 'code' ? 'grid grid-cols-2 items-end gap-3' : ''}>
+      <div className={mode === 'code' ? 'grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-3' : ''}>
         <Field
           label={t('claim.number')}
           inputMode="text"

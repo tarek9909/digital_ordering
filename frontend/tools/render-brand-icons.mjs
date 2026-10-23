@@ -15,7 +15,7 @@ const PNGS = [
   ['tanbeeh-app-icon.svg', 'apps/web-customer/public/icon-512.png', 512],
   ['tanbeeh-badge.svg', 'apps/web-customer/public/badge-72.png', 72],
 ];
-const FAVICON_APPS = ['web-site', 'web-console'];
+const FAVICON_APPS = ['web-site', 'web-console', 'web-staff', 'web-display', 'web-admin'];
 
 const browser = await chromium.launch();
 const page = await browser.newPage();

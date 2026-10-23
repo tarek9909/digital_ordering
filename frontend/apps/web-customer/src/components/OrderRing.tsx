@@ -101,12 +101,16 @@ export function OrderRing({
   );
 }
 
-/** Font size for the order number inside the ring: as large as the ring allows for its length (FR-CUS-02). */
+/**
+ * Font size for the order number inside the ring: as large as the ring allows for its length (FR-CUS-02). The vh term
+ * keeps it inside a ring that is itself capped by the viewport height (landscape phones); `vh`, not `dvh`, so an older
+ * browser never drops the whole value.
+ */
 export function numberSize(displayNumber: string) {
   const n = displayNumber.length;
-  if (n <= 1) return 'min(38vw, 10rem)';
-  if (n === 2) return 'min(30vw, 8.5rem)';
-  if (n === 3) return 'min(23vw, 6.5rem)';
-  if (n === 4) return 'min(18vw, 5rem)';
-  return 'min(13vw, 3.75rem)';
+  if (n <= 1) return 'min(38vw, 10rem, 24vh)';
+  if (n === 2) return 'min(30vw, 8.5rem, 19vh)';
+  if (n === 3) return 'min(23vw, 6.5rem, 14.5vh)';
+  if (n === 4) return 'min(18vw, 5rem, 11.5vh)';
+  return 'min(13vw, 3.75rem, 8.5vh)';
 }

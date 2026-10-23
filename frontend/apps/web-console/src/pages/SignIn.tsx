@@ -117,7 +117,7 @@ function CodeStep({ step, onDone, onBack }: { step: Extract<Step, { kind: 'code'
         error={form.formState.errors.code && t('mfa.codeInvalid')}
         {...form.register('code')}
       />
-      <div className="flex justify-between gap-2">
+      <div className="flex flex-wrap justify-between gap-2">
         <Button type="button" variant="ghost" onClick={onBack}>
           {t('common:back')}
         </Button>

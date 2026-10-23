@@ -446,13 +446,15 @@ function Languages({ onSaved }: { onSaved: () => void }) {
       ) : (
         <ul className="flex flex-col divide-y divide-line">
           {q.data?.items.map((l) => (
-            <li key={l.code} className="grid gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,18rem)] md:items-center">
-              <div className="flex items-center gap-3">
+            // Name and switch side by side from md; the voice field joins them on one row only on xl, where the
+            // switch's hint has room (an auto column would let the hint squeeze the name to nothing).
+            <li key={l.code} className="grid gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:items-center xl:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,18rem)]">
+              <div className="flex min-w-0 items-center gap-3">
                 <span dir="ltr" className="grid size-10 shrink-0 place-items-center rounded-input bg-canvas font-mono text-sm font-semibold ring-1 ring-line">
                   {l.code}
                 </span>
-                <span className="flex flex-col">
-                  <span className="font-semibold">{l.name}</span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold break-words">{l.name}</span>
                   <span className="text-sm text-muted">{l.direction === 'rtl' ? t('settings.rtl') : t('settings.ltr')}</span>
                 </span>
               </div>
@@ -471,13 +473,13 @@ function TtsEditor({ lang, busy, onSave }: { lang: Language; busy: boolean; onSa
   const [v, setV] = useState(lang.tts_lang ?? '');
   return (
     <form
-      className="flex items-end gap-2"
+      className="flex items-end gap-2 md:col-span-2 md:max-w-md xl:col-span-1 xl:max-w-none"
       onSubmit={(e) => {
         e.preventDefault();
         onSave(v.trim() || null);
       }}
     >
-      <Field label={t('settings.ttsFor', { name: lang.name })} className="flex-1" dir="ltr" maxLength={10} placeholder="ar-SA" value={v} onChange={(e) => setV(e.target.value)} />
+      <Field label={t('settings.ttsFor', { name: lang.name })} className="min-w-0 flex-1" dir="ltr" maxLength={10} placeholder="ar-SA" value={v} onChange={(e) => setV(e.target.value)} />
       <Button type="submit" variant="secondary" disabled={busy || v === (lang.tts_lang ?? '')}>
         {t('common:save')}
       </Button>

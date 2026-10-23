@@ -151,6 +151,8 @@ export const displayPatch = z
   .object({ name: z.string().trim().min(1).max(60).optional(), counterIds: z.array(uuidSchema).nullable().optional(), settings: displaySettingsSchema.optional() })
   .strict();
 export const invitationBody = z.object({ email: emailSchema, role: z.literal('manager') }).strict();
+/** Owner adds a team member directly, with a password they hand over in person (no invitation email). */
+export const memberCreateBody = z.object({ name: z.string().trim().min(1).max(120), email: emailSchema, password: passwordSchema, role: z.literal('manager') }).strict();
 export const memberPatch = z.object({ role: z.enum(MEMBER_ROLES), weeklySummary: z.boolean().optional() }).partial().strict();
 export const ownershipTransferBody = z.object({ memberId: uuidSchema, password: z.string().min(1).max(128) }).strict();
 export const reportRangeQuery = dateRange({ venueId: uuidSchema.optional() });

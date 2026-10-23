@@ -27,8 +27,17 @@
       "insights": "Insights",
       "business": "Business"
     },
+    "theme": "Appearance",
+    "themeLight": "Light",
+    "themeDark": "Dark",
     "menu": "Menu",
-    "closeMenu": "Close"
+    "closeMenu": "Close",
+    "screens": "Counters & screens",
+    "general": "General",
+    "related": "Related pages",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "language": "Language"
   },
   "pass": {
     "label": "Service now",
@@ -67,7 +76,10 @@
       "info": "Information:",
       "warning": "Warning:",
       "critical": "Important:"
-    }
+    },
+    "trialButton_one": "Free trial: {{count}} day left",
+    "trialButton_other": "Free trial: {{count}} days left",
+    "trialTitle": "Your free trial"
   },
   "form": {
     "required": "This field is required.",
@@ -157,9 +169,58 @@
     "longestNote": "Waiting time counts from when the ticket was created.",
     "description": "How service is going right now.",
     "openHint": "Orders not yet collected",
-    "emptyBody": "Open the staff board and create the first ticket of the day. The figures here update every 30 seconds."
+    "emptyBody": "Open the staff board and create the first ticket of the day. The figures here update every 30 seconds.",
+    "ringTitle": "Service so far",
+    "ringNote": "Each bar is an hour of new tickets. The ring closes at midnight.",
+    "ringLabel": "Tickets per hour. {{tickets}} tickets so far, {{open}} orders open now.",
+    "ringOpen": "orders open now",
+    "ringTickets": "Tickets so far",
+    "ringBusiest": "Busiest hour",
+    "ringBusiestValue": "{{hour}} · {{n}} tickets",
+    "passTitle": "On the pass now",
+    "passNote": "Open tickets placed by how long since they were ordered. Anything past {{n}} minutes needs a look.",
+    "passPreparing": "Preparing",
+    "passReady": "Ready",
+    "passCount_one": "{{count}} ticket",
+    "passCount_other": "{{count}} tickets",
+    "passMin": "{{n}} min",
+    "passLate": "Past {{n}} min",
+    "passMore": "{{n}} more open orders are not drawn.",
+    "passEmpty": "Nothing on the pass. New orders appear here as they come in.",
+    "passAlert": "{{number}} has been open for {{duration}}.",
+    "passAlertMore_one": "and {{count}} other ticket is past {{n}} minutes.",
+    "passAlertMore_other": "and {{count}} other tickets are past {{n}} minutes.",
+    "passBoard": "Find them on the board",
+    "showTable": "Show as a table",
+    "vsLabel": "Today against the same day last week",
+    "vsMore": "{{n}} more than last week",
+    "vsFewer": "{{n}} fewer than last week",
+    "vsSame": "Same as last week",
+    "vsNone": "No data for last week",
+    "vsFaster": "{{n}} faster",
+    "vsSlower": "{{n}} slower",
+    "vsPoints": "{{n}} points",
+    "uncollected": "Ready, not collected",
+    "paceTitle": "Kitchen pace by hour",
+    "paceNote": "Minutes from order to ready. The shaded band reaches the slowest 10% of tickets.",
+    "paceMedian": "Median",
+    "paceSlowest": "Slowest 10%",
+    "paceToday": "Today's median {{value}}",
+    "paceLabel": "Median preparation time by hour. A table view is available.",
+    "paceTip": "{{hour}} · {{n}} tickets",
+    "paceTipMedian": "Median {{value}}",
+    "paceTipSlow": "Slowest 10% {{value}}",
+    "paceHour": "Hour",
+    "reachSub": "{{n}} tickets were called today. Darker means the alert got further.",
+    "ackLine": "{{pct}} acknowledged after their alert."
   },
   "reports": {
+    "last7": "Last 7 days",
+    "last14": "Last 14 days",
+    "last30": "Last 30 days",
+    "quickRange": "Quick range",
+    "secondaryTitle": "Timing and quality",
+    "notesTitle": "Notes on these figures",
     "title": "Reports",
     "range": "Date range",
     "from": "From",
@@ -256,6 +317,7 @@
     },
     "messages": {
       "intro": "Short texts shown on the customer page. Leave a field empty to use the default wording.",
+      "groups": { "tickets": "Tickets", "alerts": "Alerts" },
       "fields": {
         "welcome": "Welcome (while preparing)",
         "collection": "Collection instructions (when ready)",
@@ -502,7 +564,13 @@
     "revoke": "Revoke",
     "revoked": "Invitation revoked",
     "description": "Owners and managers who can sign in to this admin.",
-    "noInvitationsBody": "Invite a manager above. The invitation stays here until it is accepted."
+    "noInvitationsBody": "Invite a manager above. The invitation stays here until it is accepted.",
+    "addTitle": "Add a team member",
+    "addHint": "Create their account here and give them the email and password yourself. They can sign in straight away; nothing is emailed.",
+    "add": "Add member",
+    "added": "{{name}} was added. They can sign in now with the email and password you set.",
+    "password": "Password",
+    "passwordHint": "At least 10 characters. They can change it later from their account."
   },
   "billing": {
     "plan": "Plan",
@@ -560,12 +628,12 @@
     "exportHint": "Download a ZIP with your tickets, settings and team as CSV files.",
     "exportStart": "Request export",
     "exportWorking": "Preparing your export…",
-    "exportReady": "Your export is ready",
+    "exportReady": "Your export has downloaded",
     "exportDownload": "Download export",
     "exportExpires": "Link valid until {{date}}.",
     "exportFailed": "The export failed. Please try again.",
     "deletionTitle": "Delete this restaurant",
-    "deletionHint": "All data is deleted 7 days after the request. You can cancel within those 7 days. Export your data first if you need it.",
+    "deletionHint": "All data is deleted 7 days after the request. You can cancel within those 7 days. Download your data first from Reports if you need it.",
     "deletionPassword": "Your password",
     "deletionRequest": "Request deletion",
     "deletionPending": "Deletion is scheduled for {{date}}. You can cancel until then.",
@@ -761,7 +829,8 @@
     "archiveOpenTickets": "This venue still has open tickets. Close or collect them on the staff board, then try again.",
     "billingNote": "The price is per venue: adding or archiving a venue changes what you pay from your next renewal.",
     "description": "Every location you run, each with its own board, screens and posters.",
-    "none": "No venues yet"
+    "none": "No venues yet",
+    "settings": "Venue settings"
   },
   "counters": {
     "addTitle": "Add a counter",
@@ -998,7 +1067,9 @@
       "duplicate": "Duplicate ticket",
       "mistake": "Created by mistake",
       "other": "Other"
-    }
+    },
+    "stackCollected": "Collected",
+    "stackNever": "Never collected"
   },
   "heatmap": {
     "title": "Busy hours",
@@ -1016,7 +1087,8 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
-    }
+    },
+    "peak": "{{day}} at {{hour}} was the busiest hour, with {{n}} tickets."
   },
   "auth": {
     "eyebrow": "Restaurant admin",

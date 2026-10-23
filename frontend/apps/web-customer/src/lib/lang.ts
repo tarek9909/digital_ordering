@@ -12,9 +12,10 @@ export function chooseLanguage(lng: string) {
   void i18next.changeLanguage(lng);
 }
 
-/** Default for a venue: the explicit choice when the venue offers it, otherwise the browser's best match. */
+/** Default for a venue: the explicit choice, otherwise the browser's best match among the venue's languages. */
 export function applyVenueLanguage(locales: string[]) {
-  const lng = chosen && locales.includes(chosen) ? chosen : pickLocale(locales);
+  // Arabic and English are always available, so an explicit choice is kept even where the venue lists only one.
+  const lng = chosen === 'ar' || chosen === 'en' ? chosen : pickLocale(locales);
   if (i18next.language !== lng) void i18next.changeLanguage(lng);
 }
 

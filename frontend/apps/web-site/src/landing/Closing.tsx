@@ -31,14 +31,14 @@ export function PricingSection() {
           {periods.length > 1 && (
             <fieldset>
               <legend className="sr-only">{t('landing.pricing.periodLabel')}</legend>
-              <div className="inline-flex rounded-full border border-line bg-surface p-1">
+              <div className="inline-flex max-w-full rounded-full border border-line bg-surface p-1">
                 {periods.map((p) => (
                   <button
                     key={p}
                     type="button"
                     aria-pressed={period === p}
                     onClick={() => setPeriod(p)}
-                    className={`min-h-11 rounded-full px-5 font-semibold ${period === p ? 'bg-ink text-white' : 'text-ink-2'}`}
+                    className={`min-h-11 rounded-full px-3 text-sm leading-tight font-semibold sm:px-5 sm:text-base ${period === p ? 'bg-ink text-white' : 'text-ink-2'}`}
                   >
                     {t(`landing.pricing.period.${p}`)}
                   </button>
@@ -90,7 +90,7 @@ export function Faq() {
         <div className="flex flex-col">
           {items.map((x) => (
             <details key={x.q} className="faq group border-t border-line last:border-b">
-              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 font-display text-lg font-semibold">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 font-display text-lg font-semibold break-words">
                 {x.q}
                 <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line transition-transform group-open:rotate-45">
                   <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth={2.4}>
@@ -111,15 +111,15 @@ export function Closing() {
   const { t } = useTranslation();
   return (
     <section aria-labelledby="closing-h" className="ember-glow relative overflow-hidden bg-ink text-white">
-      <div className="mx-auto max-w-7xl relative flex flex-col items-start gap-8 px-4 sm:px-8 lg:px-12 py-28">
+      <div className="mx-auto max-w-7xl relative flex flex-col items-start gap-8 px-4 sm:px-8 lg:px-12 py-20 sm:py-28">
         <div className="relative">
           <AlertRings active className="opacity-40" />
-          <h2 id="closing-h" className="relative max-w-[14ch] font-display text-5xl leading-[1.05] font-extrabold tracking-tight sm:text-7xl" data-anim="closing">
+          <h2 id="closing-h" className="relative max-w-[14ch] font-display text-[2.5rem] leading-[1.05] font-extrabold tracking-tight min-[25rem]:text-5xl sm:text-7xl" data-anim="closing">
             {t('landing.closing.title')}
           </h2>
         </div>
         <p className="max-w-[48ch] text-lg text-white/75">{t('landing.closing.body')}</p>
-        <Link to="/contact" className="inline-flex min-h-14 items-center rounded-full bg-glow px-8 text-lg font-semibold text-ink active:scale-[.98]">
+        <Link to="/contact" className="inline-flex min-h-14 items-center justify-center rounded-full bg-glow px-8 text-center text-lg font-semibold text-ink active:scale-[.98] max-sm:w-full">
           {t('landing.closing.cta')}
         </Link>
       </div>
@@ -140,7 +140,7 @@ export function WhatsAppButton() {
       rel="noopener noreferrer"
       aria-label={t('landing.whatsapp')}
       title={t('landing.whatsapp')}
-      className="fixed end-5 bottom-5 z-50 flex size-14 items-center justify-center rounded-full bg-ink text-white shadow-[var(--shadow-card)] ring-4 ring-surface hover:bg-ink-2 active:scale-[.98]"
+      className="fixed end-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-ink text-white shadow-[var(--shadow-card)] ring-4 ring-surface hover:bg-ink-2 active:scale-[.98]"
     >
       <svg viewBox="0 0 24 24" className="size-7" fill="currentColor" aria-hidden="true">
         <path d="M12 2a10 10 0 0 0-8.66 15l-1.3 4.76 4.88-1.28A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-2.9.76.78-2.83-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.08-.39-.12-.56.12-.16.25-.64.8-.79.97-.14.16-.29.18-.54.06a6.7 6.7 0 0 1-3.32-2.9c-.25-.43.25-.4.72-1.33.08-.16.04-.3-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.41-.56-.42h-.48a.92.92 0 0 0-.66.31 2.8 2.8 0 0 0-.87 2.07 4.86 4.86 0 0 0 1.02 2.58 11.1 11.1 0 0 0 4.25 3.76c1.58.68 2.2.74 2.99.62.48-.07 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.18-.06-.1-.22-.16-.47-.28z" />

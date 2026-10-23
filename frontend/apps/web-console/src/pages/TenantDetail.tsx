@@ -78,20 +78,20 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
     <PageShell
       wide
       eyebrow={
-        <span className="inline-flex items-center gap-2">
+        <span className="inline-flex max-w-full flex-wrap items-center gap-x-2">
           <Link to="/tenants" className="hover:text-ink">
             {t('layout.groups.tenants')}
           </Link>
           <span aria-hidden="true">/</span>
-          <span dir="ltr" className="font-mono normal-case">
+          <span dir="ltr" className="min-w-0 font-mono break-all normal-case">
             {x.slug}
           </span>
         </span>
       }
       title={x.name}
       actions={
-        <div className="flex items-center gap-2 rounded-control bg-surface py-1 ps-4 pe-1 shadow-card">
-          <span className="text-sm text-ink-2">{t('tenant.purposeIs', { purpose: t(`purpose.${purpose}`) })}</span>
+        <div className="flex flex-wrap items-center gap-x-2 rounded-control bg-surface py-1 ps-4 pe-1 shadow-card">
+          <span className="min-w-0 text-sm text-ink-2">{t('tenant.purposeIs', { purpose: t(`purpose.${purpose}`) })}</span>
           <Button
             variant="ghost"
             className="text-sm"
@@ -203,11 +203,19 @@ function Overview({ d }: { d: TenantDetail }) {
                   <span className="truncate font-semibold">
                     {m.name} <span className="text-sm font-normal text-muted">· {t(`memberRole.${m.role}`, { defaultValue: m.role })}</span>
                   </span>
-                  <span dir="ltr" className="self-start truncate text-sm text-muted">
+                  <span dir="ltr" className="max-w-full self-start truncate text-sm text-muted">
                     {m.email}
                   </span>
                 </span>
-                {m.verified ? <Pill tone="ok">{t('tenant.verified')}</Pill> : <Pill tone="warn">{t('tenant.notVerified')}</Pill>}
+                {m.verified ? (
+                  <Pill tone="ok" className="shrink-0">
+                    {t('tenant.verified')}
+                  </Pill>
+                ) : (
+                  <Pill tone="warn" className="shrink-0">
+                    {t('tenant.notVerified')}
+                  </Pill>
+                )}
               </li>
             ))}
           </ul>
@@ -244,8 +252,8 @@ function Venues({ d, canSignOut }: { d: TenantDetail; canSignOut: boolean }) {
         return (
           <Card key={v.id} className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold">{v.name}</h2>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold break-words">{v.name}</h2>
                 <p className="text-sm text-muted">
                   <span dir="ltr" className="font-mono">
                     {v.venue_code}
@@ -263,7 +271,7 @@ function Venues({ d, canSignOut }: { d: TenantDetail; canSignOut: boolean }) {
                 <ul className="flex flex-col divide-y divide-line rounded-input border border-line">
                   {devices.map((x) => (
                     <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-                      <span className="font-medium">{x.name}</span>
+                      <span className="min-w-0 font-medium break-words">{x.name}</span>
                       <span className="text-muted">{t('tenant.lastSeen', { date: fmtDate(x.last_seen_at, l) })}</span>
                     </li>
                   ))}
@@ -279,7 +287,7 @@ function Venues({ d, canSignOut }: { d: TenantDetail; canSignOut: boolean }) {
                 <ul className="flex flex-col divide-y divide-line rounded-input border border-line">
                   {displays.map((x) => (
                     <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-                      <span className="font-medium">{x.name}</span>
+                      <span className="min-w-0 font-medium break-words">{x.name}</span>
                       <span className="flex flex-wrap items-center gap-1.5">
                         {x.paired_at ? <Pill tone="ok">{t('tenant.paired')}</Pill> : <Pill>{t('tenant.notPaired')}</Pill>}
                         {x.sound_enabled ? <Pill tone="info">{t('tenant.soundOn')}</Pill> : <Pill tone="warn">{t('tenant.soundOff')}</Pill>}

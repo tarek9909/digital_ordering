@@ -66,7 +66,7 @@ export function NotesTab({ tenantId, purpose }: { tenantId: string; purpose: Aud
                 <p className="mb-1 text-sm text-muted">
                   {n.author} · {fmtDate(n.createdAt, i18n.language)}
                 </p>
-                <p className="whitespace-pre-wrap">{n.body}</p>
+                <p className="break-words whitespace-pre-wrap">{n.body}</p>
               </Card>
             </li>
           ))}

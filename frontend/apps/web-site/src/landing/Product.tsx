@@ -20,7 +20,7 @@ export function BrandPreview() {
   const shown = name.trim() || pt('landing.brand.defaultName');
   return (
     <section aria-labelledby="brand-h" className="bg-primary text-on-primary">
-      <div className="mx-auto max-w-7xl grid items-center gap-12 px-4 sm:px-8 lg:px-12 py-24 lg:grid-cols-[1fr_auto] lg:gap-20">
+      <div className="mx-auto max-w-7xl grid items-center gap-12 px-4 sm:px-8 lg:px-12 py-16 sm:py-24 lg:grid-cols-[1fr_auto] lg:gap-20">
         <div className="flex flex-col gap-6">
           <h2 id="brand-h" className="max-w-[16ch] font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
             {t('landing.brand.title')}
@@ -43,7 +43,7 @@ export function BrandPreview() {
                 maxLength={60}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('landing.brand.namePlaceholder')}
-                className="min-h-14 max-w-md rounded-full border-2 border-on-primary/40 bg-on-primary/10 px-6 text-lg text-on-primary placeholder:text-on-primary/60 focus-visible:border-on-primary focus-visible:outline-none"
+                className="min-h-14 w-full max-w-md rounded-full border-2 border-on-primary/40 bg-on-primary/10 px-6 text-lg text-on-primary placeholder:text-on-primary/60 focus-visible:border-on-primary focus-visible:outline-none"
               />
             </div>
             <fieldset className="flex flex-col gap-2">
@@ -87,10 +87,10 @@ export function BrandPreview() {
         <div className="flex justify-center" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} style={vars}>
           <PhoneFrame className="rotate-[-3deg] rtl:rotate-[3deg]">
             <div className="-mt-9 flex items-center gap-3 bg-[var(--brand-band)] px-4 pt-11 pb-4 text-[var(--on-band)]">
-              <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-full bg-[var(--on-band)]/20 font-display font-bold">
+              <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--on-band)]/20 font-display font-bold">
                 {shown.slice(0, 1)}
               </span>
-              <span className="truncate font-semibold">{shown}</span>
+              <span className="min-w-0 truncate font-semibold">{shown}</span>
             </div>
             <div className="flex flex-1 flex-col gap-3 p-4 text-ink">
               <div className="flex flex-col items-center gap-1 rounded-[1.2rem] bg-surface py-6 shadow-[var(--shadow-card)]">
@@ -132,7 +132,7 @@ export function Cashier() {
           <Scene kind="counter" className="aspect-[5/4] rounded-[var(--radius-card)]" />
           {/* The real staff board, overlapping the scene */}
           <div className="absolute inset-x-4 -bottom-2 rounded-[var(--radius-card)] bg-ink p-4 text-white shadow-[var(--shadow-card)] sm:inset-x-auto sm:end-6 sm:w-[22rem]" data-anim="cashier-board">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <span className="font-display font-bold">{t('landing.cashier.board')}</span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-xs">
                 <span aria-hidden="true" className="live-dot size-1.5 rounded-full bg-glow" />
@@ -153,7 +153,7 @@ export function Cashier() {
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex items-center justify-between rounded-xl border border-white/10 p-2.5">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 p-2.5">
               <span className="flex items-center gap-2">
                 <span className="num rounded-lg bg-glow px-2.5 py-1 font-display text-xl font-bold text-ink">27</span>
                 <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{t('landing.cashier.onTheWay')}</span>
@@ -203,22 +203,22 @@ export function TvShowcase() {
         </div>
         <div ref={ref} className="flex flex-col items-center gap-4">
           <TvFrame className="w-full">
-            <div className="grid h-full grid-cols-[2fr_3fr] gap-3 p-4">
-              <div className="flex flex-col gap-2 rounded-xl border border-line p-3">
-                <span className="text-sm font-semibold text-muted">{t('landing.demo.tvPreparing')}</span>
-                <div className="grid grid-cols-2 gap-2">
+            <div className="grid h-full grid-cols-[2fr_3fr] gap-2 p-2 sm:gap-3 sm:p-4">
+              <div className="flex min-w-0 flex-col gap-1 rounded-xl border border-line p-2 sm:gap-2 sm:p-3">
+                <span className="truncate text-xs font-semibold text-muted sm:text-sm">{t('landing.demo.tvPreparing')}</span>
+                <div className="grid grid-cols-2 gap-1 sm:gap-2">
                   {preparing.map((x) => (
-                    <span key={x} className="num text-center font-display text-3xl font-semibold text-muted">
+                    <span key={x} className="num text-center font-display text-xl font-semibold text-muted sm:text-3xl">
                       {x}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col gap-2 rounded-xl bg-ink p-3 text-white">
-                <span className="text-sm font-semibold text-white/70">{t('landing.demo.tvReady')}</span>
-                <div className="grid grid-cols-3 gap-2">
+              <div className="flex min-w-0 flex-col gap-1 rounded-xl bg-ink p-2 text-white sm:gap-2 sm:p-3">
+                <span className="truncate text-xs font-semibold text-white/70 sm:text-sm">{t('landing.demo.tvReady')}</span>
+                <div className="grid grid-cols-3 gap-1 sm:gap-2">
                   {ready.map((x) => (
-                    <span key={x} className={`num rounded-lg py-1 text-center font-display text-3xl font-bold ${x === latest ? 'demo-pop bg-primary text-on-primary' : 'bg-white/10'}`}>
+                    <span key={x} className={`num rounded-lg py-0.5 text-center font-display text-xl font-bold sm:py-1 sm:text-3xl ${x === latest ? 'demo-pop bg-primary text-on-primary' : 'bg-white/10'}`}>
                       {x}
                     </span>
                   ))}
@@ -262,7 +262,7 @@ export function Reach() {
           <span aria-hidden="true" className="live-dot size-2.5 rounded-full bg-glow" />
           {t('landing.demo.tapReady')}
         </div>
-        <div aria-hidden="true" className="absolute top-14 right-[16.6%] left-[16.6%] hidden h-10 border-x-2 border-t-2 border-dashed border-line md:block" />
+        <div aria-hidden="true" className="absolute inset-x-[16.6%] top-14 hidden h-10 border-x-2 border-t-2 border-dashed border-line md:block" />
         <ul className="grid gap-6 md:grid-cols-3">
           {items.map((x, i) => (
             <li key={x.title} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-6" data-anim="reach-item">
@@ -293,7 +293,7 @@ export function Pos() {
   );
   return (
     <section aria-labelledby="pos-h" className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-12">
-      <div className="ember-glow grid items-center gap-12 rounded-[2rem] bg-ink p-8 text-white sm:p-14 lg:grid-cols-2">
+      <div className="ember-glow grid items-center gap-12 rounded-[2rem] bg-ink p-6 text-white sm:p-14 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
           <h2 id="pos-h" className="max-w-[14ch] font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
             {t('landing.pos.title')}
@@ -311,7 +311,7 @@ export function Pos() {
           <p className="text-sm text-white/60">{t('landing.pos.start')}</p>
         </div>
         <div className="flex flex-col gap-2" data-anim="pos-flow">
-          <div className="pos-step flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+          <div className="pos-step flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
             <span className="text-sm text-white/70">{t('landing.pos.pos')}</span>
             <span className="flex items-baseline gap-2">
               <span className="text-sm font-semibold">{t('landing.pos.receipt')}</span>
@@ -319,7 +319,7 @@ export function Pos() {
             </span>
           </div>
           <Arrow />
-          <div className="pos-step flex items-center justify-between rounded-2xl bg-surface px-5 py-4 text-ink">
+          <div className="pos-step flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl bg-surface px-5 py-4 text-ink">
             <span className="flex flex-col">
               <span className="text-sm text-muted">{t('landing.pos.customer')}</span>
               <span className="num font-display text-5xl font-extrabold">27</span>
@@ -329,7 +329,7 @@ export function Pos() {
             </span>
           </div>
           <Arrow />
-          <div className="pos-step relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-glow px-5 py-4 font-display text-lg font-bold text-ink">
+          <div className="pos-step relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-glow px-5 py-4 text-center font-display text-lg font-bold text-ink">
             <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2.4} aria-hidden="true">
               <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16zM10 20a2 2 0 0 0 4 0" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -360,13 +360,13 @@ export function Local() {
       </h2>
       <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
         {items.map((x, i) => (
-          <li key={x.title} className="flex gap-5">
-            <span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-ink text-glow">
+          <li key={x.title} className="flex gap-4 sm:gap-5">
+            <span aria-hidden="true" className="flex size-12 shrink-0 sm:size-14 items-center justify-center rounded-2xl bg-ink text-glow">
               <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                 <path d={LOCAL_ICONS[i] ?? LOCAL_ICONS[0]} />
               </svg>
             </span>
-            <span className="flex flex-col gap-1">
+            <span className="flex min-w-0 flex-col gap-1">
               <h3 className="font-display text-xl font-bold">{x.title}</h3>
               <p className="max-w-[40ch] text-ink-2">{x.body}</p>
             </span>

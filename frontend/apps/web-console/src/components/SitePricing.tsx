@@ -109,8 +109,8 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
             {shown.map((p) => (
               <div key={p.code} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-semibold">
-                    {p.name} <span className="font-mono text-sm text-muted">{p.code}</span>
+                  <p className="min-w-0 font-semibold break-words">
+                    {p.name} <span className="font-mono text-sm break-all text-muted">{p.code}</span>
                   </p>
                   <label className="inline-flex min-h-12 items-center gap-2 font-medium">
                     <input type="radio" name="sp-featured" className="size-5" checked={featured === p.code} onChange={() => setFeatured(p.code)} />

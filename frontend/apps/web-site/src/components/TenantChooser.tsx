@@ -72,13 +72,13 @@ export function TenantChooser({ onSignedOut }: { onSignedOut: () => void }) {
                 disabled={handoff.isPending}
                 className="flex min-h-16 w-full items-center justify-between gap-3 rounded-input border border-line bg-surface px-4 py-2 text-start transition-colors hover:border-ink-2/30 hover:bg-primary-wash disabled:opacity-60"
               >
-                <span className="flex flex-col">
-                  <span className="font-semibold">{m.name}</span>
-                  <span className="font-mono text-xs text-muted" dir="ltr">
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold break-words">{m.name}</span>
+                  <span className="truncate font-mono text-xs text-muted" dir="ltr">
                     {m.slug}
                   </span>
                 </span>
-                <span className="flex flex-col items-end text-sm">
+                <span className="flex shrink-0 flex-col items-end text-sm">
                   <span>{t(`roles.${m.role}`)}</span>
                   <span className="text-muted">{t([`tenantStatus.${m.status}`, 'tenantStatus.unknown'])}</span>
                 </span>

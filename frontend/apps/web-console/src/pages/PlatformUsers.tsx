@@ -227,7 +227,7 @@ function ResetMfaDialog({ user, onClose, onDone }: { user: PlatformUser; onClose
           error={form.formState.errors.confirm && t('users.emailMismatch')}
           {...form.register('confirm')}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             {t('common:cancel')}
           </Button>

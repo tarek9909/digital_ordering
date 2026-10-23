@@ -101,7 +101,22 @@ export interface TodayReport {
   pickupSecondsP50: number | null;
   /** Open tickets waiting longest, oldest first (FR-RPT-01). Older API responses may omit it. */
   longestWaiting?: WaitingTicket[];
+  /** Tickets created in each local hour, index 0–23. Older API responses may omit the next four fields. */
+  hourly?: number[];
+  /** Preparation time by local hour of creation, only hours with ready tickets. */
+  pace?: PaceHour[];
+  /** Every open ticket (up to 40), oldest first. */
+  openTickets?: WaitingTicket[];
+  /** Minutes since local midnight at the venue. */
+  localMinutes?: number;
   prepLabel: string;
+}
+
+export interface PaceHour {
+  hour: number;
+  tickets: number;
+  p50: number | null;
+  p90: number | null;
 }
 
 export interface WaitingTicket {

@@ -60,7 +60,8 @@ export function AuditPage() {
 
   return (
     <PageShell wide eyebrow={t('layout.groups.insights')} title={t('audit.title')} description={t('audit.description')}>
-      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card sm:grid-cols-3 lg:grid-cols-6 lg:items-end" noValidate>
+      {/* Six in a row only on very wide screens: next to the sidebar, date-and-time inputs need ~12rem each. */}
+      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card sm:grid-cols-2 sm:items-end lg:grid-cols-3 2xl:grid-cols-6" noValidate>
         <Field label={t('audit.tenantId')} dir="ltr" value={draft.tenantId} onChange={set('tenantId')} error={invalid.includes('tenantId') ? t('audit.uuidInvalid') : undefined} />
         <Field label={t('audit.actorId')} dir="ltr" value={draft.actorId} onChange={set('actorId')} error={invalid.includes('actorId') ? t('audit.uuidInvalid') : undefined} />
         <Select label={t('audit.action')} value={draft.action} onChange={set('action')} options={[{ value: '', label: t('tenants.any') }, ...AUDIT_ACTIONS.map((a) => ({ value: a, label: a }))]} />

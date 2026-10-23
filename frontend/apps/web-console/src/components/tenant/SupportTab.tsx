@@ -98,7 +98,7 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
                   {s.kind === 'emergency' && <span className="ms-1 font-semibold text-danger">· {t('support.emergencyKind')}</span>}
                 </Td>
                 <Td>{s.agentName}</Td>
-                <Td className="max-w-64 whitespace-pre-wrap">{s.reason}</Td>
+                <Td className="max-w-64 break-words whitespace-pre-wrap">{s.reason}</Td>
                 <Td>{fmtDate(s.requestedAt, l)}</Td>
                 <Td>{fmtDate(s.expiresAt, l)}</Td>
                 <Td>

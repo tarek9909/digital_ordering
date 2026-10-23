@@ -10,7 +10,7 @@ import { PIN_MAX, PinPad } from '../components/PinPad';
 import { Notice } from '../components/Notice';
 import { errorText, isApiError, signInApi } from '../lib/api';
 import { usePinLock } from '../lib/pinLock';
-import { storeDeviceName, storedDeviceName } from '../lib/lang';
+import { storeDeviceName, storedDeviceName, storeStaffKey } from '../lib/lang';
 import { useStaff } from '../lib/store';
 
 const STAFF_KEY = /^[0-9A-Za-z]{32}$/;
@@ -46,6 +46,7 @@ export function SignInPage() {
     try {
       await signInApi.post('/sessions', { staffKey, pin, deviceName: name });
       storeDeviceName(name);
+      storeStaffKey(staffKey);
       useStaff.getState().setSignedOut(false);
       qc.removeQueries({ queryKey: BOARD_KEY });
       navigate('/', { replace: true });

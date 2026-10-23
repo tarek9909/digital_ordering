@@ -62,12 +62,12 @@ export function RatingForm({ token }: { token: string }) {
             role="radio"
             aria-checked={stars === n}
             aria-label={t('rating.star', { count: n })}
-            className="grid size-14 place-items-center rounded-full transition-colors hover:bg-canvas"
+            className="grid size-12 place-items-center rounded-full transition-colors hover:bg-canvas min-[22rem]:size-14"
             style={{ color: n <= stars ? 'var(--brand-band)' : 'color-mix(in srgb, var(--color-muted) 45%, transparent)' }}
             onClick={() => setStars(n)}
           >
             <span key={n <= stars ? `on-${stars}` : 'off'} className={n <= stars ? 'star-pop block' : 'block'} style={{ animationDelay: `${(n - 1) * 40}ms` }}>
-              <StarIcon className="size-10" filled={n <= stars} />
+              <StarIcon className="size-9 min-[22rem]:size-10" filled={n <= stars} />
             </span>
           </button>
         ))}

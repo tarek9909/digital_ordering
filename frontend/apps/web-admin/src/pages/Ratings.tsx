@@ -3,6 +3,7 @@ import { useTranslation } from '@dop/i18n';
 import { EmptyState, LiveRegion } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmButton, ErrorNote, Figures, Page, QueryView, Section, Stat, Table, Td } from '../components/common';
+import { SubNav } from '../components/SubNav';
 import { api } from '../lib/api';
 import type { Rating, RatingSummary } from '../lib/types';
 import { useRole } from '../lib/me';
@@ -77,7 +78,7 @@ export function RatingsPage() {
   });
   const summary = q.data?.summary;
   return (
-    <Page title={t('nav.ratings')} description={t('ratings.intro')}>
+    <Page title={t('nav.ratings')} description={t('ratings.intro')} tabs={<SubNav group="insights" />}>
       {summary && summary.count > 0 && (
         <div className="mb-5 grid gap-5 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start">
           {summary.average !== null ? (

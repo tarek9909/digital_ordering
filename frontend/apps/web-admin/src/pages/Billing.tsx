@@ -2,7 +2,7 @@ import { formatDateTime, formatMoney } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
 import { Banner, EmptyState } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
+import { TabPanel, QueryView, Section, SectionTabs, StatusPill, Table, Td } from '../components/common';
 import { canManage } from '../lib/access';
 import { api } from '../lib/api';
 import { useRole } from '../lib/me';
@@ -38,13 +38,21 @@ export function BillingPage() {
   });
   const date = (iso: string) => formatDateTime(iso, i18n.language);
   return (
-    <Page title={t('nav.billing')} description={t('billing.description')}>
+    <TabPanel description={t('billing.description')}>
       <QueryView q={q} skeleton="form">
         {(b) => (
-          <>
+          <SectionTabs
+            label={t('billing.description')}
+            idPrefix="bill"
+            sections={[
+              {
+                key: 'plan',
+                label: t('billing.plan'),
+                node: (
+                  <>
             <Section title={t('billing.plan')}>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-display text-3xl font-extrabold tracking-tight">{b.plan.name}</span>
+                <span className="min-w-0 font-display text-3xl font-extrabold tracking-tight break-words">{b.plan.name}</span>
                 <StatusPill tone={b.status === 'active' ? 'ok' : b.status === 'trial' ? 'info' : b.status === 'past_due' ? 'warn' : 'danger'}>{t(`tenantStatus.${b.status}`)}</StatusPill>
                 {b.complimentary && <StatusPill tone="ok">{t('billing.complimentary')}</StatusPill>}
               </div>
@@ -62,6 +70,13 @@ export function BillingPage() {
                 <Banner tone="info">{t('billing.viewOnly')}</Banner>
               </div>
             )}
+                  </>
+                ),
+              },
+              {
+                key: 'prices',
+                label: t('billing.pricesTitle'),
+                node: (
             <Section title={t('billing.pricesTitle')}>
               {(b.plans ?? []).length === 0 ? (
                 <p className="text-muted">{t('billing.noPrices')}</p>
@@ -86,6 +101,12 @@ export function BillingPage() {
                 </Table>
               )}
             </Section>
+                ),
+              },
+              {
+                key: 'payments',
+                label: t('billing.payments'),
+                node: (
             <Section title={t('billing.payments')}>
               {b.payments.length === 0 ? (
                 <EmptyState title={t('billing.noPayments')}>{t('billing.noPaymentsBody')}</EmptyState>
@@ -113,9 +134,12 @@ export function BillingPage() {
                 </Table>
               )}
             </Section>
-          </>
+                ),
+              },
+            ]}
+          />
         )}
       </QueryView>
-    </Page>
+    </TabPanel>
   );
 }

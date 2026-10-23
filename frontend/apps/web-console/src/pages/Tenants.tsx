@@ -82,7 +82,7 @@ export function TenantsPage() {
       <div className="mb-5 flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-4 shadow-card">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <form role="search" onSubmit={search} className="flex flex-1 items-end gap-2">
-            <Field label={t('tenants.search')} type="search" className="flex-1" placeholder={t('tenantsUx.searchPlaceholder')} value={q} maxLength={100} onChange={(e) => setQ(e.target.value)} />
+            <Field label={t('tenants.search')} type="search" className="min-w-0 flex-1" placeholder={t('tenantsUx.searchPlaceholder')} value={q} maxLength={100} onChange={(e) => setQ(e.target.value)} />
             <Button type="submit" variant="ink">
               {t('tenantsUx.searchButton')}
             </Button>
@@ -98,7 +98,7 @@ export function TenantsPage() {
                 type="button"
                 aria-pressed={on}
                 onClick={() => apply({ status: s })}
-                className={`inline-flex min-h-10 items-center rounded-full px-3.5 text-sm font-semibold ring-1 transition-colors ${on ? 'bg-ink text-white ring-ink' : 'bg-surface text-ink-2 ring-line hover:text-ink'}`}
+                className={`inline-flex min-h-12 items-center lg:min-h-10 rounded-full px-3.5 text-sm font-semibold ring-1 transition-colors ${on ? 'bg-ink text-white ring-ink' : 'bg-surface text-ink-2 ring-line hover:text-ink'}`}
               >
                 {s ? t(`tenantStatus.${s}`) : t('tenantsUx.allStatuses')}
               </button>
@@ -122,7 +122,60 @@ export function TenantsPage() {
           </EmptyState>
         ) : (
           <>
-            <Table caption={t('tenants.title')} head={[t('tenantsUx.restaurant'), t('tenants.status'), t('tenants.plan'), t('tenants.owner'), t('tenants.ticketsMonth'), t('tenants.lastActivity')]}>
+            {/* Phones get one card per restaurant; the six-column table needs at least a tablet's width. */}
+            <ul aria-label={t('tenants.title')} className="flex flex-col gap-3 md:hidden">
+              {list.data.items.length === 0 && <li className="text-muted">{t('tenants.empty')}</li>}
+              {list.data.items.map((r) => (
+                <li key={r.id} className="relative flex flex-col gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card transition-colors has-[a:hover]:bg-primary-wash">
+                  <div className="flex items-center gap-3">
+                    <Initials name={r.name} tone="soft" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      {/* The link covers the whole card (after:inset-0) so the card is one large tap target. */}
+                      <Link to={`/tenants/${r.id}`} className="truncate font-semibold text-ink after:absolute after:inset-0 after:rounded-[var(--radius-card)]">
+                        {r.name}
+                      </Link>
+                      <span dir="ltr" className="max-w-full self-start truncate font-mono text-xs text-muted">
+                        {r.slug}
+                      </span>
+                    </span>
+                    <span className="shrink-0">
+                      <StatusBadge status={r.status} />
+                    </span>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line pt-3 text-sm">
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted">{t('tenants.plan')}</dt>
+                      <dd className="font-medium break-words">
+                        {t(`plan.${r.plan}`, { defaultValue: r.plan })}
+                        {r.complimentary && (
+                          <Pill tone="ink" className="ms-2">
+                            {t('tenants.complimentary')}
+                          </Pill>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted">{t('tenants.ticketsMonth')}</dt>
+                      <dd className="num font-semibold">{r.ticketsThisMonth}</dd>
+                    </div>
+                    <div className="col-span-2 min-w-0">
+                      <dt className="text-xs text-muted">{t('tenants.owner')}</dt>
+                      <dd className="truncate text-ink-2">
+                        <span dir="ltr">{r.ownerEmail ?? '—'}</span>
+                      </dd>
+                    </div>
+                    <div className="col-span-2 min-w-0">
+                      <dt className="text-xs text-muted">{t('tenants.lastActivity')}</dt>
+                      <dd className="text-ink-2">
+                        {fmtDate(r.lastActivityAt, i18n.language)}
+                        {r.status === 'trial' && r.trialEndsAt && <span className="block text-xs text-muted">{t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}</span>}
+                      </dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+            <Table className="hidden md:block" caption={t('tenants.title')} head={[t('tenantsUx.restaurant'), t('tenants.status'), t('tenants.plan'), t('tenants.owner'), t('tenants.ticketsMonth'), t('tenants.lastActivity')]}>
               {list.data.items.length === 0 && (
                 <tr>
                   <Td className="text-muted">{t('tenants.empty')}</Td>

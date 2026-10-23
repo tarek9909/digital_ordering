@@ -79,7 +79,7 @@ function MfaDialog({ open, onDone }: { open: boolean; onDone: (ok: boolean) => v
           error={form.formState.errors.code ? t('mfa.codeInvalid') : (err ?? undefined)}
           {...form.register('code')}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="secondary" onClick={() => onDone(false)}>
             {t('common:cancel')}
           </Button>

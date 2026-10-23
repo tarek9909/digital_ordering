@@ -1,12 +1,13 @@
 import { useTranslation } from '@dop/i18n';
 import { Card } from '@dop/ui';
-import { useSearchParams } from 'react-router';
-import { Page, QueryView, Tabs } from '../components/common';
+import { Link, useSearchParams } from 'react-router';
+import { Page, QueryView, Tabs, linkClass } from '../components/common';
+import { useRole } from '../lib/me';
 import { BrandingForm } from '../components/venue/BrandingForm';
 import { FlowForm } from '../components/venue/FlowForm';
 import { GeneralForm } from '../components/venue/GeneralForm';
 import { MessagesForm } from '../components/venue/MessagesForm';
-import { useCurrentVenueId, useVenue } from '../lib/venue';
+import { useCurrentVenueId, useVenue, useVenues } from '../lib/venue';
 
 const TABS = ['general', 'branding', 'messages', 'flow'] as const;
 type Tab = (typeof TABS)[number];
@@ -17,9 +18,21 @@ export function VenuePage() {
   const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '') ? (params.get('tab') as Tab) : 'general';
   const venueId = useCurrentVenueId();
   const q = useVenue(venueId);
+  const owner = useRole() === 'owner';
+  const many = (useVenues().data ?? []).length > 1;
 
   return (
-    <Page title={t('nav.venue')} description={t('venue.description')}>
+    <Page
+      title={t('nav.venue')}
+      description={t('venue.description')}
+      actions={
+        (owner || many) && (
+          <Link to="/venues" className={linkClass('secondary')}>
+            {t('nav.venues')}
+          </Link>
+        )
+      }
+    >
       <Tabs label={t('venue.tabsLabel')} tabs={TABS} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} idPrefix="" labelOf={(k) => t(`venue.tabs.${k}`)} />
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         <QueryView q={q} skeleton="form">

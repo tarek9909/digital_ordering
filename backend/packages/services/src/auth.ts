@@ -628,6 +628,27 @@ export async function inviteMember(deps: Deps, actor: Actor & { kind: 'user' | '
   return { id };
 }
 
+/**
+ * The owner creates a team member's account directly and hands the password over in person; no email is sent. The
+ * address must be new to the platform: an existing account joins only through an invitation it accepts itself.
+ */
+export async function addMember(deps: Deps, actor: Actor & { kind: 'user' }, tenantId: string, b: { name: string; email: string; password: string; role: MemberRole }) {
+  const db = deps.db.platform();
+  if (await db.selectFrom('users').select('id').where('email', '=', b.email).executeTakeFirst()) throw new AppError('EMAIL_TAKEN', 'This email already has an account');
+  const problem = checkPassword(b.password, [b.email, b.name]);
+  if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'password', message: problem }] });
+  const userId = uuidv7();
+  const membershipId = uuidv7();
+  const passwordHash = await hashSecret(b.password);
+  await db.transaction().execute(async (tx) => {
+    // The owner vouches for the address; there is no verification email to wait for.
+    await tx.insertInto('users').values({ id: userId, email: b.email, name: b.name, password_hash: passwordHash, email_verified_at: deps.now() }).execute();
+    await tx.insertInto('tenant_memberships').values({ id: membershipId, tenant_id: tenantId, user_id: userId, role: b.role }).execute();
+    await writeAudit(tx, { actor, action: 'member.added', tenantId, entityType: 'membership', entityId: membershipId, after: { email: b.email, role: b.role } });
+  });
+  return { id: membershipId };
+}
+
 export async function invitationDetails(deps: Deps, token: string) {
   const inv = await deps.db
     .platform()

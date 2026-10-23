@@ -108,7 +108,7 @@ interface FormProps {
 function Actions({ onCancel, busy, label, danger }: { onCancel: () => void; busy: boolean; label: string; danger?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <Button type="button" variant="secondary" onClick={onCancel}>
         {t('common:cancel')}
       </Button>

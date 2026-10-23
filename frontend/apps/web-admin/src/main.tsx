@@ -11,8 +11,10 @@ import ar from '../../../packages/i18n/locales/ar/admin.json';
 import en from '../../../packages/i18n/locales/en/admin.json';
 import { Layout, type RouteHandle } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
+import { TabbedPage } from './components/SubNav';
 import { BASENAME, createQueryClient } from './lib/api';
 import { storedLang } from './lib/lang';
+import './lib/theme';
 import { AccountPage } from './pages/Account';
 import { BillingPage } from './pages/Billing';
 import { CountersPage } from './pages/Counters';
@@ -26,7 +28,6 @@ import { RatingsPage } from './pages/Ratings';
 import { SettingsPage } from './pages/Settings';
 import { SignInPage } from './pages/SignIn';
 import { StaffAccessPage } from './pages/StaffAccess';
-import { SupportPage } from './pages/Support';
 import { SupportHandoffPage } from './pages/SupportHandoff';
 import { TeamPage } from './pages/Team';
 import { TwoFactorRequiredPage } from './pages/TwoFactorRequired';
@@ -81,10 +82,31 @@ const router = createBrowserRouter(
         { index: true, element: guard(<HomePage />), handle: h('home') },
         { path: 'venues', element: guard(<VenuesPage />), handle: h('venues') },
         { path: 'venue', element: guard(<VenuePage />), handle: h('venue') },
-        { path: 'counters', element: guard(<CountersPage />), handle: h('counters') },
-        { path: 'staff-access', element: guard(<StaffAccessPage />), handle: h('staff') },
-        { path: 'displays', element: guard(<DisplaysPage />), handle: h('displays') },
-        { path: 'posters', element: guard(<PostersPage />), handle: h('posters') },
+        {
+          element: <TabbedPage group="screens" title="nav.screens" />,
+          children: [
+            {
+              path: 'counters',
+              element: guard(<CountersPage />),
+              handle: h('counters'),
+            },
+            {
+              path: 'staff-access',
+              element: guard(<StaffAccessPage />),
+              handle: h('staff'),
+            },
+            {
+              path: 'displays',
+              element: guard(<DisplaysPage />),
+              handle: h('displays'),
+            },
+            {
+              path: 'posters',
+              element: guard(<PostersPage />),
+              handle: h('posters'),
+            },
+          ],
+        },
         {
           path: 'reports',
           handle: h('reports'),
@@ -94,20 +116,32 @@ const router = createBrowserRouter(
             return { element: guard(<m.ReportsPage />) };
           },
         },
-        { path: 'ratings', element: guard(<RatingsPage />), handle: h('ratings') },
-        { path: 'team', element: guard(<TeamPage />), handle: h('team') },
         {
-          path: 'integrations',
-          handle: h('integrations'),
-          lazy: async () => {
-            const m = await import('./pages/Integrations');
-            return { element: guard(<m.IntegrationsPage />) };
-          },
+          path: 'ratings',
+          element: guard(<RatingsPage />),
+          handle: h('ratings'),
         },
-        { path: 'support', element: guard(<SupportPage />), handle: h('support') },
-        { path: 'billing', element: guard(<BillingPage />), handle: h('billing') },
-        { path: 'settings', element: guard(<SettingsPage />), handle: h('settings') },
-        { path: 'account', element: guard(<AccountPage />), handle: h('account') },
+        {
+          element: <TabbedPage group="business" title="nav.groups.business" />,
+          children: [
+            {
+              path: 'settings',
+              element: guard(<SettingsPage />),
+              handle: h('settings'),
+            },
+            { path: 'team', element: guard(<TeamPage />), handle: h('team') },
+            {
+              path: 'billing',
+              element: guard(<BillingPage />),
+              handle: h('billing'),
+            },
+          ],
+        },
+        {
+          path: 'account',
+          element: guard(<AccountPage />),
+          handle: h('account'),
+        },
         { path: '*', element: <Navigate to="/" replace /> },
       ],
     },

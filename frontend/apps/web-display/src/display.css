@@ -39,10 +39,37 @@
   pointer-events: none;
 }
 
+/* ---- Preparing numbers: the Ready tile, a size smaller and a shade quieter ---- */
+.tile-preparing {
+  font-size: 10vmin;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.82);
+}
+/* A long Preparing list scrolls upwards as a seamless loop (the track holds two copies; --loop is one copy plus
+   its gap). The edges fade so numbers slide in and out rather than being cut. */
+.prep-viewport.is-scrolling {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 4%, #000 92%, transparent 100%);
+}
+.prep-track {
+  animation-name: prep-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes prep-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-1 * var(--loop)));
+  }
+}
+
 /* ---- Column headings ---- */
 .board-count {
   font-family: var(--font-mono);
-  font-size: 2.6vmin;
+  /* Viewport-relative for the room, with a floor so a small (1024 px) screen stays legible. */
+  font-size: max(0.875rem, 2.6vmin);
   font-weight: 500;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -52,7 +79,7 @@
 .board-clock {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 3.4vmin;
+  font-size: max(1rem, 3.4vmin);
   font-weight: 500;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -111,8 +138,10 @@
   align-items: center;
   gap: 1vmin;
   border-radius: 999px;
+  max-width: 100%;
   padding: 0.8vmin 1.8vmin;
-  white-space: nowrap;
+  /* Wraps inside its (capped) column rather than pushing the venue name out of a narrow header. */
+  text-align: start;
 }
 .badge-mark {
   width: 1.1vmin;
@@ -124,7 +153,7 @@
 /* ---- Promo ---- */
 .promo-tag {
   font-family: var(--font-mono);
-  font-size: 1.6vmin;
+  font-size: max(0.6875rem, 1.6vmin);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -132,7 +161,7 @@
 }
 :lang(ar) .promo-tag {
   font-family: var(--font-sans);
-  font-size: 1.9vmin;
+  font-size: max(0.75rem, 1.9vmin);
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -152,6 +181,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .prep-track {
+    animation: none;
+  }
   .live-dot.is-live::after {
     animation: none;
     opacity: 0;

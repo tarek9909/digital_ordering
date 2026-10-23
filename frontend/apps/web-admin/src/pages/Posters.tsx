@@ -2,7 +2,7 @@ import { useTranslation } from '@dop/i18n';
 import { Select } from '@dop/ui';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Page, Section, linkClass } from '../components/common';
+import { TabPanel, Section, SectionTabs, linkClass } from '../components/common';
 import { useCurrentVenueId, useVenue } from '../lib/venue';
 
 const KINDS = ['a4', 'tent', 'door'] as const;
@@ -16,7 +16,15 @@ export function PostersPage() {
   const locales = venue?.locales ?? ['ar', 'en'];
   if (!venueId) return null;
   return (
-    <Page title={t('nav.posters')} description={t('posters.description')}>
+    <TabPanel description={t('posters.description')}>
+      <SectionTabs
+        label={t('posters.description')}
+        idPrefix="post"
+        sections={[
+          {
+            key: 'pdf',
+            label: t('posters.pdfTitle'),
+            node: (
       <Section title={t('posters.pdfTitle')} description={t('posters.pdfHint')}>
         <Select
           className="mb-4 max-w-xs"
@@ -50,12 +58,22 @@ export function PostersPage() {
           ))}
         </ul>
       </Section>
-      <Section title={t('posters.printTitle')} description={t('posters.printHint')}>
-        <Link to="/posters/print" className={linkClass('primary')}>
-          {t('posters.openPrint')}
-        </Link>
-      </Section>
-    </Page>
+            ),
+          },
+          {
+            key: 'print',
+            label: t('posters.printTitle'),
+            node: (
+              <Section title={t('posters.printTitle')} description={t('posters.printHint')}>
+                <Link to="/posters/print" className={linkClass('primary')}>
+                  {t('posters.openPrint')}
+                </Link>
+              </Section>
+            ),
+          },
+        ]}
+      />
+    </TabPanel>
   );
 }
 

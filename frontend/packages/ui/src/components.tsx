@@ -19,7 +19,7 @@ const VARIANTS: Record<Variant, string> = {
   danger: 'bg-danger text-white shadow-button hover:brightness-110 enabled:hover:-translate-y-px',
   ghost: 'bg-transparent text-ink hover:bg-canvas',
   brand: 'bg-[var(--brand)] text-[var(--on-brand)] shadow-button hover:brightness-110 enabled:hover:-translate-y-px',
-  ink: 'bg-ink text-white shadow-button hover:bg-ink-2 enabled:hover:-translate-y-px',
+  ink: 'bg-panel text-white shadow-button hover:bg-panel-2 enabled:hover:-translate-y-px',
 };
 const SIZES = { md: 'min-h-12 px-4 text-base', lg: 'min-h-16 px-6 text-lg', xl: 'min-h-20 px-8 text-2xl' };
 
@@ -148,8 +148,9 @@ export function Modal({ open, onOpenChange, title, children, description }: { op
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-ink/45 backdrop-blur-[2px]" />
-        <Dialog.Content className="dialog-content fixed inset-x-4 top-[10vh] z-50 mx-auto max-h-[80vh] max-w-lg overflow-auto rounded-dialog bg-surface p-6 shadow-dialog">
+        <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-panel/45 backdrop-blur-[2px]" />
+        {/* Phones: a sheet anchored to the bottom, within thumb reach and clear of the home indicator. */}
+        <Dialog.Content className="dialog-content fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-h-[calc(100dvh-1.5rem)] max-w-lg overflow-auto overscroll-contain rounded-dialog bg-surface p-5 shadow-dialog sm:inset-x-4 sm:top-[10dvh] sm:bottom-auto sm:max-h-[80dvh] sm:p-6">
           <Dialog.Title className="mb-2 font-display text-xl font-bold tracking-tight">{title}</Dialog.Title>
           {description ? <Dialog.Description className="mb-4 text-muted">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
           {children}
@@ -183,10 +184,10 @@ export function Toasts({ items, onDismiss }: { items: ToastItem[]; onDismiss: (i
     return () => timers.forEach(clearTimeout);
   }, [items, onDismiss]);
   return (
-    <div aria-live="polite" className="fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4">
+    <div aria-live="polite" className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4">
       {items.map((t) => (
-        <div key={t.id} className={cx('toast-in flex w-full max-w-xl items-center justify-between gap-4 rounded-input px-4 py-3 text-white shadow-dialog', t.tone === 'danger' ? 'bg-danger' : t.tone === 'ok' ? 'bg-ok' : 'bg-ink')}>
-          <span className="flex items-center gap-3">
+        <div key={t.id} className={cx('toast-in flex w-full max-w-xl flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-input px-4 py-3 text-white shadow-dialog', t.tone === 'danger' ? 'bg-danger' : t.tone === 'ok' ? 'bg-ok' : 'bg-panel')}>
+          <span className="flex min-w-0 items-center gap-3">
             <span aria-hidden="true" className={cx('size-1.5 shrink-0 rounded-full', t.tone ? 'bg-white' : 'bg-glow')} />
             {t.text}
           </span>
@@ -257,7 +258,7 @@ export function PageShell({
     <div className="min-h-dvh bg-canvas">
       {nav}
       <main className={cx('mx-auto px-4 py-6 sm:px-6 sm:py-8', wide ? 'max-w-7xl' : 'max-w-5xl')}>
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <header className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
           <div data-motion="page" className="flex min-w-0 flex-col gap-1.5">
             {eyebrow && <span className="eyebrow">{eyebrow}</span>}
             <h1 className="font-display text-[1.75rem] leading-tight font-extrabold tracking-tight sm:text-[2rem]">{title}</h1>
@@ -274,9 +275,9 @@ export function PageShell({
 /** A figure with a label: the big number in display type, the label as an eyebrow. Counts up once. */
 export function Stat({ label, value, hint, accent, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; accent?: boolean; className?: string }) {
   return (
-    <div className={cx('flex flex-col gap-2 rounded-[var(--radius-card)] p-5', accent ? 'ember-glow ember-glow-sm bg-ink text-white shadow-card' : 'bg-surface shadow-card', className)}>
+    <div className={cx('flex min-w-0 flex-col gap-2 rounded-[var(--radius-card)] p-4 sm:p-5', accent ? 'ember-glow ember-glow-sm bg-panel text-white shadow-card' : 'bg-surface shadow-card', className)}>
       <span className={cx('eyebrow', accent && 'text-white/65')}>{label}</span>
-      <span data-motion="count" className={cx('num font-display text-4xl leading-none font-extrabold tracking-tight', accent && 'text-glow')}>
+      <span data-motion="count" className={cx('num font-display text-3xl leading-none font-extrabold tracking-tight break-words sm:text-4xl', accent && 'text-glow')}>
         {value}
       </span>
       {hint && <span className={cx('text-sm', accent ? 'text-white/70' : 'text-muted')}>{hint}</span>}
@@ -307,7 +308,7 @@ export function Pill({ tone = 'neutral', children, className }: { tone?: 'neutra
     warn: 'bg-warn-bg text-warn',
     danger: 'bg-danger-bg text-danger',
     info: 'bg-info-bg text-info',
-    ink: 'bg-ink text-white',
+    ink: 'bg-panel text-white',
     ember: 'bg-primary-soft text-primary-hover',
   };
   const marks = { neutral: '○', ok: '●', warn: '▲', danger: '■', info: '◐', ink: '●', ember: '●' };

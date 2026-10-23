@@ -19,6 +19,7 @@ export const AUDIT_ACTIONS = [
   'tenant.ownership_transferred',
   'tenant.viewed',
   'member.invited',
+  'member.added',
   'member.role_changed',
   'member.removed',
   'member.preferences_changed',
@@ -63,6 +64,7 @@ export const AUDIT_ACTIONS = [
   'platform_user.mfa_reset',
   'platform_user.removed',
   'export.requested',
+  'export.downloaded',
   'rating.deleted',
 ] as const;
 

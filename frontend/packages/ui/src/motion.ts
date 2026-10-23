@@ -46,17 +46,36 @@ export function preloadMotion() {
   });
 }
 
+/** The translation a transform string applies (what an in-flight glide still adds to an item's layout position). */
+function translation(transform: string) {
+  if (!transform || transform === 'none') return { x: 0, y: 0 };
+  try {
+    const m = new DOMMatrixReadOnly(transform);
+    return { x: m.m41, y: m.m42 };
+  } catch {
+    return { x: 0, y: 0 };
+  }
+}
+
 /**
  * Keyed FLIP: children with data-flip-id glide from where they were to where they are after each render, and new
- * ones settle in. Pass the list (or anything that changes when items move) as `deps`.
+ * ones settle in. Pass the list (or anything that changes when items move) as `deps`. When `scope` changes (a
+ * different tab, a different layout) the items are a new set: they are shown in place, not animated.
  */
-export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[]) {
+export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[], scope?: string | number | boolean) {
   const last = useRef(new Map<string, DOMRect>());
+  const lastScope = useRef(scope);
   // Layout effect: measure after React has moved the nodes but before the browser paints them.
   useLayoutEffect(() => {
     const el = container.current;
     if (!el) return;
     const items = Array.from(el.querySelectorAll<HTMLElement>('[data-flip-id]'));
+    // Measure layout positions, not where an item is drawn mid-glide: a render that lands during a glide (the
+    // server confirming a move, the clock ticking) would otherwise record a half-way spot and snap from it.
+    // The in-flight offset is kept so the next glide continues from where the item is on screen.
+    const moving = items.filter((item) => item.style.transform);
+    const saved = moving.map((item) => item.style.transform);
+    moving.forEach((item) => (item.style.transform = 'none'));
     // Relative to the container, so page scrolling between renders is not replayed as movement.
     const box = el.getBoundingClientRect();
     const next = new Map<string, DOMRect>();
@@ -64,12 +83,19 @@ export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[
       const r = item.getBoundingClientRect();
       next.set(item.dataset.flipId!, new DOMRect(r.left - box.left, r.top - box.top, r.width, r.height));
     }
+    const carry = new Map<string, { x: number; y: number }>();
+    moving.forEach((item, i) => {
+      item.style.transform = saved[i]!;
+      carry.set(item.dataset.flipId!, translation(saved[i]!));
+    });
     const prev = last.current;
     last.current = next;
-    if (prev.size === 0 || prefersReducedMotion()) return;
-    void loadMotion().then((rt) => rt?.flip(items, prev, next));
+    const sameScope = lastScope.current === scope;
+    lastScope.current = scope;
+    if (prev.size === 0 || !sameScope || prefersReducedMotion()) return;
+    void loadMotion().then((rt) => rt?.flip(items, prev, next, carry));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, scope]);
   // Scrolling or resizing moves every rect; forget them so the next change does not replay that as motion.
   useEffect(() => {
     const reset = () => last.current.clear();

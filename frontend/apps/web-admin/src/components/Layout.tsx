@@ -1,7 +1,7 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Pill } from '@dop/ui';
+import { EmptyState, Pill } from '@dop/ui';
 import { useState } from 'react';
-import { Navigate, NavLink, Outlet, useMatches } from 'react-router';
+import { Link, Navigate, Outlet, useLocation, useMatches } from 'react-router';
 import { canReach, homeSection, isLimited, type Section } from '../lib/access';
 import { authApi, BASENAME } from '../lib/api';
 import { switchLang } from '../lib/lang';
@@ -10,46 +10,48 @@ import { setSupportMode } from '../lib/support';
 import { useCurrentVenueId } from '../lib/venue';
 import { staffBoardUrl } from '../pages/Home';
 import { Banners } from './Banners';
+import { reachableTabs } from './SubNav';
 import { LoadingShape, Page } from './common';
-import { AccountLink, Frame, Pass, SideGroup, sideItemClass } from './Frame';
+import { AccountMenu, Frame, LangSwitch, NavIcon, SideGroup, StaffBoardButton, ThemeSwitch, VenueSwitch, sideItemClass } from './Frame';
 import { LegalGate } from './LegalGate';
 
 // Grouped like the work: running today's service, reading how it went, and running the business. Account is
 // reached from the signed-in person at the foot of the sidebar.
 const NAV: Array<{
   group: 'service' | 'insights' | 'business';
-  items: Array<{ section: Section; to: string }>;
+  // `also` are sibling pages reached from this entry (Venues from Venue, Staff and Displays from Counters & screens), so the
+  // entry stays lit while you are on them.
+  items: Array<{ section: Section; to: string; label?: string; also?: string[] }>;
 }> = [
   {
     group: 'service',
     items: [
       { section: 'home', to: '/' },
-      { section: 'venues', to: '/venues' },
-      { section: 'venue', to: '/venue' },
-      { section: 'counters', to: '/counters' },
-      { section: 'staff', to: '/staff-access' },
-      { section: 'displays', to: '/displays' },
-      { section: 'posters', to: '/posters' },
+      { section: 'venue', to: '/venue', also: ['/venues'] },
+      { section: 'counters', to: '/counters', label: 'screens', also: ['/staff-access', '/displays', '/posters'] },
     ],
   },
   {
     group: 'insights',
-    items: [
-      { section: 'reports', to: '/reports' },
-      { section: 'ratings', to: '/ratings' },
-    ],
+    items: [{ section: 'reports', to: '/reports', also: ['/ratings'] }],
   },
   {
     group: 'business',
     items: [
-      { section: 'team', to: '/team' },
-      { section: 'integrations', to: '/integrations' },
-      { section: 'support', to: '/support' },
-      { section: 'billing', to: '/billing' },
-      { section: 'settings', to: '/settings' },
+      // One entry for the tabbed Settings, Team and Billing page; it opens the first tab this viewer may reach.
+      { section: 'settings', to: '/settings', also: ['/team', '/billing'] },
     ],
   },
 ];
+
+const COLLAPSE_KEY = 'admin.sidebar.collapsed';
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 export interface RouteHandle {
   section: Section;
@@ -95,47 +97,55 @@ export function Layout() {
   const allowed = canReach(section, status, role);
   const lng = i18n.language === 'ar' ? 'ar' : 'en';
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1');
+      } catch {
+        /* a private window: the choice is not remembered */
+      }
+      return !c;
+    });
   const pickVenue = (Boolean(tenant.data) || isSupport) && !limited;
   const venueId = useCurrentVenueId(pickVenue);
   // Live figures need the Today report; Today itself shows them in full, so the pass leaves them out there.
   const live = pickVenue && canReach('home', status, role);
+  const businessTo = reachableTabs('business', status, role)[0]?.to;
   const groups = NAV.map((g) => ({
     ...g,
-    items: g.items.filter((n) => canReach(n.section, status, role)),
+    items: g.items.flatMap((n) => (n.section === 'settings' ? (businessTo ? [{ ...n, to: businessTo }] : []) : canReach(n.section, status, role) ? [n] : [])),
   })).filter((g) => g.items.length > 0);
 
-  const account = me && (
-    <div className="flex flex-col gap-1">
-      <AccountLink
-        name={isSupport ? (me.agentName ?? t('nav.supportMode')) : me.user.name || me.user.email}
-        detail={isSupport ? t('nav.supportMode') : role ? t(`roles.${role}`, { defaultValue: role }) : undefined}
-        to={canReach('account', status, role) ? '/account' : undefined}
-      />
-      {isSupport && (
-        <span className="px-2.5 pb-1">
-          <Pill tone="warn">{t('nav.supportMode')}</Pill>
-        </span>
-      )}
-    </div>
-  );
-
+  const accountName = me ? (isSupport ? (me.agentName ?? t('nav.supportMode')) : me.user.name || me.user.email) : '';
   const footer = (
-    <div className="flex gap-2">
-      <Button variant="ghost" className="shrink-0 px-3" onClick={() => switchLang(lng === 'ar' ? 'en' : 'ar')} lang={lng === 'ar' ? 'en' : 'ar'}>
-        {lng === 'ar' ? 'English' : 'العربية'}
-      </Button>
-      <Button variant="ghost" className="flex-1 px-3 whitespace-nowrap text-ink-2" onClick={() => void signOut(isSupport)}>
-        {isSupport ? t('nav.leaveSupport') : t('common:signOut')}
-      </Button>
-    </div>
+    <>
+      <LangSwitch lng={lng} onChange={switchLang} label={t('nav.language')} collapsed={collapsed} />
+      <ThemeSwitch label={t('nav.theme')} lightLabel={t('nav.themeLight')} darkLabel={t('nav.themeDark')} collapsed={collapsed} />
+      {me && (
+        <AccountMenu
+          name={accountName}
+          detail={isSupport ? t('nav.supportMode') : role ? t(`roles.${role}`, { defaultValue: role }) : undefined}
+          badge={isSupport ? <Pill tone="warn">{t('nav.supportMode')}</Pill> : undefined}
+          accountTo={canReach('account', status, role) ? '/account' : undefined}
+          accountLabel={t('nav.account')}
+          signOutLabel={isSupport ? t('nav.leaveSupport') : t('common:signOut')}
+          onSignOut={() => void signOut(isSupport)}
+          collapsed={collapsed}
+        />
+      )}
+    </>
   );
 
+  const { pathname } = useLocation();
+  const isOn = (n: { to: string; also?: string[] }) => [n.to, ...(n.also ?? [])].some((p) => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`)));
   const nav = groups.map((g) => (
-    <SideGroup key={g.group} label={t(`nav.groups.${g.group}`)}>
+    <SideGroup key={g.group} label={t(`nav.groups.${g.group}`)} collapsed={collapsed}>
       {g.items.map((n) => (
-        <NavLink key={n.section} to={n.to} end={n.to === '/'} onClick={() => setMenuOpen(false)} className={({ isActive }) => sideItemClass(isActive)}>
-          {t(`nav.${n.section}`)}
-        </NavLink>
+        <Link key={n.section} to={n.to} aria-current={isOn(n) ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={sideItemClass(isOn(n), collapsed)} title={collapsed ? t(`nav.${n.label ?? n.section}`) : undefined}>
+          <NavIcon name={n.label ?? n.section} />
+          <span className={collapsed ? 'lg:sr-only' : undefined}>{t(`nav.${n.label ?? n.section}`)}</span>
+        </Link>
       ))}
     </SideGroup>
   ));
@@ -148,16 +158,19 @@ export function Layout() {
       <Frame
         title={tenant.data?.name ?? t('common:appName')}
         subtitle={tenant.data ? t('common:appName') : undefined}
+        venue={pickVenue ? <VenueSwitch enabled={pickVenue} /> : undefined}
+        action={<StaffBoardButton venueEnabled={pickVenue} live={live} href={live && venueId ? staffBoardUrl(venueId) : null} collapsed={collapsed} />}
         nav={nav}
-        account={account}
         footer={footer}
         navLabel={t('nav.label')}
         menuOpen={menuOpen}
         onMenu={() => setMenuOpen((o) => !o)}
         menuText={{ open: t('nav.menu'), close: t('nav.closeMenu') }}
+        collapsed={collapsed}
+        onCollapse={toggleCollapsed}
+        collapseText={{ collapse: t('nav.collapse'), expand: t('nav.expand') }}
         top={
           <div className="print:hidden">
-            {pickVenue && venueId && <Pass venueEnabled={pickVenue} live={live} showFigures={section !== 'home'} boardHref={live ? staffBoardUrl(venueId) : null} />}
             <Banners />
           </div>
         }
@@ -165,7 +178,7 @@ export function Layout() {
         {/* Pages render their own <main> through Page. */}
         <div id="main" tabIndex={-1} className="outline-none">
           {tenant.isLoading ? (
-            <div className="max-w-6xl px-4 py-8 sm:px-8 lg:px-10">
+            <div className="px-4 py-8 sm:px-8 lg:px-10">
               <LoadingShape kind="tiles" />
             </div>
           ) : allowed ? (

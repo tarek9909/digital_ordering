@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill } from '../components/common';
+import { AddDialog, Checkbox, ConfirmButton, DialogActions, ErrorNote, TabPanel, QueryView, StatusPill } from '../components/common';
 import { api } from '../lib/api';
 import { MAX_ANNOUNCE_LANGUAGES, MAX_QUIET_HOURS, displayToForm, validateDisplayForm, type DisplayForm, type DisplayFormField } from '../lib/displayForm';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -32,11 +32,12 @@ function PairingCodeView({ code, onNew, busy }: { code: PairingCode; onNew: () =
   const { t } = useTranslation();
   const left = useCountdown(code.expiresAt);
   return (
-    <div className="ember-glow flex flex-col items-center gap-3 rounded-[var(--radius-card)] bg-ink p-5 text-center text-white">
+    <div className="ember-glow @container flex flex-col items-center gap-3 rounded-[var(--radius-card)] bg-panel p-5 text-center text-white">
       <p className="text-white/80">{t('displays.pairingIntro')}</p>
       {left > 0 ? (
         <>
-          <p data-motion="pop" dir="ltr" className="num font-display text-6xl font-extrabold tracking-[0.3em] text-glow" aria-label={code.code.split('').join(' ')}>
+          {/* Sized to the panel: the spaced-out code is about 5.4em wide, so it fits a phone or a half-width card. */}
+          <p data-motion="pop" dir="ltr" className="num font-display text-[length:clamp(1.75rem,16cqi,3.75rem)] font-extrabold tracking-[0.3em] text-glow" aria-label={code.code.split('').join(' ')}>
             {code.code}
           </p>
           <p className="text-white/70">
@@ -81,7 +82,7 @@ function RenameDialog({ display, venueId }: { display: DisplayItem; venueId: str
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <Field label={t('displays.name')} error={form.formState.errors.name ? t('form.required') : undefined} {...form.register('name')} />
           {form.formState.errors.root && <Banner tone="danger">{form.formState.errors.root.message}</Banner>}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               {t('common:cancel')}
             </Button>
@@ -289,7 +290,7 @@ function SettingsDialog({ display, venueId }: { display: DisplayItem; venueId: s
           </fieldset>
 
           <ErrorNote error={save.error} />
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               {t('common:cancel')}
             </Button>
@@ -371,7 +372,7 @@ function DisplayCard({ d, venueId }: { d: DisplayItem; venueId: string }) {
   );
 }
 
-function CreateDisplay({ venueId }: { venueId: string }) {
+function CreateDisplay({ venueId, onDone }: { venueId: string; onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const form = useForm({
@@ -381,32 +382,17 @@ function CreateDisplay({ venueId }: { venueId: string }) {
   const submit = form.handleSubmit(async ({ name }) => {
     try {
       await api.post(`/venues/${venueId}/displays`, { name });
-      form.reset({ name: '' });
       await qc.invalidateQueries({ queryKey: displaysKey(venueId) });
+      onDone();
     } catch (e) {
       if (!applyFieldErrors(e, form.setError, ['name'])) form.setError('root', { message: errorText(t, e) });
     }
   });
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
-      <Field
-        className="min-w-60 flex-1"
-        label={t('displays.name')}
-        placeholder={t('displays.namePlaceholder')}
-        error={form.formState.errors.name ? t('form.required') : undefined}
-        {...form.register('name')}
-      />
-      <div className="sm:pt-7">
-        <Button type="submit" busy={form.formState.isSubmitting}>
-          {t('displays.add')}
-        </Button>
-      </div>
-      {form.formState.errors.root && (
-        <div className="w-full">
-          <Banner tone="danger">{form.formState.errors.root.message}</Banner>
-        </div>
-      )}
-      <LiveRegion text={form.formState.isSubmitSuccessful ? t('displays.added') : ''} />
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <Field label={t('displays.name')} placeholder={t('displays.namePlaceholder')} error={form.formState.errors.name ? t('form.required') : undefined} {...form.register('name')} />
+      {form.formState.errors.root && <Banner tone="danger">{form.formState.errors.root.message}</Banner>}
+      <DialogActions onCancel={onDone} submitLabel={t('displays.add')} busy={form.formState.isSubmitting} />
     </form>
   );
 }
@@ -423,12 +409,16 @@ export function DisplaysPage() {
   });
   if (!venueId) return null;
   return (
-    <Page title={t('nav.displays')} description={t('displays.description')}>
-      {role !== 'support' && (
-        <Section title={t('displays.addTitle')} description={t('displays.addHint')}>
-          <CreateDisplay venueId={venueId} />
-        </Section>
-      )}
+    <TabPanel
+      description={t('displays.description')}
+      actions={
+        role !== 'support' && (
+          <AddDialog label={t('displays.add')} title={t('displays.addTitle')} description={t('displays.addHint')}>
+            {(close) => <CreateDisplay venueId={venueId} onDone={close} />}
+          </AddDialog>
+        )
+      }
+    >
       <QueryView q={q} skeleton="cards">
         {(items) =>
           items.length === 0 ? (
@@ -442,6 +432,6 @@ export function DisplaysPage() {
           )
         }
       </QueryView>
-    </Page>
+    </TabPanel>
   );
 }

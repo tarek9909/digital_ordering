@@ -9,7 +9,7 @@ export function BrandMark({ className = 'size-9', tone = 'ink' }: { className?: 
     <svg viewBox="0 0 64 64" aria-hidden="true" className={`shrink-0 ${className}`}>
       <rect width="64" height="64" rx="16" className={ink ? 'fill-ink' : 'fill-surface'} />
       <path d="M32 18a14 14 0 1 1-12.124 7" fill="none" strokeWidth="6" strokeLinecap="round" className={ink ? 'stroke-surface' : 'stroke-ink'} />
-      <circle cx="19.876" cy="25" r="5.5" className="fill-primary" />
+      <circle cx="19.876" cy="25" r="5.5" className="fill-ember" />
     </svg>
   );
 }

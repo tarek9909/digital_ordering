@@ -9,9 +9,15 @@ import { ApiError } from '@dop/client-sdk';
 import { formToMessages, MESSAGE_KEYS, messagesToForm, validateMessagesForm, type MessageKey, type MessagesForm as Form } from '../../lib/settingsForm';
 import type { VenueAdmin } from '../../lib/types';
 import { venueKey } from '../../lib/venue';
-import { TextArea } from '../common';
+import { SectionTabs, TextArea } from '../common';
 
 const MAX = 280;
+
+/** What the customer sees about their ticket vs. the alert wording sent when it is ready or cancelled. */
+const GROUPS: ReadonlyArray<{ key: 'tickets' | 'alerts'; keys: readonly MessageKey[] }> = [
+  { key: 'tickets', keys: ['welcome', 'afterCollection', 'websiteUrl'] },
+  { key: 'alerts', keys: ['collection', 'cancelled'] },
+];
 
 /** Validates with `venueMessagesSchema` (via validateMessagesForm) and nests errors per language. */
 const resolver: Resolver<Form> = async (values) => {
@@ -61,11 +67,34 @@ export function MessagesForm({ venue }: { venue: VenueAdmin }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-      <p className="text-muted">{t('venue.messages.intro')}</p>
-      {venue.locales.map((locale) => (
-        <fieldset key={locale} className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-line p-4" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-          <legend className="px-2 text-lg font-bold">{t(`languages.${locale}`, { defaultValue: locale })}</legend>
-          {MESSAGE_KEYS.filter((k) => k !== 'websiteUrl').map((k) => {
+      <p className="rounded-md border-s-4 border-primary bg-primary-wash px-4 py-3 text-ink-2">{t('venue.messages.intro')}</p>
+      <SectionTabs
+        label={t('venue.messages.intro')}
+        idPrefix="msg"
+        sections={GROUPS.map((g) => ({ key: g.key, label: t(`venue.messages.groups.${g.key}`), node: <div className="flex flex-col gap-6">{venue.locales.map((locale) => fieldsFor(locale, g.keys))}</div> }))}
+      />
+      {error && <Banner tone="danger">{error}</Banner>}
+      <div>
+        <Button type="submit" busy={isSubmitting} disabled={!isDirty}>
+          {t('common:save')}
+        </Button>
+      </div>
+      <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
+    </form>
+  );
+
+  function fieldsFor(locale: string, keys: readonly MessageKey[]) {
+    return (
+      <fieldset
+        key={locale}
+        className="grid gap-5 rounded-xl border-2 border-line bg-surface p-5 shadow-[0_3px_8px_-6px_color-mix(in_srgb,var(--color-primary)_30%,transparent)] md:grid-cols-2"
+        lang={locale}
+        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+      >
+        <legend className="rounded-md border-2 border-primary bg-surface px-3 py-0.5 text-sm font-bold text-primary">{t(`languages.${locale}`, { defaultValue: locale })}</legend>
+        {keys
+          .filter((k) => k !== 'websiteUrl')
+          .map((k) => {
             const len = values[locale]?.[k]?.length ?? 0;
             const err = errors[locale]?.[k];
             return (
@@ -79,7 +108,9 @@ export function MessagesForm({ venue }: { venue: VenueAdmin }) {
               />
             );
           })}
+        {keys.includes('websiteUrl') && (
           <Field
+            className="md:col-span-2"
             label={t('venue.messages.fields.websiteUrl')}
             type="url"
             dir="ltr"
@@ -88,15 +119,8 @@ export function MessagesForm({ venue }: { venue: VenueAdmin }) {
             error={errors[locale]?.websiteUrl ? t('venue.messages.urlInvalid') : undefined}
             {...form.register(`${locale}.websiteUrl`)}
           />
-        </fieldset>
-      ))}
-      {error && <Banner tone="danger">{error}</Banner>}
-      <div>
-        <Button type="submit" busy={isSubmitting} disabled={!isDirty}>
-          {t('common:save')}
-        </Button>
-      </div>
-      <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
-    </form>
-  );
+        )}
+      </fieldset>
+    );
+  }
 }

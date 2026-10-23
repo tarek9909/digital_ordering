@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, SectionTabs, StatusPill } from '../components/common';
 import { api, authApi, BASENAME } from '../lib/api';
 import { applyFieldErrors, errorText, isCode } from '../lib/errors';
 import { meKey, useMe } from '../lib/me';
@@ -91,8 +91,13 @@ function EmailChange({ me }: { me: Me }) {
   const pending = sent ?? me.user.pendingEmail ?? null;
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-4" noValidate>
-      <p className="text-ink-2">{t('account.currentEmail', { email: me.user.email })}</p>
-      {pending && <Banner tone="info">{t('account.emailPending', { email: pending })}</Banner>}
+      {/* Addresses can be one long word: let them break rather than push the page sideways on a phone. */}
+      <p className="break-words text-ink-2">{t('account.currentEmail', { email: me.user.email })}</p>
+      {pending && (
+        <Banner tone="info">
+          <span className="break-words">{t('account.emailPending', { email: pending })}</span>
+        </Banner>
+      )}
       <Field
         type="email"
         dir="ltr"
@@ -271,7 +276,7 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
         error={form.formState.errors.code ? (form.formState.errors.code.type === 'server' ? form.formState.errors.code.message : t('signIn.codeInvalid')) : undefined}
         {...form.register('code')}
       />
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="submit" variant="ink" busy={form.formState.isSubmitting}>
           {t('account.mfaConfirm')}
         </Button>
@@ -393,28 +398,26 @@ export function AccountPage() {
     <Page title={t('nav.account')} description={t('account.description')}>
       <QueryView q={me} skeleton="form">
         {(m) => (
-          <>
-            <Section title={t('account.profile')}>
-              <Profile me={m} />
-            </Section>
-            <Section title={t('account.email')}>
-              <EmailChange me={m} />
-            </Section>
-            <Section title={t('account.password')}>
-              <Password />
-            </Section>
-            {m.preferences && (
-              <Section title={t('account.preferences')}>
-                <Preferences me={m} />
-              </Section>
-            )}
-            <Section title={t('account.mfa')} description={t('account.mfaOptional')}>
-              <TwoFactor me={m} />
-            </Section>
-            <Section tone="danger" title={t('account.deleteTitle')}>
-              <DeleteAccount />
-            </Section>
-          </>
+          <SectionTabs
+            label={t('account.description')}
+            idPrefix="acc"
+            sections={[
+              { key: 'profile', label: t('account.profile'), node: <Section title={t('account.profile')}><Profile me={m} /></Section> },
+              { key: 'email', label: t('account.email'), node: <Section title={t('account.email')}><EmailChange me={m} /></Section> },
+              { key: 'password', label: t('account.password'), node: <Section title={t('account.password')}><Password /></Section> },
+              m.preferences && { key: 'preferences', label: t('account.preferences'), node: <Section title={t('account.preferences')}><Preferences me={m} /></Section> },
+              {
+                key: 'mfa',
+                label: t('account.mfa'),
+                node: (
+                  <Section title={t('account.mfa')} description={t('account.mfaOptional')}>
+                    <TwoFactor me={m} />
+                  </Section>
+                ),
+              },
+              { key: 'delete', label: t('account.deleteTitle'), node: <Section tone="danger" title={t('account.deleteTitle')}><DeleteAccount /></Section> },
+            ]}
+          />
         )}
       </QueryView>
     </Page>

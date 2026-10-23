@@ -62,7 +62,7 @@ export function PrivacyPage() {
     );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-[38rem] bg-surface px-5 pt-6 pb-12">
+    <main className="mx-auto min-h-dvh w-full max-w-[38rem] bg-surface px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] break-words sm:px-8 md:pt-12">
       {history.length > 1 && (
         <button
           className="-ms-3 mb-6 inline-flex min-h-12 items-center gap-1.5 rounded-control px-3 font-semibold text-ink-2 hover:bg-canvas"

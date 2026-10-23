@@ -105,16 +105,16 @@ function AnnouncementCard({ a, when, onDelete }: { a: Announcement; when: When; 
       </div>
       <div className="flex flex-col gap-1.5">
         {LANGS.filter((x) => msg[x]).map((x) => (
-          <p key={x} lang={x} dir={x === 'ar' ? 'rtl' : 'ltr'} className="text-[0.9375rem]">
+          <p key={x} lang={x} dir={x === 'ar' ? 'rtl' : 'ltr'} className="text-[0.9375rem] break-words">
             <span className="me-2 font-mono text-[0.6875rem] text-muted">{x.toUpperCase()}</span>
             {msg[x]}
           </p>
         ))}
       </div>
       <dl className="grid gap-2 border-t border-line pt-3 text-sm sm:grid-cols-2">
-        <div>
+        <div className="min-w-0">
           <dt className="text-xs text-muted">{t('announcements.target')}</dt>
-          <dd className="font-medium">
+          <dd className="font-medium break-words">
             {t(`announcements.mode.${target.kind}`)}
             {target.kind === 'plans' && target.items.length > 0 && <span className="text-ink-2"> · {target.items.map((p) => t(`plan.${p}`, { defaultValue: p })).join(', ')}</span>}
             {target.kind === 'tenants' && <span className="text-ink-2"> · {t('announcementsUx.tenantCount', { count: target.items.length })}</span>}
@@ -122,8 +122,9 @@ function AnnouncementCard({ a, when, onDelete }: { a: Announcement; when: When; 
         </div>
         <div>
           <dt className="text-xs text-muted">{t('announcementsUx.shown')}</dt>
-          <dd className="font-medium whitespace-nowrap">
-            {fmtDate(a.starts_at, l)} → {fmtDate(a.ends_at, l)}
+          {/* Each date stays on one line; the range breaks at the arrow when the card is narrow. */}
+          <dd className="font-medium">
+            <span className="whitespace-nowrap">{fmtDate(a.starts_at, l)}</span> → <span className="whitespace-nowrap">{fmtDate(a.ends_at, l)}</span>
           </dd>
         </div>
       </dl>
@@ -255,7 +256,7 @@ function CreateForm({ onDone }: { onDone: () => void }) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-sm text-muted">{t('announcementsUx.lasts')}</span>
             {DURATIONS.map((n) => (
-              <button key={n} type="button" className="min-h-10 rounded-full px-3 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink" onClick={() => lasting(n)}>
+              <button key={n} type="button" className="min-h-12 rounded-full lg:min-h-10 px-3 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink" onClick={() => lasting(n)}>
                 {t('announcementsUx.days', { count: n })}
               </button>
             ))}

@@ -1,5 +1,5 @@
 import { connectSocket, createReconnector, SeqTracker, setCsrfToken, type DopSocket, type Revalidation } from '@dop/client-sdk';
-import type { DisplayTicket } from '@dop/contracts';
+import type { DisplayTicket, TicketChangeReason } from '@dop/contracts';
 import { i18next } from '@dop/i18n';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
@@ -22,6 +22,10 @@ const SNAPSHOT_RETRY_MAX_MS = 60_000;
 const POLL_WHEN_REFUSED_MS = 30_000;
 /** An alert queued behind a snapshot that took longer than this is not announced late (the next round will be). */
 const QUEUED_ALERT_MAX_AGE_MS = 60_000;
+/** The worker's first alert for a ticket this display already announced on its Ready update is skipped this long. */
+const LOCAL_ANNOUNCE_DEDUPE_MS = 10 * 60_000;
+/** Ready taps this close together are announced together; short, so the chime follows the tap (TR-ALR-15). */
+const ANNOUNCE_MERGE_MS = 1_000;
 
 let highlightTimer: ReturnType<typeof setTimeout> | undefined;
 function highlight(id: string) {
@@ -85,7 +89,7 @@ function createAnnouncer(qc: QueryClient) {
       return !b || b.ready.some((t) => t.id === id);
     },
     setTimeout: (fn, ms) => setTimeout(fn, ms),
-  });
+  }, ANNOUNCE_MERGE_MS);
 }
 
 /** Warns about languages without a voice on this device (TR-ALR-17). */
@@ -162,17 +166,32 @@ export function useDisplaySocket(enabled: boolean) {
     };
     const whenFresh = (f: () => void) => (reloading ? queued.push(f) : f());
 
-    const apply = (t: DisplayTicket) => {
+    // Tickets announced the moment their Ready update arrived; the worker's first alert for them is then skipped.
+    const announcedAt = new Map<string, number>();
+    const announce = (number: string, id?: string) => {
+      if (id) announcedAt.set(id, Date.now());
+      announcer.current?.add(number, id);
+    };
+
+    const apply = (t: DisplayTicket, reason?: TicketChangeReason) => {
       const v = seq.check(t.id, t.seq);
       if (v === 'stale') return;
       if (v === 'gap') return void reload();
       seq.set(t.id, t.seq);
       const before = qc.getQueryData<Board>(BOARD_KEY);
       const wasReady = before?.ready.some((x) => x.id === t.id) ?? false;
-      qc.setQueryData<Board>(BOARD_KEY, (b) => (b ? applyDisplayTicket(b, t) : b));
-      if (t.status === 'ready' && !wasReady) highlight(t.id);
+      const after = qc.setQueryData<Board>(BOARD_KEY, (b) => (b ? applyDisplayTicket(b, t) : b));
+      if (t.status === 'ready' && !wasReady) {
+        highlight(t.id);
+        // Announce at once rather than waiting for the worker's alert; a reopened ticket is not alerted (no new
+        // Ready alert), and with a counter filter only numbers this display shows.
+        if (reason !== 'reopen' && after?.ready.some((x) => x.id === t.id)) announce(t.displayNumber, t.id);
+      }
       // Left Ready (Undo, Collected, Cancelled): a pending announcement for it must not play.
-      if (t.status !== 'ready') announcer.current?.cancel(t.id);
+      if (t.status !== 'ready') {
+        announcer.current?.cancel(t.id);
+        announcedAt.delete(t.id);
+      }
     };
 
     const sendHeartbeat = (s: DopSocket) => {
@@ -210,7 +229,7 @@ export function useDisplaySocket(enabled: boolean) {
     );
 
     socket.on('ticket.created', (p) => whenFresh(() => p.display && apply(p.display)));
-    socket.on('ticket.updated', (p) => whenFresh(() => apply(p.ticket as DisplayTicket)));
+    socket.on('ticket.updated', (p) => whenFresh(() => apply(p.ticket as DisplayTicket, p.reason)));
     // Alerts wait with ticket events while a snapshot reloads, so the counter filter is checked against fresh
     // state and a ticket entering Ready during a resync is still announced (CSD05).
     socket.on('ticket.alert', (p) => {
@@ -222,8 +241,11 @@ export function useDisplaySocket(enabled: boolean) {
         const b = qc.getQueryData<Board>(BOARD_KEY);
         // With a counter filter, announce only numbers this display shows.
         if (b?.counterIds?.length && p.id && !b.ready.some((t) => t.id === p.id)) return;
+        // The first automatic alert repeats the announcement this display already made on the Ready update.
+        const at0 = p.id ? announcedAt.get(p.id) : undefined;
+        if (!p.manual && p.attempt === 1 && at0 !== undefined && Date.now() - at0 < LOCAL_ANNOUNCE_DEDUPE_MS) return;
         if (p.id) highlight(p.id);
-        announcer.current?.add(number, p.id);
+        announce(number, p.id);
       });
     });
     socket.on('tenant.status_changed', () => void reload());

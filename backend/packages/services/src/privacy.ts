@@ -203,39 +203,52 @@ export async function exportStatus(deps: Deps, tenantId: string, exportId: strin
 // Spreadsheet-safe encoder shared with the report export (M-8): rating comments, notes and receipts are untrusted.
 const csv = csvDocument;
 
-/** `tenant.export` job: builds the ZIP described in TR-PRV-07. */
-export async function buildExport(deps: Deps, tenantId: string, exportId: string, storage: ObjectStorage) {
+/** The ZIP described in TR-PRV-07: everything the tenant holds, as JSON and spreadsheet-safe CSV. */
+async function exportZip(deps: Deps, tenantId: string): Promise<Buffer> {
   const db = deps.db.forTenant(tenantId);
   const pdb = deps.db.platform();
+  const tenant = await pdb.selectFrom('tenants').select(['id', 'name', 'slug', 'status', 'country', 'default_locale', 'created_at']).where('id', '=', tenantId).executeTakeFirstOrThrow();
+  const venues = await db.selectFrom('venues').selectAll().execute();
+  const counters = await db.selectFrom('counters').selectAll().execute();
+  const members = await db
+    .selectFrom('tenant_memberships')
+    .innerJoin('users', 'users.id', 'tenant_memberships.user_id')
+    .select(['users.name', 'users.email', 'tenant_memberships.role', 'tenant_memberships.status'])
+    .execute();
+  const tickets = await db.selectFrom('tickets').select(['id', 'venue_id', 'business_date', 'display_number', 'status', 'source', 'note', 'external_ref', 'created_at', 'ready_at', 'collected_at', 'cancelled_at', 'expired_at', 'alert_level_at_ready', 'acknowledged_at', 'cancel_reason']).execute();
+  const events = await db.selectFrom('ticket_events').select(['ticket_id', 'type', 'from_status', 'to_status', 'actor_type', 'occurred_at']).execute();
+  const ratings = await db.selectFrom('ratings').select(['ticket_id', 'stars', 'comment', 'created_at']).where('deleted_at', 'is', null).execute();
+  const reports = await db.selectFrom('report_daily').select(['venue_id', 'counter_key', 'business_date', 'hour_local', 'tickets_created', 'tickets_collected', 'reach_push', 'reach_live', 'reach_closed', 'reach_none', 'acknowledged']).execute();
+  const audit = await pdb.selectFrom('audit_log').select(['occurred_at', 'actor_type', 'action', 'entity_type', 'entity_id']).where('tenant_id', '=', tenantId).where('visible_to_tenant', '=', true).execute();
+  const payments = await db.selectFrom('tenant_payments').select(['amount_minor', 'currency', 'months', 'method', 'reference', 'covers_from', 'covers_until', 'recorded_at']).execute();
+  return buildZip([
+    { name: 'README.txt', data: `Export of ${tenant.name} (${tenant.slug}) created ${deps.now().toISOString()}.\nTimes are UTC. CSV files are UTF-8 with BOM.\n` },
+    { name: 'tenant.json', data: JSON.stringify(tenant, null, 2) },
+    { name: 'venues.json', data: JSON.stringify(venues.map((v) => ({ ...v, staff_key_enc: undefined })), null, 2) },
+    { name: 'counters.json', data: JSON.stringify(counters, null, 2) },
+    { name: 'members.json', data: JSON.stringify(members, null, 2) },
+    { name: 'tickets.csv', data: csv(tickets) },
+    { name: 'ticket_events.csv', data: csv(events) },
+    { name: 'ratings.csv', data: csv(ratings) },
+    { name: 'reports_daily.csv', data: csv(reports) },
+    { name: 'audit_activity.csv', data: csv(audit) },
+    { name: 'payments.csv', data: csv(payments) },
+  ]);
+}
+
+/** Immediate download from Reports: built on request and streamed back, nothing stored or emailed. */
+export async function downloadExport(deps: Deps, actor: Actor & { kind: 'user' }, tenantId: string) {
+  const zip = await exportZip(deps, tenantId);
+  await writeAudit(deps.db.forTenant(tenantId), { actor, action: 'export.downloaded', tenantId, entityType: 'export', entityId: tenantId });
+  return zip;
+}
+
+/** `tenant.export` job: builds the ZIP and stores it for a week. */
+export async function buildExport(deps: Deps, tenantId: string, exportId: string, storage: ObjectStorage) {
+  const db = deps.db.forTenant(tenantId);
   await db.updateTable('data_exports').set({ status: 'running' }).where('id', '=', exportId).execute();
   try {
-    const tenant = await pdb.selectFrom('tenants').select(['id', 'name', 'slug', 'status', 'country', 'default_locale', 'created_at']).where('id', '=', tenantId).executeTakeFirstOrThrow();
-    const venues = await db.selectFrom('venues').selectAll().execute();
-    const counters = await db.selectFrom('counters').selectAll().execute();
-    const members = await db
-      .selectFrom('tenant_memberships')
-      .innerJoin('users', 'users.id', 'tenant_memberships.user_id')
-      .select(['users.name', 'users.email', 'tenant_memberships.role', 'tenant_memberships.status'])
-      .execute();
-    const tickets = await db.selectFrom('tickets').select(['id', 'venue_id', 'business_date', 'display_number', 'status', 'source', 'note', 'external_ref', 'created_at', 'ready_at', 'collected_at', 'cancelled_at', 'expired_at', 'alert_level_at_ready', 'acknowledged_at', 'cancel_reason']).execute();
-    const events = await db.selectFrom('ticket_events').select(['ticket_id', 'type', 'from_status', 'to_status', 'actor_type', 'occurred_at']).execute();
-    const ratings = await db.selectFrom('ratings').select(['ticket_id', 'stars', 'comment', 'created_at']).where('deleted_at', 'is', null).execute();
-    const reports = await db.selectFrom('report_daily').select(['venue_id', 'counter_key', 'business_date', 'hour_local', 'tickets_created', 'tickets_collected', 'reach_push', 'reach_live', 'reach_closed', 'reach_none', 'acknowledged']).execute();
-    const audit = await pdb.selectFrom('audit_log').select(['occurred_at', 'actor_type', 'action', 'entity_type', 'entity_id']).where('tenant_id', '=', tenantId).where('visible_to_tenant', '=', true).execute();
-    const payments = await db.selectFrom('tenant_payments').select(['amount_minor', 'currency', 'months', 'method', 'reference', 'covers_from', 'covers_until', 'recorded_at']).execute();
-    const zip = buildZip([
-      { name: 'README.txt', data: `Export of ${tenant.name} (${tenant.slug}) created ${deps.now().toISOString()}.\nTimes are UTC. CSV files are UTF-8 with BOM.\n` },
-      { name: 'tenant.json', data: JSON.stringify(tenant, null, 2) },
-      { name: 'venues.json', data: JSON.stringify(venues.map((v) => ({ ...v, staff_key_enc: undefined })), null, 2) },
-      { name: 'counters.json', data: JSON.stringify(counters, null, 2) },
-      { name: 'members.json', data: JSON.stringify(members, null, 2) },
-      { name: 'tickets.csv', data: csv(tickets) },
-      { name: 'ticket_events.csv', data: csv(events) },
-      { name: 'ratings.csv', data: csv(ratings) },
-      { name: 'reports_daily.csv', data: csv(reports) },
-      { name: 'audit_activity.csv', data: csv(audit) },
-      { name: 'payments.csv', data: csv(payments) },
-    ]);
+    const zip = await exportZip(deps, tenantId);
     const key = `exports/${tenantId}/${exportId}.zip`;
     await storage.put('exports', key, zip, 'application/zip');
     await db

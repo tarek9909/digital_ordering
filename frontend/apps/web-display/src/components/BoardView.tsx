@@ -1,7 +1,7 @@
 import { brandTokens, contrast, textOn } from '@dop/client-sdk';
 import type { DisplayTicket } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { LiveRegion, useFlip, useMoment } from '@dop/ui';
+import { BrandMark, LiveRegion, useFlip, useMoment, useVenueFavicon } from '@dop/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { gridCapacity, READY_PAGE_MS, readyPage, tileMinVmin, type Board, type ReadyKey } from '../lib/board';
@@ -12,15 +12,18 @@ import { useDisplay } from '../lib/store';
 // the number that just became ready (ember when the venue colour would not read on ink).
 const SURFACE = '#ffffff';
 const INK = '#1c1917';
-/** Preparing is informational: smaller, quieter numbers in narrower tiles. */
-const PREPARING_FONT_VMIN = 8;
-const PREPARING_MIN_VMIN = 17;
+/** Preparing uses the Ready tile, a size smaller so Ready keeps the weight. */
+const PREPARING_FONT_VMIN = 10;
+const PREPARING_MIN_VMIN = 22;
+/** Preparing scroll speed when the list is longer than its column, in viewport heights per second. */
+const PREPARING_SCROLL_VH_PER_S = 3.5;
 /** The landing pulse is removed once it has radiated, so it never adds to the tile's box. */
 const PULSE_MS = 2_200;
 // Tiles are sized in vmin (the same as vh on a landscape TV, and not oversized on a portrait one). Columns are at
 // least wide enough for the longest number; rows are as tall as their tile (max-content), so a tile is never
-// squashed (CSD03).
-const numberGrid = (minVmin: number): CSSProperties => ({ gridTemplateColumns: `repeat(auto-fill, minmax(${minVmin}vmin, 1fr))`, gridAutoRows: 'max-content' });
+// squashed (CSD03). A column narrower than one tile (a very long number on a small screen) still gets one full-width
+// track rather than overflowing the board.
+const numberGrid = (minVmin: number): CSSProperties => ({ gridTemplateColumns: `repeat(auto-fill, minmax(min(${minVmin}vmin, 100%), 1fr))`, gridAutoRows: 'max-content' });
 
 /** The highlight colour: the venue's own when it stands out on the ink column, else ember. */
 function highlightTokens(brand: string): CSSProperties {
@@ -53,14 +56,82 @@ function NumberTile({ t, highlighted }: { t: DisplayTicket; highlighted: boolean
   );
 }
 
-/** Column heading: the status word, the same word in the second announcement language, and the count. */
-function ColumnHeading({ id, label, alt, count, live, tone }: { id: string; label: string; alt: string | null; count: number; live?: boolean; tone: 'ink' | 'light' }) {
+/**
+ * The Preparing list in a clipped viewport. When it is longer than the column, it scrolls upwards continuously as a
+ * seamless loop (two copies, the second hidden from assistive tech); while it scrolls, its tiles leave the FLIP glide
+ * out, since the moving track would be replayed as movement.
+ */
+function PreparingList({ tickets, grid }: { tickets: DisplayTicket[]; grid: CSSProperties }) {
+  const viewport = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const [loop, setLoop] = useState(0);
+  useLayoutEffect(() => {
+    const vp = viewport.current;
+    const ul = list.current;
+    if (!vp || !ul) return;
+    const measure = () => {
+      const gap = parseFloat(getComputedStyle(ul).rowGap) || 0;
+      const next = ul.offsetHeight > vp.clientHeight + 1 ? ul.offsetHeight + gap : 0;
+      setLoop((l) => (Math.abs(l - next) < 1 ? l : next));
+    };
+    measure();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    ro?.observe(vp);
+    ro?.observe(ul);
+    void document.fonts?.ready.then(measure);
+    return () => ro?.disconnect();
+  }, []);
+  const scrolling = loop > 0;
+  const speed = (window.innerHeight * PREPARING_SCROLL_VH_PER_S) / 100;
+  const track = scrolling ? ({ '--loop': `${loop}px`, animationDuration: `${Math.max(6, loop / speed)}s` } as CSSProperties) : undefined;
+  const tiles = (copy: boolean) =>
+    tickets.map((x) => (
+      <li key={x.id} data-flip-id={copy || scrolling ? undefined : x.id} className="relative flex">
+        <span className="tile-ready tile-preparing">{x.displayNumber}</span>
+      </li>
+    ));
+  return (
+    <div ref={viewport} className={`prep-viewport relative min-h-0 flex-1 overflow-hidden ${scrolling ? 'is-scrolling' : ''}`}>
+      <div className={scrolling ? 'prep-track' : undefined} style={track}>
+        <ul ref={list} className="grid content-start gap-[1.6vmin]" style={grid}>
+          {tiles(false)}
+        </ul>
+        {scrolling && (
+          <ul aria-hidden="true" className="mt-[1.6vmin] grid content-start gap-[1.6vmin]" style={grid}>
+            {tiles(true)}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** A label in the board language with the same words in the other one beneath (the board is always bilingual). */
+function Bilingual({ main, alt, altLang, className = '', altClassName = '' }: { main: string; alt: string | null; altLang: string; className?: string; altClassName?: string }) {
+  return (
+    <span className={`flex flex-col gap-[0.6vmin] ${className}`}>
+      <span>{main}</span>
+      {alt && alt !== main && (
+        <span lang={altLang} className={altClassName}>
+          {alt}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Column heading: the status word, the same word in the other board language, and the count. */
+function ColumnHeading({ id, label, alt, altLang, count, live, tone }: { id: string; label: string; alt: string | null; altLang?: string | null; count: number; live?: boolean; tone: 'ink' | 'light' }) {
   const dark = tone === 'ink';
   return (
-    <h2 id={id} className={`mb-[2.4vmin] flex items-baseline gap-[1.6vmin] border-b pb-[1.8vmin] ${dark ? 'border-white/10' : 'border-line'}`}>
+    <h2 id={id} className={`mb-[2.4vmin] flex flex-wrap items-baseline gap-x-[1.6vmin] gap-y-[1vmin] border-b pb-[1.8vmin] ${dark ? 'border-white/10' : 'border-line'}`}>
       {live !== undefined && <span aria-hidden="true" className={`live-dot self-center ${live ? 'is-live' : ''}`} />}
       <span className={`font-display text-[3.8vmin] leading-none font-bold tracking-tight ${dark ? 'text-white' : 'text-ink'}`}>{label}</span>
-      {alt && <span className={`font-display text-[2.4vmin] leading-none font-medium ${dark ? 'text-white/40' : 'text-muted'}`}>{alt}</span>}
+      {alt && (
+        <span lang={altLang ?? undefined} className={`font-display text-[2.8vmin] leading-none font-semibold ${dark ? 'text-white/55' : 'text-muted'}`}>
+          {alt}
+        </span>
+      )}
       <span className={`board-count ms-auto ${dark ? 'text-white/55' : 'text-muted'}`}>{count}</span>
     </h2>
   );
@@ -82,7 +153,7 @@ function Badges({ offline }: { offline: boolean }) {
   const soundOn = useDisplay((s) => s.soundEnabled);
   if (!offline && !missing.length && soundOn) return null;
   return (
-    <div className="flex flex-col items-end gap-[0.8vmin] text-[1.8vmin] leading-tight font-semibold">
+    <div className="flex max-w-[30vmin] min-w-0 shrink flex-col items-end gap-[0.8vmin] text-[max(0.75rem,1.8vmin)] leading-tight font-semibold">
       {offline && (
         <span role="status" className="badge bg-danger-bg text-danger">
           <span aria-hidden="true" className="badge-mark bg-danger" />
@@ -195,7 +266,7 @@ function PromoContent({ text, imageUrl, className }: { text: string; imageUrl: s
       {imageUrl && <img src={imageUrl} alt="" className="h-full max-h-full w-auto max-w-[38%] shrink-0 rounded-[1.6vmin] object-cover" />}
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-[0.8vmin]">
         <span className="promo-tag">{t('promo.label')}</span>
-        {text && <p className="line-clamp-3 min-w-0 text-[2.5vmin] leading-snug font-semibold text-ink">{text}</p>}
+        {text && <p className="line-clamp-3 min-w-0 text-[max(0.875rem,2.5vmin)] leading-snug font-semibold text-ink">{text}</p>}
       </div>
     </aside>
   );
@@ -208,26 +279,23 @@ export function BoardView({ board }: { board: Board }) {
   const { offline, live } = useLive();
   const boardRef = useRef<HTMLElement>(null);
   const readyList = useRef<HTMLUListElement>(null);
-  const preparingList = useRef<HTMLUListElement>(null);
   const readyGrid = useMemo(() => numberGrid(tileMinVmin(board.ready.map((x) => x.displayNumber))), [board.ready]);
   const preparingGrid = useMemo(() => numberGrid(tileMinVmin(board.preparing.map((x) => x.displayNumber), PREPARING_FONT_VMIN, PREPARING_MIN_VMIN)), [board.preparing]);
   // Re-measured when the column template changes (a longer number widens the tiles without resizing the list).
   const readyCapacity = useGridCapacity(readyList, board.ready.length > 0, String(readyGrid.gridTemplateColumns));
   const { shown, page, pages, hidden } = useReadyPages(board, readyCapacity, highlightId);
-  // Preparing keeps the server's order (oldest first); new tickets join at the end. Only whole numbers are shown;
-  // the rest are counted (Preparing is informational, so it is capped rather than rotated).
-  const preparingCapacity = useGridCapacity(preparingList, board.settings.showPreparing && board.preparing.length > 0, String(preparingGrid.gridTemplateColumns));
-  const preparingCap = preparingCapacity > 0 && board.preparing.length > preparingCapacity ? preparingCapacity : board.preparing.length;
-  const preparing = board.preparing.slice(0, preparingCap);
-  const preparingMore = board.preparing.length - preparing.length;
+  // Preparing keeps the server's order (oldest first); new tickets join at the end. A list longer than the column
+  // scrolls (PreparingList), so every number is on screen in turn.
+  const preparing = board.preparing;
   // Numbers glide between Preparing and Ready, and close the gap when one leaves (one FLIP over both columns).
   useFlip(boardRef, [shown.map((x) => x.id).join(), preparing.map((x) => x.id).join()]);
   const style = useMemo(() => ({ ...(brandTokens(board.venue.brandColor, SURFACE) as CSSProperties), ...highlightTokens(board.venue.brandColor) }), [board.venue.brandColor]);
+  useVenueFavicon(board.venue.logoUrl);
   const lang = i18n.language;
   const base = lang.split('-')[0] ?? lang;
-  // Bilingual venues: the column names also appear in the second announcement language.
-  const altLang = board.settings.announce.languages.map((l) => l.split('-')[0]).find((l) => (l === 'ar' || l === 'en') && l !== base) ?? null;
-  const altT = altLang ? i18n.getFixedT(altLang, 'common') : null;
+  // The board is always bilingual: labels also appear in the other of Arabic and English.
+  const altLang = base === 'ar' ? 'en' : 'ar';
+  const altT = i18n.getFixedT(altLang);
   const message = board.settings.message[lang] ?? board.settings.message[base] ?? Object.values(board.settings.message)[0] ?? '';
   const highlighted = shown.find((x) => x.id === highlightId);
   const vp = useViewport();
@@ -245,41 +313,44 @@ export function BoardView({ board }: { board: Board }) {
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-surface text-ink" style={style}>
       <div aria-hidden="true" className="h-[0.5vmin] shrink-0 bg-[var(--brand-band)]" />
-      <header className="flex items-center gap-[2.4vmin] px-[4vmin] py-[2.4vmin]">
-        {board.venue.logoUrl && <img src={board.venue.logoUrl} alt="" className="size-[7vmin] shrink-0 rounded-[1.6vmin] object-contain" />}
+      <header className="flex items-center gap-[2.4vmin] px-[4vmin] py-[2.4vmin] portrait:px-[3vmin]">
+        {board.venue.logoUrl ? (
+          <img src={board.venue.logoUrl} alt="" className="size-[7vmin] shrink-0 rounded-[1.6vmin] object-contain" />
+        ) : (
+          <BrandMark className="size-[7vmin]" />
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-[0.6vmin]">
           <h1 className="truncate font-display text-[4.2vmin] leading-[1.15] font-extrabold tracking-tight">{board.venue.name}</h1>
-          {message && <p className="truncate text-[2.3vmin] leading-snug font-medium text-muted">{message}</p>}
+          {message && <p className="truncate text-[max(0.875rem,2.3vmin)] leading-snug font-medium text-muted">{message}</p>}
         </div>
         <Badges offline={offline} />
         <Clock timeZone={board.venue.timeZone} />
         {board.settings.qr.show && (
           <figure className="flex shrink-0 items-center gap-[1.6vmin] border-s border-line ps-[2.4vmin]">
-            <figcaption className="max-w-[16vmin] text-end text-[1.9vmin] leading-snug font-semibold text-ink-2">{t('scanToFollow')}</figcaption>
+            <figcaption className="max-w-[18vmin] text-end text-[max(0.75rem,1.9vmin)] leading-snug font-semibold text-ink-2">
+              <Bilingual altLang={altLang} main={t('scanToFollow')} alt={altT('scanToFollow')} altClassName="text-[max(0.6875rem,1.7vmin)] font-medium text-muted" />
+            </figcaption>
             <QRCodeSVG value={board.venueUrl} size={256} level="M" bgColor={SURFACE} fgColor={INK} style={{ width: '10vmin', height: '10vmin', display: 'block' }} />
           </figure>
         )}
       </header>
 
-      <main ref={boardRef} className="flex min-h-0 flex-1 gap-[3vmin] px-[4vmin] pb-[3.4vmin] portrait:flex-col-reverse">
+      {/* Portrait: Ready on top, Preparing beneath, and slimmer gutters so the Ready grid fits three tiles across. */}
+      <main ref={boardRef} className="flex min-h-0 flex-1 gap-[3vmin] px-[4vmin] pb-[3.4vmin] portrait:flex-col-reverse portrait:gap-[2.4vmin] portrait:px-[3vmin]">
         {board.settings.showPreparing && (
-          <section aria-labelledby="col-preparing" className="flex min-h-0 min-w-0 flex-[2] flex-col py-[3vmin]">
-            <ColumnHeading id="col-preparing" label={t('common:status.preparing')} alt={altT ? altT('status.preparing') : null} count={board.preparing.length} tone="light" />
-            <ul ref={preparingList} className="grid min-h-0 flex-1 content-start gap-x-[1.6vmin] gap-y-[0.6vmin]" style={preparingGrid}>
-              {preparing.map((x) => (
-                <li key={x.id} data-flip-id={x.id} className="num flex items-center justify-center py-[1vmin] font-display text-[8vmin] leading-none font-semibold tracking-[-0.02em] text-ink/45">
-                  {x.displayNumber}
-                </li>
-              ))}
-            </ul>
-            {preparingMore > 0 && <p className="mt-[1vmin] text-end font-display text-[2.4vmin] font-semibold text-muted">{t('more', { n: preparingMore })}</p>}
+          <section aria-labelledby="col-preparing" className="flex min-h-0 min-w-0 flex-[2] flex-col rounded-[3.2vmin] bg-ink p-[3vmin] text-white portrait:p-[2.4vmin]">
+            <ColumnHeading id="col-preparing" label={t('common:status.preparing')} alt={altT('common:status.preparing')} altLang={altLang} count={board.preparing.length} tone="ink" />
+            {preparing.length > 0 && <PreparingList tickets={preparing} grid={preparingGrid} />}
+            {preparing.length === 0 && <div className="flex-1" />}
             {promo.placement === 'preparing' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mt-[2vmin]" />}
           </section>
         )}
-        <section aria-labelledby="col-ready" className="flex min-h-0 min-w-0 flex-[3] flex-col rounded-[3.2vmin] bg-ink p-[3vmin] text-white">
-          <ColumnHeading id="col-ready" label={t('common:status.ready')} alt={altT ? altT('status.ready') : null} count={board.ready.length} live={live} tone="ink" />
+        <section aria-labelledby="col-ready" className="flex min-h-0 min-w-0 flex-[3] flex-col rounded-[3.2vmin] bg-ink p-[3vmin] text-white portrait:p-[2.4vmin]">
+          <ColumnHeading id="col-ready" label={t('common:status.ready')} alt={altT('common:status.ready')} altLang={altLang} count={board.ready.length} live={live} tone="ink" />
           {shown.length === 0 ? (
-            <p className="flex flex-1 items-center justify-center text-center text-[3.2vmin] font-medium text-white/40">{t('emptyReady')}</p>
+            <p className="flex flex-1 items-center justify-center text-center text-[3.2vmin] font-medium text-white/40">
+              <Bilingual altLang={altLang} main={t('emptyReady')} alt={altT('emptyReady')} className="items-center" altClassName="text-[2.6vmin] text-white/30" />
+            </p>
           ) : (
             <ul ref={readyList} className="grid min-h-0 flex-1 content-start gap-[1.8vmin]" style={readyGrid}>
               {shown.map((x) => (
@@ -288,7 +359,7 @@ export function BoardView({ board }: { board: Board }) {
             </ul>
           )}
           {(pages > 1 || hidden > 0) && (
-            <p data-testid="ready-overflow" className="mt-[1.4vmin] flex items-center justify-end gap-[2.4vmin] text-[2.2vmin] leading-none font-semibold text-white/60">
+            <p data-testid="ready-overflow" className="mt-[1.4vmin] flex flex-wrap items-center justify-end gap-x-[2.4vmin] gap-y-[1vmin] text-[max(0.875rem,2.2vmin)] leading-none font-semibold text-white/60">
               {pages > 1 && (
                 <span className="flex items-center gap-[1.4vmin]">
                   {/* Page marks: which page of the rotation is on screen. */}
@@ -305,7 +376,7 @@ export function BoardView({ board }: { board: Board }) {
           )}
         </section>
       </main>
-      {promo.placement === 'strip' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mx-[4vmin] mb-[3vmin]" />}
+      {promo.placement === 'strip' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mx-[4vmin] mb-[3vmin] portrait:mx-[3vmin]" />}
       <LiveRegion text={highlighted ? t('announce.one', { number: highlighted.displayNumber }) : ''} />
     </div>
   );

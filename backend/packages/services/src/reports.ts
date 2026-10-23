@@ -30,6 +30,8 @@ const secs = (a: Date | null, b: Date | null) => (a && b ? Math.max(0, (b.getTim
 
 /** Open tickets listed on Today, oldest first (FR-RPT-01). */
 export const LONGEST_WAITING_LIMIT = 5;
+/** Open tickets drawn on the Today pass lane; more than this are counted but not drawn. */
+export const OPEN_TICKETS_LIMIT = 40;
 
 export async function todayReport(deps: Deps, tenantId: string, venueId: string) {
   const cacheKey = keys.todayCache(tenantId, venueId);
@@ -59,6 +61,23 @@ export async function todayReport(deps: Deps, tenantId: string, venueId: string)
     .sort((a, b) => a.created_at.getTime() - b.created_at.getTime())
     .slice(0, LONGEST_WAITING_LIMIT)
     .map((r) => ({ id: r.id, displayNumber: r.display_number, status: r.status, createdAt: r.created_at.toISOString(), waitingSeconds: Math.max(0, Math.round((now.getTime() - r.created_at.getTime()) / 1000)) }));
+  // Tickets and prep times by local hour of creation, for the Today ring and pace chart.
+  const hourly = Array.from({ length: 24 }, () => 0);
+  const prepByHour: number[][] = Array.from({ length: 24 }, () => []);
+  for (const r of rows) {
+    const h = Number(toZoned(r.created_at, v.time_zone).time.slice(0, 2)) % 24;
+    hourly[h]!++;
+    if (r.first_ready_at) {
+      const p = prepSeconds(r.created_at, r.preparing_at, r.first_ready_at);
+      if (p !== null) prepByHour[h]!.push(p);
+    }
+  }
+  const pace = prepByHour.map((xs, hour) => ({ hour, tickets: xs.length, p50: percentile(xs, 50), p90: percentile(xs, 90) })).filter((x) => x.tickets > 0);
+  const openTickets = rows
+    .filter((r) => r.status === 'received' || r.status === 'preparing' || r.status === 'ready')
+    .sort((a, b) => a.created_at.getTime() - b.created_at.getTime())
+    .slice(0, OPEN_TICKETS_LIMIT)
+    .map((r) => ({ id: r.id, displayNumber: r.display_number, status: r.status, createdAt: r.created_at.toISOString(), waitingSeconds: Math.max(0, Math.round((now.getTime() - r.created_at.getTime()) / 1000)) }));
   const out = {
     businessDate: bd,
     tickets: rows.length,
@@ -70,6 +89,11 @@ export async function todayReport(deps: Deps, tenantId: string, venueId: string)
     prepSecondsP50: percentile(prep, 50),
     pickupSecondsP50: percentile(pickup, 50),
     longestWaiting,
+    hourly,
+    pace,
+    openTickets,
+    /** Minutes since local midnight at the venue, for the Today ring's "now" mark. */
+    localMinutes: (() => { const [h, m] = toZoned(now, v.time_zone).time.split(':'); return Number(h) * 60 + Number(m); })(),
     prepLabel: 'from ticket creation', // TR-RPT-05
   };
   await deps.kv.set(cacheKey, JSON.stringify(out), 15);

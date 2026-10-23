@@ -21,8 +21,8 @@ function TicketRow({ ticket, now, disabled, timeZone, onReopen, onOpen }: RowPro
   const when = ticket.collectedAt ?? ticket.readyAt ?? ticket.createdAt;
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-1.5 last:border-b-0">
-      <button type="button" className="-mx-2 flex min-h-14 flex-1 items-center gap-4 rounded-input px-2 text-start transition-colors hover:bg-primary-wash" onClick={() => onOpen(ticket)}>
-        <span className="num min-w-16 font-display text-3xl leading-none font-extrabold tracking-tight">{ticket.displayNumber}</span>
+      <button type="button" className="-mx-2 flex min-h-14 min-w-0 flex-1 items-center gap-4 rounded-input px-2 text-start transition-colors hover:bg-primary-wash" onClick={() => onOpen(ticket)}>
+        <span className="num min-w-16 shrink-0 font-display text-3xl leading-none font-extrabold tracking-tight">{ticket.displayNumber}</span>
         <span className="flex min-w-0 flex-col gap-0.5 text-sm">
           <StatusLabel status={ticket.status} className="font-semibold text-ink" />
           <span className="text-muted">
@@ -100,7 +100,7 @@ export function SearchDialog(props: Omit<RowProps, 'ticket' | 'onReopen'> & { in
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} title={t('search.title')}>
       <form onSubmit={search} className="mb-4 flex items-end gap-2">
-        <Field className="flex-1" label={t('search.label')} type="search" autoFocus value={q} onChange={(e) => setQ(e.target.value)} />
+        <Field className="min-w-0 flex-1" label={t('search.label')} type="search" autoFocus value={q} onChange={(e) => setQ(e.target.value)} />
         <Button type="submit" variant="ink" busy={busy}>
           {t('search.go')}
         </Button>

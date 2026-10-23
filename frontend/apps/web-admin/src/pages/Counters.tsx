@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, Table, Td } from '../components/common';
+import { AddDialog, Checkbox, ConfirmButton, DialogActions, ErrorNote, TabPanel, QueryView, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, isCode } from '../lib/errors';
 import type { Counter, VenueAdmin } from '../lib/types';
@@ -50,7 +50,7 @@ function useServerError(form: UseFormReturn<CounterFormValues>) {
   return { error, setError, handle };
 }
 
-function AddCounter({ venueId, nextOrder }: { venueId: string; nextOrder: number }) {
+function AddCounter({ venueId, nextOrder, onDone }: { venueId: string; nextOrder: number; onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const form = useForm<CounterFormValues>({
@@ -65,25 +65,18 @@ function AddCounter({ venueId, nextOrder }: { venueId: string; nextOrder: number
         ...body,
         sortOrder: nextOrder,
       });
-      form.reset({ name: '', prefix: null });
       await qc.invalidateQueries({ queryKey: countersKey(venueId) });
+      onDone();
     } catch (e) {
       handle(e);
     }
   });
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <CounterFields form={form} />
-      <div className="sm:pt-7">
-        <Button type="submit" busy={form.formState.isSubmitting}>
-          {t('counters.add')}
-        </Button>
-      </div>
-      <div className="w-full">
-        {isCode(error, 'PLAN_LIMIT') && <p className="mb-2 text-sm">{t('counters.limitExplained')}</p>}
-        <ErrorNote error={error} />
-      </div>
-      <LiveRegion text={form.formState.isSubmitSuccessful && !error ? t('counters.added') : ''} />
+      {isCode(error, 'PLAN_LIMIT') && <p className="text-sm">{t('counters.limitExplained')}</p>}
+      <ErrorNote error={error} />
+      <DialogActions onCancel={onDone} submitLabel={t('counters.add')} busy={form.formState.isSubmitting} />
     </form>
   );
 }
@@ -126,7 +119,7 @@ function EditCounter({ counter, venueId }: { counter: Counter; venueId: string }
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <CounterFields form={form} />
           <ErrorNote error={error} />
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               {t('common:cancel')}
             </Button>
@@ -202,13 +195,17 @@ export function CountersPage() {
   if (!venueId) return null;
 
   return (
-    <Page title={t('nav.counters')} description={t('counters.description')}>
-      <Section title={t('counters.addTitle')} description={t('counters.addHint')}>
-        <AddCounter venueId={venueId} nextOrder={active.length * 10} />
-      </Section>
-      <Section title={t('counters.prefixesTitle')} description={t('counters.prefixesHint')}>
+    <TabPanel
+      description={t('counters.description')}
+      actions={
+        <AddDialog label={t('counters.add')} title={t('counters.addTitle')} description={t('counters.addHint')}>
+          {(close) => <AddCounter venueId={venueId} nextOrder={active.length * 10} onDone={close} />}
+        </AddDialog>
+      }
+    >
+      <div className="mb-5">
         <QueryView q={venue}>{(v) => <PrefixSwitch venue={v} />}</QueryView>
-      </Section>
+      </div>
       <div className="mb-3 empty:hidden">
         <ErrorNote error={archive.error ?? move.error} />
       </div>
@@ -224,7 +221,7 @@ export function CountersPage() {
         }
       </QueryView>
       <LiveRegion text={archive.isSuccess ? t('counters.archived') : ''} />
-    </Page>
+    </TabPanel>
   );
 }
 

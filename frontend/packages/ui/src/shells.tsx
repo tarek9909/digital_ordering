@@ -10,7 +10,7 @@ const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean)
 export const navItemClass = (active: boolean) =>
   cx(
     'group flex min-h-12 items-center gap-3 rounded-input px-3 text-[0.9375rem] font-medium transition-colors',
-    active ? 'bg-ink text-white shadow-button' : 'text-ink-2 hover:bg-canvas hover:text-ink',
+    active ? 'bg-panel text-white shadow-button' : 'text-ink-2 hover:bg-canvas hover:text-ink',
   );
 
 /** The dot in front of a sidebar link; it glows on the active item and settles in when you arrive. */
@@ -115,7 +115,7 @@ export function SidebarShell({
       </aside>
       <div className="min-w-0 flex-1">
         {top}
-        <div className="lg:px-4 lg:py-2">{children}</div>
+        <div className="lg:px-4 lg:py-2 2xl:px-8">{children}</div>
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ export function AuthShell({
 }) {
   return (
     <div className="grid min-h-dvh bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-      <aside className="ember-glow hidden flex-col justify-between gap-10 bg-ink p-12 text-white lg:flex">
+      <aside className="ember-glow sticky top-0 hidden h-dvh flex-col justify-between gap-10 bg-panel p-10 text-white lg:flex xl:p-12">
         <span className="flex items-center gap-3 font-display text-lg font-bold">
           <span data-motion="draw" className="contents">
             <BrandMark tone="light" />
@@ -156,7 +156,7 @@ export function AuthShell({
         </span>
         <div data-motion="page" className="flex max-w-lg flex-col gap-6">
           {panelEyebrow && <span className="eyebrow text-white/65">{panelEyebrow}</span>}
-          <p className="font-display text-5xl leading-[1.05] font-extrabold tracking-tight text-balance">{headline}</p>
+          <p className="font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-balance xl:text-5xl">{headline}</p>
           {points && points.length > 0 && (
             <ul className="flex flex-col gap-3 text-white/85">
               {points.map((p, i) => (
@@ -171,7 +171,7 @@ export function AuthShell({
         <span className="text-sm text-white/55">© {new Date().getFullYear()} Tanbeeh</span>
       </aside>
 
-      <div className="flex flex-col px-4 py-6 sm:px-10">
+      <div className="flex min-w-0 flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 sm:px-10">
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-3 font-display font-bold lg:invisible">
             <BrandMark className="size-8" />
@@ -179,10 +179,10 @@ export function AuthShell({
           </span>
           {corner}
         </div>
-        <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 py-10">
+        <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 py-8 sm:py-10">
           <div data-motion="page" className="flex flex-col gap-2">
             {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-            <h1 className="text-3xl font-bold">{title}</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
           </div>
           {children}
         </main>

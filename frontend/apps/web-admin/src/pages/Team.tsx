@@ -1,12 +1,12 @@
 import { formatDateTime } from '@dop/client-sdk';
-import { invitationBody, ownershipTransferBody } from '@dop/contracts';
+import { memberCreateBody, ownershipTransferBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, EmptyState, Field, LiveRegion, Modal } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, Modal, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
+import { AddDialog, ConfirmButton, DialogActions, ErrorNote, TabPanel, QueryView, Section, SectionTabs, StatusPill, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
 import { meKey, useMe } from '../lib/me';
@@ -15,44 +15,40 @@ import type { Member, TeamList } from '../lib/types';
 const teamKey = ['team'] as const;
 const transferForm = ownershipTransferBody.pick({ password: true });
 
-function InviteForm() {
+/** The owner creates the account and hands the email and password over in person; nothing is emailed. */
+function AddMemberForm({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const empty = { name: '', email: '', password: '', role: 'manager' as const };
   const form = useForm({
-    resolver: zodResolver(invitationBody),
-    defaultValues: { email: '', role: 'manager' as const },
+    resolver: zodResolver(memberCreateBody),
+    defaultValues: empty,
   });
-  const [sent, setSent] = useState<string | null>(null);
+  const { errors, isSubmitting } = form.formState;
   const submit = form.handleSubmit(async (body) => {
-    setSent(null);
     try {
-      await api.post('/invitations', body);
-      setSent(body.email);
-      form.reset({ email: '', role: 'manager' });
+      await api.post('/members', body);
       await qc.invalidateQueries({ queryKey: teamKey });
+      onDone();
     } catch (e) {
-      if (!applyFieldErrors(e, form.setError, ['email'])) form.setError('root', { message: errorText(t, e) });
+      if (!applyFieldErrors(e, form.setError, ['name', 'email', 'password'])) form.setError('root', { message: errorText(t, e) });
     }
   });
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
-      <Field className="min-w-64 flex-1" type="email" label={t('team.inviteEmail')} error={form.formState.errors.email ? t('form.email') : undefined} {...form.register('email')} />
-      <div className="sm:pt-7">
-        <Button type="submit" busy={form.formState.isSubmitting}>
-          {t('team.invite')}
-        </Button>
-      </div>
-      {form.formState.errors.root && (
-        <div className="w-full">
-          <Banner tone="danger">{form.formState.errors.root.message}</Banner>
-        </div>
-      )}
-      {sent && (
-        <div className="w-full">
-          <Banner tone="ok">{t('team.invited', { email: sent })}</Banner>
-        </div>
-      )}
-      <LiveRegion text={sent ? t('team.invited', { email: sent }) : ''} />
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <Field label={t('team.name')} autoComplete="off" error={errors.name ? t('form.required') : undefined} {...form.register('name')} />
+      <Field type="email" dir="ltr" autoComplete="off" label={t('common:email')} error={errors.email ? t('form.email') : undefined} {...form.register('email')} />
+      <Field
+        type="password"
+        autoComplete="new-password"
+        label={t('team.password')}
+        hint={t('team.passwordHint')}
+        error={errors.password ? (errors.password.type === 'server' ? errors.password.message : t('team.passwordHint')) : undefined}
+        {...form.register('password')}
+      />
+      <Select label={t('team.role')} options={[{ value: 'manager', label: t('roles.manager') }]} {...form.register('role')} />
+      {errors.root && <Banner tone="danger">{errors.root.message}</Banner>}
+      <DialogActions onCancel={onDone} submitLabel={t('team.add')} busy={isSubmitting} />
     </form>
   );
 }
@@ -89,7 +85,7 @@ function TransferDialog({ member }: { member: Member }) {
             {...form.register('password')}
           />
           {form.formState.errors.root && <Banner tone="danger">{form.formState.errors.root.message}</Banner>}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               {t('common:cancel')}
             </Button>
@@ -122,14 +118,27 @@ export function TeamPage() {
   });
 
   return (
-    <Page title={t('nav.team')} description={t('team.description')}>
-      <Section title={t('team.inviteTitle')} description={t('team.inviteHint')}>
-        <InviteForm />
-      </Section>
+    <TabPanel
+      description={t('team.description')}
+      actions={
+        isOwner && (
+          <AddDialog label={t('team.add')} title={t('team.addTitle')} description={t('team.addHint')}>
+            {(close) => <AddMemberForm onDone={close} />}
+          </AddDialog>
+        )
+      }
+    >
       <ErrorNote error={revoke.error ?? removeMember.error} />
       <QueryView q={q} skeleton="table">
         {(team) => (
-          <>
+          <SectionTabs
+            label={t('team.description')}
+            idPrefix="team"
+            sections={[
+              {
+                key: 'members',
+                label: t('team.members'),
+                node: (
             <Section title={t('team.members')}>
               <Table caption={t('team.members')} head={[t('team.name'), t('common:email'), t('team.role'), t('team.mfa'), t('team.since'), '']}>
                 {team.members.map((m) => (
@@ -165,10 +174,14 @@ export function TeamPage() {
                 ))}
               </Table>
             </Section>
-            <Section title={t('team.invitations')}>
-              {team.invitations.length === 0 ? (
-                <EmptyState title={t('team.noInvitations')}>{t('team.noInvitationsBody')}</EmptyState>
-              ) : (
+                ),
+              },
+              // Members are added directly now; invitations sent before that can still be revoked.
+              team.invitations.length > 0 && {
+                key: 'invitations',
+                label: t('team.invitations'),
+                node: (
+              <Section title={t('team.invitations')}>
                 <Table caption={t('team.invitations')} head={[t('common:email'), t('team.role'), t('team.expires'), '']}>
                   {team.invitations.map((inv) => (
                     <tr key={inv.id}>
@@ -189,12 +202,14 @@ export function TeamPage() {
                     </tr>
                   ))}
                 </Table>
-              )}
-            </Section>
-          </>
+              </Section>
+                ),
+              },
+            ]}
+          />
         )}
       </QueryView>
       <LiveRegion text={removeMember.isSuccess ? t('team.removed') : revoke.isSuccess ? t('team.revoked') : ''} />
-    </Page>
+    </TabPanel>
   );
 }

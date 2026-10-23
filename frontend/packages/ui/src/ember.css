@@ -22,12 +22,16 @@
   --color-line: #eeebe8;
   --color-surface: #ffffff;
   --color-canvas: #faf9f7;
+  --color-backdrop: #f1eeea;
+  --color-panel: #1c1917;
+  --color-panel-2: #44403c;
 
   --color-primary: #c2410c;
   --color-primary-hover: #9a3412;
   --color-primary-soft: #ffedd5;
   --color-primary-wash: #fff7ed;
   --color-glow: #fb923c;
+  --color-ember: #c2410c;
   --color-on-primary: #ffffff;
 
   --color-ok: #15803d;
@@ -54,9 +58,50 @@
   --on-band: #ffffff;
 }
 
+/* Dark mode: the admin sets data-theme="dark" on <html> (chosen with the sidebar switch; follows the system until then).
+   Only tokens change, so every component follows. Panels stay dark and carry white text. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --sheen: rgb(255 255 255 / 0.06);
+
+  --color-ink: #f5f1ed;
+  --color-ink-2: #d4cdc7;
+  --color-muted: #a39b94;
+  --color-line: #3a332e;
+  --color-surface: #1f1b19;
+  --color-canvas: #2a2522;
+  --color-backdrop: #141211;
+  --color-panel: #302a26;
+  --color-panel-2: #3f3732;
+
+  --color-primary: #fb923c;
+  --color-primary-hover: #fdba74;
+  --color-primary-soft: #43240f;
+  --color-primary-wash: #2c1d13;
+  --color-glow: #fb923c;
+  --color-on-primary: #1c1917;
+
+  --color-ok: #4ade80;
+  --color-ok-bg: #12301d;
+  --color-warn: #facc15;
+  --color-warn-bg: #352b0a;
+  --color-danger: #fb7185;
+  --color-danger-bg: #3d1420;
+  --color-info: #93c5fd;
+  --color-info-bg: #172b4d;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-button: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-dialog: 0 2px 6px rgb(0 0 0 / 0.4), 0 32px 80px -24px rgb(0 0 0 / 0.8);
+}
+
 @layer base {
   html {
     background: var(--color-surface);
+  }
+  :root[data-theme='dark'] html,
+  html[data-theme='dark'] {
+    background: var(--color-backdrop);
   }
   h1,
   h2,
