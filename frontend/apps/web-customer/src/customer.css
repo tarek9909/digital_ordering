@@ -9,8 +9,6 @@
   --color-primary-soft: color-mix(in srgb, var(--brand-band) 16%, white);
   --color-primary-wash: color-mix(in srgb, var(--brand-band) 6%, white);
   --color-glow: color-mix(in srgb, var(--brand-band) 60%, white);
-  /* The venue tint used behind the ring and in soft surfaces. */
-  --venue-tint: color-mix(in srgb, var(--brand-band) 9%, transparent);
 }
 
 /* ---- The call ring (ticket page signature). Geometry lives in OrderRing.tsx; motion in the shared runtime. */
@@ -32,24 +30,6 @@
   transition-duration: 0.7s;
   transition-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
 }
-/* A slow live halo around the tip while the order is open (one cycle every 2.4 s, well under 1 Hz). */
-@keyframes ring-breathe {
-  0%,
-  100% {
-    opacity: 0.18;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.5);
-  }
-}
-.ring-halo {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: ring-breathe 2.4s ease-in-out infinite;
-}
-
 /* Ready: the venue's colour floods out from the ring when the order turns ready on an open page. */
 @keyframes ready-flood {
   from {
@@ -185,7 +165,6 @@
   .ring-tip[data-ready='true'] {
     transition: none;
   }
-  .ring-halo,
   .ready-flood,
   .sheet[open],
   .sheet[open]::backdrop,

@@ -9,7 +9,7 @@
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
-  border-radius: 2.2vmin;
+  border-radius: 2vmin;
   padding: 1.2vmin 0;
   font-family: var(--font-display);
   font-size: 13vmin;
@@ -20,14 +20,14 @@
   direction: ltr;
   unicode-bidi: isolate;
   color: var(--color-surface);
-  background: rgb(255 255 255 / 0.045);
+  background: rgb(255 255 255 / 0.035);
 }
 /* The number that just became ready: filled with the venue colour (ember when it would not read on ink). */
 .tile-hl {
   z-index: 1;
   background: var(--hl);
   color: var(--on-hl);
-  box-shadow: 0 1.6vmin 4vmin -1.6vmin rgb(0 0 0 / 0.55);
+  box-shadow: 0 0 0 0.5vmin rgb(255 255 255 / 0.08), 0 2vmin 5vmin -2vmin rgb(0 0 0 / 0.6);
 }
 /* One pulse radiates from the tile as it lands (GSAP sets its opacity; invisible without motion). */
 .land-pulse {
@@ -41,13 +41,23 @@
 
 /* ---- Column headings ---- */
 .board-count {
-  border-radius: 999px;
-  padding: 0.6vmin 1.6vmin;
   font-family: var(--font-mono);
-  font-size: 2.2vmin;
+  font-size: 2.6vmin;
   font-weight: 500;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+
+/* Header clock: venue time, quiet but readable from the room. */
+.board-clock {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 3.4vmin;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  color: var(--color-ink-2);
 }
 
 /* Live indicator next to "Ready": a dot with one soft ring every 2.4 s (the only loop on the board). */
@@ -101,7 +111,7 @@
   align-items: center;
   gap: 1vmin;
   border-radius: 999px;
-  padding: 0.7vmin 1.8vmin;
+  padding: 0.8vmin 1.8vmin;
   white-space: nowrap;
 }
 .badge-mark {

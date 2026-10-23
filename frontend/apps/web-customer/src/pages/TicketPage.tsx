@@ -1,7 +1,7 @@
 import type { PublicTicket } from '@dop/contracts';
 import { ApiError, applyBrand, prefetchChime, type DopSocket } from '@dop/client-sdk';
 import { i18next, useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, LiveRegion, Spinner } from '@dop/ui';
+import { Banner, Button, LiveRegion, Spinner } from '@dop/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from '../lib/router';
@@ -400,7 +400,7 @@ function TicketView({ token }: { token: string }) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
         <OrderRing token="" progress={0} idle className="w-28" />
-        <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('notFoundTitle')}</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">{t('notFoundTitle')}</h1>
         <p className="max-w-xs text-lg text-ink-2">{t('notFoundBody')}</p>
       </main>
     );
@@ -409,7 +409,7 @@ function TicketView({ token }: { token: string }) {
     // Server or network failure on the first load (A28): say so and offer a retry.
     return (
       <main role="alert" className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas p-6 text-center">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('loadError.title')}</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">{t('loadError.title')}</h1>
         <p className="max-w-xs text-lg text-ink-2">{t('loadError.body')}</p>
         <Button size="lg" className="w-full max-w-sm" busy={ticketQ.isFetching} onClick={() => void ticketQ.refetch()}>
           {t('common:retry')}
@@ -500,25 +500,25 @@ function TicketBody({
   const progress = ringProgress(ticket.token, ticket.status, open ? wait : null);
   const hint = delivery === 'push' ? t('alertsPushOn') : delivery === 'live' ? t('keepOpenLive') : t('keepOpen');
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center px-4 pt-7 pb-4 text-center">
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center px-4 pt-10 pb-4 text-center">
       {/* The call ring closes around the number as the order moves on; Ready closes it (ReadyScreen). */}
-      <OrderRing token={ticket.token} progress={progress} idle={idle} live={open} className="w-[min(82vw,21rem)]">
-        <p className="eyebrow">{t('yourOrder')}</p>
+      <OrderRing token={ticket.token} progress={progress} idle={idle} className="w-[min(82vw,21rem)]">
+        <p className="text-sm font-medium text-muted">{t('yourOrder')}</p>
         {/* At least one third of the screen width (FR-CUS-02, TR-FE-11). */}
         <div
-          className={`num font-display leading-[0.95] font-extrabold tracking-tight ${idle ? 'text-muted' : ''}`}
+          className={`num font-display leading-[0.95] font-bold tracking-tight tabular-nums ${idle ? 'text-muted' : ''}`}
           style={{ fontSize: numberSize(ticket.displayNumber) }}
           aria-label={`${t('order')} ${ticket.displayNumber}`}
         >
           {ticket.displayNumber}
         </div>
-        {ticket.counterName && <p className="mt-1 max-w-[12rem] truncate text-base font-semibold text-ink-2">{ticket.counterName}</p>}
+        {ticket.counterName && <p className="mt-1 max-w-[12rem] truncate text-sm font-medium text-ink-2">{ticket.counterName}</p>}
       </OrderRing>
 
-      <h1 className="mt-6 font-display text-[1.625rem] leading-tight font-extrabold tracking-tight text-balance">{t(`status.${ticket.status}`)}</h1>
+      <h1 className="mt-8 font-display text-2xl leading-tight font-semibold tracking-tight text-balance">{t(`status.${ticket.status}`)}</h1>
       {open && wait && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-lg text-ink-2">
-          <ClockIcon className="size-5 text-muted" />
+        <p className="mt-1.5 inline-flex items-center gap-1.5 text-base text-muted">
+          <ClockIcon className="size-4" />
           {wait.late ? t('wait.late') : t('wait.about', { count: wait.minutes })}
         </p>
       )}
@@ -531,14 +531,12 @@ function TicketBody({
       {open && (
         <div className="flex w-full flex-col gap-3">
           {alertsOn ? (
-            <div className="flex w-full items-center gap-3 rounded-[var(--radius-card)] bg-surface p-4 text-start shadow-card">
-              <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-ok-bg text-ok">
-                <CheckIcon className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="font-semibold">{t('alertsOn')}</p>
-                <p className="text-sm text-muted">{hint}</p>
-              </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <p className="inline-flex items-center gap-1.5 font-semibold text-ok">
+                <CheckIcon className="size-4" />
+                {t('alertsOn')}
+              </p>
+              <p className="text-sm text-muted">{hint}</p>
             </div>
           ) : (
             <>
@@ -548,8 +546,8 @@ function TicketBody({
                 </p>
               )}
               {delivery === 'blocked' && <p className="text-ink-2">{t('alertsBlocked')}</p>}
-              <Button size="lg" className="w-full text-xl" onClick={onTurnOn}>
-                <BellIcon className="size-6" />
+              <Button size="lg" className="w-full" onClick={onTurnOn}>
+                <BellIcon className="size-5" />
                 {t('turnOnAlerts')}
               </Button>
               <p className="text-sm text-muted">{hint}</p>
@@ -558,15 +556,15 @@ function TicketBody({
         </div>
       )}
       {ticket.status === 'collected' && ticket.ratingAllowed && (
-        <Card className="w-full">
+        <div className="w-full border-t border-line pt-5">
           <RatingForm token={ticket.token} />
-        </Card>
+        </div>
       )}
       {!open && (
         // A closed ticket links back to the venue page (FR-CUS-11).
         <Link
           to={`/v/${encodeURIComponent(ticket.venue.venueCode)}`}
-          className="mt-4 inline-flex min-h-12 items-center gap-1 rounded-control px-5 font-semibold text-ink ring-1 ring-line transition-colors hover:bg-surface"
+          className="mt-4 inline-flex min-h-12 items-center gap-1 rounded-control px-4 font-medium text-ink-2 transition-colors hover:text-ink"
         >
           {t('backToVenue', { venue: ticket.venue.name })}
           <ChevronIcon className="size-4 text-muted" />

@@ -32,7 +32,7 @@ export function promoText(promo: Promo, lang: string): string {
 
 /**
  * Height (px) the Ready column needs for `shown` tiles when it is the only column, mirroring BoardView: tiles at
- * least 28vmin wide and 15.4vmin tall (13vmin number + 1.2vmin padding), 1.8vmin gaps, a 7.5vmin heading, 3vmin
+ * least 28vmin wide and 15.4vmin tall (13vmin number + 1.2vmin padding), 1.8vmin gaps, an 8.5vmin heading, 3vmin
  * padding, plus the page/"+n more" line. Slightly generous, so the strip never forces the list into pages.
  */
 export function readyHeightNeeded(shown: number, more: boolean, w: number, h: number): number {
@@ -42,13 +42,13 @@ export function readyHeightNeeded(shown: number, more: boolean, w: number, h: nu
   const cols = Math.max(1, Math.floor((innerW + gap) / (28 * vmin + gap)));
   const rows = Math.max(1, Math.ceil(shown / cols));
   const tiles = rows * 15.4 * vmin + (rows - 1) * gap;
-  return 7.5 * vmin + tiles + 6 * vmin + (more ? 5 * vmin : 0) + 2 * vmin;
+  return 8.5 * vmin + tiles + 6 * vmin + (more ? 5 * vmin : 0) + 2 * vmin;
 }
 
-/** Space (px) under the header for the board, mirroring BoardView (15vmin QR + caption, paddings). */
+/** Space (px) under the header for the board, mirroring BoardView (0.5vmin band, 10vmin QR, 2.4vmin paddings). */
 export function boardHeightAvailable(w: number, h: number): number {
   const vmin = Math.min(w, h) / 100;
-  const header = 15 * vmin + 1.6 * vmin + 2.3 * vmin + 4 * vmin;
+  const header = 0.5 * vmin + 10 * vmin + 2 * 2.4 * vmin + 1 * vmin;
   return h - header - 3 * vmin;
 }
 

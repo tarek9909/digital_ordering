@@ -57,11 +57,11 @@ function NumberTile({ t, highlighted }: { t: DisplayTicket; highlighted: boolean
 function ColumnHeading({ id, label, alt, count, live, tone }: { id: string; label: string; alt: string | null; count: number; live?: boolean; tone: 'ink' | 'light' }) {
   const dark = tone === 'ink';
   return (
-    <h2 id={id} className="mb-[2.4vmin] flex items-center gap-[1.6vmin]">
-      {live !== undefined && <span aria-hidden="true" className={`live-dot ${live ? 'is-live' : ''}`} />}
-      <span className={`font-display leading-none font-bold tracking-tight ${dark ? 'text-[4.6vmin] text-white' : 'text-[3.6vmin] text-ink-2'}`}>{label}</span>
-      {alt && <span className={`font-display text-[2.6vmin] leading-none font-semibold ${dark ? 'text-white/45' : 'text-muted/80'}`}>{alt}</span>}
-      <span className={`board-count ms-auto ${dark ? 'bg-white/10 text-white/80' : 'bg-ink/[0.06] text-ink-2'}`}>{count}</span>
+    <h2 id={id} className={`mb-[2.4vmin] flex items-baseline gap-[1.6vmin] border-b pb-[1.8vmin] ${dark ? 'border-white/10' : 'border-line'}`}>
+      {live !== undefined && <span aria-hidden="true" className={`live-dot self-center ${live ? 'is-live' : ''}`} />}
+      <span className={`font-display text-[3.8vmin] leading-none font-bold tracking-tight ${dark ? 'text-white' : 'text-ink'}`}>{label}</span>
+      {alt && <span className={`font-display text-[2.4vmin] leading-none font-medium ${dark ? 'text-white/40' : 'text-muted'}`}>{alt}</span>}
+      <span className={`board-count ms-auto ${dark ? 'text-white/55' : 'text-muted'}`}>{count}</span>
     </h2>
   );
 }
@@ -113,6 +113,23 @@ function useViewport() {
     return () => window.removeEventListener('resize', on);
   }, []);
   return size;
+}
+
+/** Local time at the venue, refreshed every 10 seconds (latin digits, like the order numbers). */
+function Clock({ timeZone }: { timeZone: string }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 10_000);
+    return () => clearInterval(id);
+  }, []);
+  const fmt = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone });
+    } catch {
+      return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    }
+  }, [timeZone]);
+  return <time className="board-clock">{fmt.format(now)}</time>;
 }
 
 /**
@@ -174,7 +191,7 @@ const PROMO_HEIGHT: CSSProperties = { height: `${PROMO_STRIP_VH}vh` };
 function PromoContent({ text, imageUrl, className }: { text: string; imageUrl: string | null; className: string }) {
   const { t } = useTranslation();
   return (
-    <aside aria-label={t('promo.label')} className={`flex min-w-0 shrink-0 items-center gap-[2.2vmin] overflow-hidden rounded-[2.4vmin] bg-surface p-[1.4vmin] pe-[2.6vmin] shadow-card ${className}`} style={PROMO_HEIGHT}>
+    <aside aria-label={t('promo.label')} className={`flex min-w-0 shrink-0 items-center gap-[2.2vmin] overflow-hidden rounded-[2.4vmin] bg-canvas p-[1.2vmin] pe-[2.6vmin] ${imageUrl ? '' : 'ps-[2.6vmin]'} ${className}`} style={PROMO_HEIGHT}>
       {imageUrl && <img src={imageUrl} alt="" className="h-full max-h-full w-auto max-w-[38%] shrink-0 rounded-[1.6vmin] object-cover" />}
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-[0.8vmin]">
         <span className="promo-tag">{t('promo.label')}</span>
@@ -227,43 +244,42 @@ export function BoardView({ board }: { board: Board }) {
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-surface text-ink" style={style}>
-      <div aria-hidden="true" className="h-[0.7vmin] shrink-0 bg-[var(--brand-band)]" />
-      <header className="flex items-center gap-[2.6vmin] px-[4vmin] pt-[2.4vmin] pb-[2.2vmin]">
-        {board.venue.logoUrl && <img src={board.venue.logoUrl} alt="" className="size-[9.5vmin] shrink-0 rounded-[2vmin] object-contain" />}
-        <div className="flex min-w-0 flex-1 flex-col gap-[0.8vmin]">
-          <h1 className="line-clamp-2 font-display text-[4.8vmin] leading-[1.1] break-words font-extrabold tracking-tight">{board.venue.name}</h1>
-          {message && <p className="truncate text-[2.6vmin] leading-snug font-medium text-ink-2">{message}</p>}
+      <div aria-hidden="true" className="h-[0.5vmin] shrink-0 bg-[var(--brand-band)]" />
+      <header className="flex items-center gap-[2.4vmin] px-[4vmin] py-[2.4vmin]">
+        {board.venue.logoUrl && <img src={board.venue.logoUrl} alt="" className="size-[7vmin] shrink-0 rounded-[1.6vmin] object-contain" />}
+        <div className="flex min-w-0 flex-1 flex-col gap-[0.6vmin]">
+          <h1 className="truncate font-display text-[4.2vmin] leading-[1.15] font-extrabold tracking-tight">{board.venue.name}</h1>
+          {message && <p className="truncate text-[2.3vmin] leading-snug font-medium text-muted">{message}</p>}
         </div>
         <Badges offline={offline} />
+        <Clock timeZone={board.venue.timeZone} />
         {board.settings.qr.show && (
-          <figure className="flex shrink-0 items-center gap-[1.8vmin] rounded-[2.2vmin] bg-canvas p-[1.2vmin] pe-[2.2vmin]">
-            <span className="rounded-[1.2vmin] bg-surface p-[0.8vmin]">
-              <QRCodeSVG value={board.venueUrl} size={256} level="M" bgColor={SURFACE} fgColor={INK} style={{ width: '11vmin', height: '11vmin', display: 'block' }} />
-            </span>
-            <figcaption className="max-w-[19vmin] text-[2.1vmin] leading-snug font-semibold text-ink-2">{t('scanToFollow')}</figcaption>
+          <figure className="flex shrink-0 items-center gap-[1.6vmin] border-s border-line ps-[2.4vmin]">
+            <figcaption className="max-w-[16vmin] text-end text-[1.9vmin] leading-snug font-semibold text-ink-2">{t('scanToFollow')}</figcaption>
+            <QRCodeSVG value={board.venueUrl} size={256} level="M" bgColor={SURFACE} fgColor={INK} style={{ width: '10vmin', height: '10vmin', display: 'block' }} />
           </figure>
         )}
       </header>
 
-      <main ref={boardRef} className="flex min-h-0 flex-1 gap-[2.4vmin] px-[4vmin] pb-[3.4vmin] portrait:flex-col">
+      <main ref={boardRef} className="flex min-h-0 flex-1 gap-[3vmin] px-[4vmin] pb-[3.4vmin] portrait:flex-col-reverse">
         {board.settings.showPreparing && (
-          <section aria-labelledby="col-preparing" className="flex min-h-0 min-w-0 flex-[2] flex-col rounded-[3.2vmin] bg-canvas p-[3vmin]">
+          <section aria-labelledby="col-preparing" className="flex min-h-0 min-w-0 flex-[2] flex-col py-[3vmin]">
             <ColumnHeading id="col-preparing" label={t('common:status.preparing')} alt={altT ? altT('status.preparing') : null} count={board.preparing.length} tone="light" />
             <ul ref={preparingList} className="grid min-h-0 flex-1 content-start gap-x-[1.6vmin] gap-y-[0.6vmin]" style={preparingGrid}>
               {preparing.map((x) => (
-                <li key={x.id} data-flip-id={x.id} className="num flex items-center justify-center py-[1vmin] font-display text-[8vmin] leading-none font-semibold tracking-[-0.01em] text-muted">
+                <li key={x.id} data-flip-id={x.id} className="num flex items-center justify-center py-[1vmin] font-display text-[8vmin] leading-none font-semibold tracking-[-0.02em] text-ink/45">
                   {x.displayNumber}
                 </li>
               ))}
             </ul>
-            {preparingMore > 0 && <p className="mt-[1vmin] text-end font-display text-[2.6vmin] font-semibold text-muted">{t('more', { n: preparingMore })}</p>}
+            {preparingMore > 0 && <p className="mt-[1vmin] text-end font-display text-[2.4vmin] font-semibold text-muted">{t('more', { n: preparingMore })}</p>}
             {promo.placement === 'preparing' && <PromoContent text={promo.text} imageUrl={promo.imageUrl} className="mt-[2vmin]" />}
           </section>
         )}
         <section aria-labelledby="col-ready" className="flex min-h-0 min-w-0 flex-[3] flex-col rounded-[3.2vmin] bg-ink p-[3vmin] text-white">
           <ColumnHeading id="col-ready" label={t('common:status.ready')} alt={altT ? altT('status.ready') : null} count={board.ready.length} live={live} tone="ink" />
           {shown.length === 0 ? (
-            <p className="flex flex-1 items-center justify-center text-center text-[3.4vmin] font-medium text-white/50">{t('emptyReady')}</p>
+            <p className="flex flex-1 items-center justify-center text-center text-[3.2vmin] font-medium text-white/40">{t('emptyReady')}</p>
           ) : (
             <ul ref={readyList} className="grid min-h-0 flex-1 content-start gap-[1.8vmin]" style={readyGrid}>
               {shown.map((x) => (
@@ -272,7 +288,7 @@ export function BoardView({ board }: { board: Board }) {
             </ul>
           )}
           {(pages > 1 || hidden > 0) && (
-            <p data-testid="ready-overflow" className="mt-[1.4vmin] flex items-center justify-end gap-[2.4vmin] text-[2.4vmin] leading-none font-semibold text-white/70">
+            <p data-testid="ready-overflow" className="mt-[1.4vmin] flex items-center justify-end gap-[2.4vmin] text-[2.2vmin] leading-none font-semibold text-white/60">
               {pages > 1 && (
                 <span className="flex items-center gap-[1.4vmin]">
                   {/* Page marks: which page of the rotation is on screen. */}
@@ -284,7 +300,7 @@ export function BoardView({ board }: { board: Board }) {
                   <span>{t('page', { x: page, y: pages })}</span>
                 </span>
               )}
-              {hidden > 0 && <span className="rounded-full bg-white/10 px-[1.6vmin] py-[0.8vmin] text-white">{t('more', { n: hidden })}</span>}
+              {hidden > 0 && <span className="text-white">{t('more', { n: hidden })}</span>}
             </p>
           )}
         </section>

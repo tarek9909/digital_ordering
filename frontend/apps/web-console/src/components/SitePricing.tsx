@@ -76,7 +76,7 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
       </h2>
       <p className="mb-3 text-muted">{t('sitePricing.intro')}</p>
       <Card>
-        <form onSubmit={submit} className="flex flex-col gap-6 p-5" noValidate>
+        <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
           <div className="grid gap-4 md:grid-cols-2">
             {LANGS.map((l) => (
               <fieldset key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-4">

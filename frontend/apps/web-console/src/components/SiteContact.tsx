@@ -47,7 +47,7 @@ export function SiteContact({ value, onSaved }: { value: Contact; onSaved: () =>
       </h2>
       <p className="mb-3 text-muted">{t('siteContact.intro')}</p>
       <Card>
-        <form onSubmit={submit} className="grid gap-4 p-5 md:grid-cols-2" noValidate>
+        <form onSubmit={submit} className="grid gap-4 md:grid-cols-2" noValidate>
           <Field label={t('siteContact.email')} type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} hint={t('siteContact.emailHint')} />
           <Field
             label={t('siteContact.whatsapp')}

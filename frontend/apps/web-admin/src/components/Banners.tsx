@@ -128,7 +128,7 @@ export function Banners() {
 
   return (
     // Padded only when a banner shows (live regions are visually hidden).
-    <div className="mx-auto flex max-w-5xl flex-col gap-2 has-[>:not(.sr-only)]:px-4 has-[>:not(.sr-only)]:pt-4 sm:has-[>:not(.sr-only)]:px-6">
+    <div className="flex max-w-6xl flex-col gap-2 has-[>:not(.sr-only)]:px-4 has-[>:not(.sr-only)]:pt-5 sm:has-[>:not(.sr-only)]:px-8 lg:has-[>:not(.sr-only)]:px-10">
       {!isSupport && <Announcements />}
       <SupportBanner isSupport={isSupport} />
       {tenant && (

@@ -35,7 +35,7 @@ export function TicketCard({
       className="group flex min-h-20 items-center gap-4 rounded-[var(--radius-card)] bg-surface p-2.5 pe-4 shadow-card transition-transform active:scale-[.99]"
     >
       <span
-        className={`num grid h-16 min-w-16 place-items-center rounded-[1rem] px-3 font-display text-3xl font-extrabold tracking-tight ${closed ? 'bg-canvas text-muted' : ''}`}
+        className={`num grid h-16 min-w-16 place-items-center rounded-[1rem] px-3 font-display text-3xl font-bold tracking-tight ${closed ? 'bg-canvas text-muted' : ''}`}
         style={closed ? undefined : { background: colour, color: onBand ?? 'var(--on-band)' }}
       >
         {displayNumber}

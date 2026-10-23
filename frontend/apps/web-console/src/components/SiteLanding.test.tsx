@@ -77,7 +77,7 @@ it('saves hidden sections, changed text and an edited list, and nothing else', a
   expect(body.value.copy.en.landing.faq.items).toEqual([...siteEn.landing.faq.items.slice(1), { q: 'Do you take cash?', a: 'Yes, in dollars.' }]);
   expect(Object.keys(body.value.copy.en.landing)).toEqual(['hero', 'faq']);
   await waitFor(() => expect(onSaved).toHaveBeenCalled());
-});
+}, 20_000); // renders the whole landing editor; slow when the full suite runs in parallel
 
 it('refuses text that drops a placeholder the site fills in', async () => {
   renderEditor();

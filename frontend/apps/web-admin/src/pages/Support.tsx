@@ -1,9 +1,9 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, LiveRegion, PageShell } from '@dop/ui';
+import { Button, EmptyState, LiveRegion } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
+import { ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration } from '../lib/format';
 import type { SupportCode, SupportSession, SupportStatus } from '../lib/types';
@@ -70,10 +70,8 @@ export function SupportPage() {
   });
   const date = (iso: string | null) => (iso ? formatDateTime(iso, i18n.language) : '—');
   const busy = (id: string, action: string) => decide.isPending && decide.variables?.id === id && decide.variables.action === action;
-
-  const eyebrow = usePageEyebrow('tenant');
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.support')} description={t('support.description')}>
+    <Page title={t('nav.support')} description={t('support.description')}>
       <Section title={t('support.codeTitle')} description={t('support.codeHint')}>
         <ErrorNote error={gen.error} />
         {code ? (
@@ -145,6 +143,6 @@ export function SupportPage() {
         </QueryView>
       </Section>
       <LiveRegion text={decide.isSuccess ? t('support.updated') : code ? t('support.codeReady') : ''} />
-    </PageShell>
+    </Page>
   );
 }

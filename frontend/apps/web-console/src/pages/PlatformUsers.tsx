@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PLATFORM_ROLES, platformUserCreateBody, type PlatformRole } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Field, LiveRegion, Modal, PageShell, Pill, Select, Spinner } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, Modal, PageShell, Pill, Select, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { ErrorNote, Table, Td } from '../components/common';
+import { ErrorNote, FormButtons, Initials, Segmented, Table, Td } from '../components/common';
 import { MfaCancelled, useFreshMfa } from '../components/FreshMfa';
 import { api } from '../lib/api';
 import { applyFieldErrors } from '../lib/errors';
@@ -36,28 +36,72 @@ export function PlatformUsersPage() {
   });
   const roleOptions = PLATFORM_ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }));
 
+  const [inviting, setInviting] = useState(false);
+  const users = list.data?.items ?? [];
+  const noMfa = users.filter((u) => u.status === 'active' && !u.mfa_enrolled_at).length;
+
   return (
-    <PageShell eyebrow={t('layout.groups.platform')} title={t('users.title')} description={t('users.description')}>
+    <PageShell
+      wide
+      eyebrow={t('layout.groups.platform')}
+      title={t('users.title')}
+      description={t('users.description')}
+      actions={
+        <Button onClick={() => setInviting(true)}>
+          <span aria-hidden="true">+</span>
+          {t('users.invite')}
+        </Button>
+      }
+    >
       <LiveRegion text={announce} />
-      <InviteForm onDone={() => setAnnounce(t('users.invited'))} />
-      <ErrorNote error={list.error ?? patch.error} />
+      <ErrorNote error={list.error ?? (patch.error instanceof MfaCancelled ? null : patch.error)} />
+      {list.data && (
+        <section aria-label={t('usersUx.summary')} className="mb-6 grid gap-3 sm:grid-cols-3">
+          {PLATFORM_ROLES.map((r) => (
+            <div key={r} className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-surface p-4 shadow-card">
+              <span className="eyebrow">{t(`role.${r}`)}</span>
+              <span className="num font-display text-2xl font-extrabold tracking-tight">{users.filter((u) => u.role === r && u.status !== 'disabled').length}</span>
+              <span className="text-xs text-muted">{t(`usersUx.roleHint.${r}`)}</span>
+            </div>
+          ))}
+        </section>
+      )}
+      {noMfa > 0 && (
+        <div className="mb-4">
+          <Banner tone="warn">{t('usersUx.noMfa', { count: noMfa })}</Banner>
+        </div>
+      )}
       {list.isPending ? (
         <Spinner label={t('common:loading')} />
       ) : (
         list.data && (
-          <Table caption={t('users.title')} head={[t('users.name'), t('common:email'), t('users.role'), t('users.status'), t('users.mfa'), t('users.lastSignIn'), t('users.actions')]}>
-            {list.data.items.map((u) => {
+          <Table caption={t('users.title')} head={[t('users.name'), t('users.role'), t('users.status'), t('users.mfa'), t('users.lastSignIn'), t('users.actions')]}>
+            {users.map((u) => {
               const self = u.id === me?.platformUser.id;
               return (
-                <tr key={u.id}>
-                  <Td className="font-semibold whitespace-nowrap">{u.name}</Td>
+                <tr key={u.id} className={u.status === 'disabled' ? 'opacity-60' : undefined}>
                   <Td>
-                    <span dir="ltr">{u.email}</span>
+                    <span className="flex min-h-12 items-center gap-3">
+                      <Initials name={u.name} tone={self ? 'ink' : 'soft'} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-semibold whitespace-nowrap">
+                          {u.name}
+                          {self && (
+                            <Pill tone="ink" className="ms-2">
+                              {t('usersUx.you')}
+                            </Pill>
+                          )}
+                        </span>
+                        <span dir="ltr" className="self-start text-sm text-muted">
+                          {u.email}
+                        </span>
+                      </span>
+                    </span>
                   </Td>
                   <Td>
                     <Select
                       label={t('users.roleFor', { name: u.name })}
-                      className="[&>label]:sr-only"
+                      className="min-w-40 [&>label]:sr-only"
                       value={u.role}
                       disabled={self || patch.isPending}
                       options={roleOptions}
@@ -68,12 +112,13 @@ export function PlatformUsersPage() {
                     <Pill tone={u.status === 'active' ? 'ok' : u.status === 'invited' ? 'info' : 'neutral'}>{t(`users.statusValue.${u.status}`, { defaultValue: u.status })}</Pill>
                   </Td>
                   <Td>{u.mfa_enrolled_at ? <Pill tone="ok">{t('users.mfaOn')}</Pill> : <Pill tone="warn">{t('users.mfaOff')}</Pill>}</Td>
-                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(u.last_sign_in_at, i18n.language)}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">{u.last_sign_in_at ? fmtDate(u.last_sign_in_at, i18n.language) : t('usersUx.never')}</Td>
                   <Td>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       {!self && (
                         <Button
-                          variant="secondary"
+                          variant="ghost"
+                          className="text-sm"
                           disabled={patch.isPending}
                           onClick={() => patch.mutate({ id: u.id, body: { status: u.status === 'disabled' ? 'active' : 'disabled' } })}
                         >
@@ -81,7 +126,7 @@ export function PlatformUsersPage() {
                         </Button>
                       )}
                       {u.mfa_enrolled_at && (
-                        <Button variant="danger" onClick={() => setResetFor(u)}>
+                        <Button variant="ghost" className="text-sm text-danger" onClick={() => setResetFor(u)}>
                           {t('users.resetMfa')}
                         </Button>
                       )}
@@ -92,6 +137,17 @@ export function PlatformUsersPage() {
             })}
           </Table>
         )
+      )}
+      {inviting && (
+        <Modal open onOpenChange={(o) => !o && setInviting(false)} title={t('users.invite')} description={t('usersUx.inviteIntro')}>
+          <InviteForm
+            onCancel={() => setInviting(false)}
+            onDone={() => {
+              setInviting(false);
+              setAnnounce(t('users.invited'));
+            }}
+          />
+        </Modal>
       )}
       {resetFor && (
         <ResetMfaDialog
@@ -108,12 +164,13 @@ export function PlatformUsersPage() {
   );
 }
 
-function InviteForm({ onDone }: { onDone: () => void }) {
+function InviteForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const run = useFreshMfa();
   const [error, setError] = useState<unknown>(null);
   const form = useForm({ resolver: zodResolver(platformUserCreateBody), defaultValues: { email: '', name: '', role: 'support' as PlatformRole } });
+  const role = form.watch('role');
   const submit = form.handleSubmit(async (v) => {
     setError(null);
     try {
@@ -128,20 +185,14 @@ function InviteForm({ onDone }: { onDone: () => void }) {
   });
   const errs = form.formState.errors;
   return (
-    <Card className="mb-6">
-      <h2 className="mb-3 text-lg font-bold">{t('users.invite')}</h2>
-      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-4 sm:items-end" noValidate>
-        <Field label={t('users.name')} error={errs.name && t('form.required')} {...form.register('name')} />
-        <Field label={t('common:email')} type="email" dir="ltr" error={errs.email && t('form.emailInvalid')} {...form.register('email')} />
-        <Select label={t('users.role')} options={PLATFORM_ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))} {...form.register('role')} />
-        <Button type="submit" busy={form.formState.isSubmitting}>
-          {t('users.sendInvite')}
-        </Button>
-      </form>
-      <div className="mt-3">
-        <ErrorNote error={error} />
-      </div>
-    </Card>
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <ErrorNote error={error} />
+      <Field label={t('users.name')} error={errs.name && t('form.required')} {...form.register('name')} />
+      <Field label={t('common:email')} type="email" dir="ltr" error={errs.email && t('form.emailInvalid')} {...form.register('email')} />
+      <Segmented label={t('users.role')} value={role} onChange={(r) => form.setValue('role', r)} options={PLATFORM_ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))} />
+      <p className="-mt-2 text-sm text-muted">{t(`usersUx.roleHint.${role}`)}</p>
+      <FormButtons onCancel={onCancel} busy={form.formState.isSubmitting} label={t('users.sendInvite')} />
+    </form>
   );
 }
 

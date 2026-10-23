@@ -1,12 +1,12 @@
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, Modal, Pill, Skeleton, Spinner, Stat as UiStat } from '@dop/ui';
-import { useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from 'react';
+import { Banner, Button, Modal, Pill, Skeleton, Spinner } from '@dop/ui';
+import { createContext, useContext, useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from 'react';
 import { Link } from 'react-router';
 import { errorText, isCode } from '../lib/errors';
-import { useRole, useTenant } from '../lib/me';
-import { useCurrentVenueId, useVenues } from '../lib/venue';
+import { useRole } from '../lib/me';
 
-// Local building blocks of the restaurant admin, on top of @dop/ui (brand: Ember console patterns).
+// Local building blocks of the restaurant admin, on top of @dop/ui. Pages sit on the canvas as flat, bordered panels;
+// the one raised surface on a page is its headline figures (brand: Ember).
 
 const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
 
@@ -73,7 +73,7 @@ export function LoadingShape({ kind }: { kind: SkeletonKind }) {
     <div role="status" aria-live="polite">
       <span className="sr-only">{t('common:loading')}</span>
       {kind === 'table' && (
-        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-5">
           <Skeleton className="h-3 w-1/3" />
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-9 w-full" />
@@ -83,7 +83,7 @@ export function LoadingShape({ kind }: { kind: SkeletonKind }) {
       {kind === 'cards' && (
         <div className="grid gap-4 md:grid-cols-2">
           {[0, 1].map((i) => (
-            <div key={i} className="flex flex-col gap-3 rounded-[var(--radius-card)] bg-surface p-5 shadow-card">
+            <div key={i} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-5">
               <Skeleton className="h-5 w-1/2" />
               <Skeleton className="h-3 w-2/3" />
               <Skeleton className="h-12 w-40 rounded-control" />
@@ -92,9 +92,9 @@ export function LoadingShape({ kind }: { kind: SkeletonKind }) {
         </div>
       )}
       {kind === 'tiles' && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex flex-col gap-3 rounded-[var(--radius-card)] bg-surface p-5 shadow-card">
+            <div key={i} className="flex flex-col gap-3 bg-surface p-5">
               <Skeleton className="h-3 w-1/2" />
               <Skeleton className="h-9 w-2/3" />
             </div>
@@ -102,7 +102,7 @@ export function LoadingShape({ kind }: { kind: SkeletonKind }) {
         </div>
       )}
       {kind === 'form' && (
-        <div className="flex max-w-xl flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-5 shadow-card">
+        <div className="flex max-w-xl flex-col gap-4 rounded-[var(--radius-card)] border border-line bg-surface p-5">
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex flex-col gap-2">
               <Skeleton className="h-3 w-28" />
@@ -122,12 +122,51 @@ export function QueryView<T>({ q, children, skeleton }: { q: { isPending: boolea
   return <>{children(q.data)}</>;
 }
 
-/** A calm card with a heading: one topic of a page (a form, a list, a setting). */
-export function Section({ title, description, children, actions, tone }: { title: string; description?: ReactNode; children: ReactNode; actions?: ReactNode; tone?: 'danger' }) {
+/**
+ * A page: a large title over a hairline, an optional description and actions, then the content. The header is the
+ * page's one entrance moment (data-motion="page"). Content lines up with the sidebar rather than floating centred.
+ */
+export function Page({ title, description, actions, children }: { title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode }) {
+  return (
+    <main className="max-w-6xl px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
+      <header className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
+        <div data-motion="page" className="flex min-w-0 flex-col gap-2">
+          <h1 className="font-display text-[2rem] leading-[1.05] font-extrabold tracking-[-0.025em] sm:text-[2.5rem]">{title}</h1>
+          {description && <p className="max-w-2xl text-ink-2">{description}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </header>
+      {children}
+    </main>
+  );
+}
+
+/** Set inside a Section, so a Table there runs edge to edge instead of drawing a second frame. */
+const InPanel = createContext(false);
+
+/** One topic of a page (a form, a list, a setting): a flat panel with its heading ruled off from the content. */
+export function Section({
+  title,
+  description,
+  children,
+  actions,
+  tone,
+  className,
+}: {
+  title: string;
+  description?: ReactNode;
+  children: ReactNode;
+  actions?: ReactNode;
+  tone?: 'danger';
+  className?: string;
+}) {
   const id = useId();
   return (
-    <Card className={cx('mb-5 p-5 sm:p-6', tone === 'danger' && 'ring-1 ring-danger/20')} role="region" aria-labelledby={id}>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section
+      className={cx('overflow-clip rounded-[var(--radius-card)] border bg-surface', tone === 'danger' ? 'border-danger/25' : 'border-line', className ?? 'mb-6')}
+      aria-labelledby={id}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 pt-5 pb-4 sm:px-6">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 id={id} className={cx('text-lg leading-snug font-bold', tone === 'danger' && 'text-danger')}>
             {title}
@@ -136,8 +175,10 @@ export function Section({ title, description, children, actions, tone }: { title
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {children}
-    </Card>
+      <div className="px-5 py-5 sm:px-6">
+        <InPanel.Provider value={true}>{children}</InPanel.Provider>
+      </div>
+    </section>
   );
 }
 
@@ -231,18 +272,28 @@ export function RadioGroup<V extends string>({
 }
 
 /**
- * Data table (console pattern): eyebrow column heads, warm row hover, numbers in tabular figures. `raised` floats it
- * on the page; inside a Section it sits flat.
+ * Data table: eyebrow column heads, warm row hover, numbers in tabular figures. On its own it is a bordered panel
+ * (`raised` adds the soft shadow); inside a Section it runs to the panel's edges, and meets its heading rule or
+ * bottom edge when it opens or closes the panel.
  */
 export function Table({ caption, head, children, raised, bodyRef }: { caption: string; head: string[]; children: ReactNode; raised?: boolean; bodyRef?: Ref<HTMLTableSectionElement> }) {
+  const inPanel = useContext(InPanel);
   return (
-    <div className={cx('overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface', raised && 'shadow-card')}>
+    <div
+      className={cx(
+        'overflow-x-auto bg-surface',
+        inPanel
+          ? '-mx-5 border-y border-line first:-mt-5 first:border-t-0 last:-mb-5 last:border-b-0 sm:-mx-6 [&_td:first-child]:ps-5 [&_td:last-child]:pe-5 [&_th:first-child]:ps-5 sm:[&_td:first-child]:ps-6 sm:[&_td:last-child]:pe-6 sm:[&_th:first-child]:ps-6'
+          : 'rounded-[var(--radius-card)] border border-line',
+        raised && !inPanel && 'shadow-card',
+      )}
+    >
       <table className="w-full border-collapse text-sm [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-primary-wash">
         <caption className="sr-only">{caption}</caption>
-        <thead>
+        <thead className="bg-canvas/60">
           <tr>
             {head.map((h, i) => (
-              <th key={`${h}-${i}`} scope="col" className="eyebrow px-4 pt-4 pb-3 text-start whitespace-nowrap">
+              <th key={`${h}-${i}`} scope="col" className="eyebrow px-4 py-3 text-start whitespace-nowrap">
                 {h}
               </th>
             ))}
@@ -255,12 +306,37 @@ export function Table({ caption, head, children, raised, bodyRef }: { caption: s
 }
 
 export const Td = ({ children, className }: { children?: ReactNode; className?: string }) => (
-  <td className={cx('border-t border-line px-4 py-2.5 align-middle', !className?.includes('text-end') && 'text-start', className)}>{children}</td>
+  <td className={cx('border-t border-line px-4 py-3 align-middle', !className?.includes('text-end') && 'text-start', className)}>{children}</td>
 );
 
-/** Big figure (counts up once) with an eyebrow label. */
-export function Stat({ label, value, hint, accent, className }: { label: string; value: ReactNode; hint?: ReactNode; accent?: boolean; className?: string }) {
-  return <UiStat label={label} value={value} hint={hint} accent={accent} className={className} />;
+/**
+ * Headline figures as ruled cells of one slip, like the boxes on a printed ticket: hairlines between cells, one soft
+ * shadow under the whole (`flat` inside a panel). Give it a column count that divides the cells, so no empty box shows.
+ */
+export function Figures({ children, className, label, flat }: { children: ReactNode; className?: string; label?: string; flat?: boolean }) {
+  return (
+    <div
+      data-motion="stagger"
+      role={label ? 'group' : undefined}
+      aria-label={label}
+      className={cx('grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line', !flat && 'shadow-card', className)}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** One cell of Figures, or a figure on its own. `lead` makes it the page's live number (the one ember element). */
+export function Stat({ label, value, hint, lead, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; lead?: boolean; className?: string }) {
+  return (
+    <div className={cx('flex flex-col gap-2 bg-surface p-5', className)}>
+      <span className="eyebrow">{label}</span>
+      <span data-motion="count" className={cx('num font-display leading-none font-extrabold tracking-tight', lead ? 'text-6xl text-primary' : 'text-[2.25rem]')}>
+        {value}
+      </span>
+      {hint && <span className="text-sm text-muted">{hint}</span>}
+    </div>
+  );
 }
 
 /** Status shown as text plus a marker shape, never colour alone. */
@@ -350,7 +426,7 @@ export function CopyButton({ text, label, variant = 'secondary' }: { text: strin
   );
 }
 
-/** Segmented tabs (ink pill on the chosen one). The caller renders the matching role="tabpanel". */
+/** Tabs on a ruled line; the chosen one is underlined in ink. The caller renders the matching role="tabpanel". */
 export function Tabs<K extends string>({
   label,
   tabs,
@@ -367,35 +443,25 @@ export function Tabs<K extends string>({
   labelOf: (k: K) => string;
 }) {
   return (
-    <div className="mb-5 overflow-x-auto">
-      <div role="tablist" aria-label={label} className="inline-flex gap-1 rounded-control border border-line bg-surface p-1">
-        {tabs.map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            id={`${idPrefix}tab-${k}`}
-            aria-selected={value === k}
-            aria-controls={`${idPrefix}panel-${k}`}
-            onClick={() => onChange(k)}
-            className={cx(
-              'min-h-12 rounded-control px-5 font-semibold whitespace-nowrap transition-colors',
-              value === k ? 'bg-ink text-white shadow-button' : 'text-ink-2 hover:bg-canvas hover:text-ink',
-            )}
-          >
-            {labelOf(k)}
-          </button>
-        ))}
-      </div>
+    <div role="tablist" aria-label={label} className="mb-6 flex gap-6 overflow-x-auto border-b border-line">
+      {tabs.map((k) => (
+        <button
+          key={k}
+          type="button"
+          role="tab"
+          id={`${idPrefix}tab-${k}`}
+          aria-selected={value === k}
+          aria-controls={`${idPrefix}panel-${k}`}
+          onClick={() => onChange(k)}
+          className={cx(
+            'relative min-h-12 shrink-0 font-semibold whitespace-nowrap transition-colors',
+            'after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors',
+            value === k ? 'text-ink after:bg-ink' : 'text-muted after:bg-transparent hover:text-ink hover:after:bg-line',
+          )}
+        >
+          {labelOf(k)}
+        </button>
+      ))}
     </div>
   );
-}
-
-/** Page context line: the venue a page manages, or the restaurant for account-wide pages. */
-export function usePageEyebrow(scope: 'venue' | 'tenant'): string | undefined {
-  const venues = useVenues(scope === 'venue').data ?? [];
-  const venueId = useCurrentVenueId(scope === 'venue');
-  const tenant = useTenant().data;
-  if (scope === 'venue') return venues.find((v) => v.id === venueId)?.name ?? tenant?.name;
-  return tenant?.name;
 }

@@ -18,28 +18,26 @@ export function VenueHeader({ venue }: { venue: VenueBranding }) {
   const { t } = useTranslation();
   const other = venue.locales.find((l) => l !== i18next.language);
   return (
-    <header className="relative flex items-center justify-between gap-3 border-b border-line bg-surface/90 px-4 py-2.5 backdrop-blur">
-      {/* A hairline of the venue's colour: the venue frames the page, its colour leads. */}
-      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: 'var(--brand-band)' }} />
-      <div className="flex min-w-0 items-center gap-3 pt-1">
+    <header className="flex items-center justify-between gap-3 px-4 py-2">
+      <div className="flex min-w-0 items-center gap-2.5">
         {venue.logoUrl ? (
-          <img src={venue.logoUrl} alt="" className="size-11 shrink-0 rounded-[0.875rem] bg-white object-contain p-1 ring-1 ring-line" />
+          <img src={venue.logoUrl} alt="" className="size-9 shrink-0 rounded-full bg-white object-contain" />
         ) : (
           <span
             aria-hidden="true"
-            className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] font-display text-lg font-extrabold"
+            className="grid size-9 shrink-0 place-items-center rounded-full font-display text-base font-bold"
             style={{ background: 'var(--brand-band)', color: 'var(--on-band)' }}
           >
             {Array.from(venue.name.trim())[0] ?? ''}
           </span>
         )}
-        <span dir="auto" className="truncate font-display text-[1.0625rem] font-bold tracking-tight">
+        <span dir="auto" className="truncate text-base font-semibold">
           {venue.name}
         </span>
       </div>
       {other && (
         <button
-          className="mt-1 min-h-12 shrink-0 rounded-control px-4 text-sm font-semibold text-ink-2 ring-1 ring-line transition-colors hover:bg-canvas active:scale-[.98]"
+          className="-me-2 min-h-12 shrink-0 rounded-control px-3 text-sm font-medium text-muted transition-colors hover:text-ink"
           onClick={() => chooseLanguage(other)}
           lang={other}
         >
@@ -55,13 +53,13 @@ export function VenueFooter({ venue }: { venue: VenueBranding }) {
   const website = venue.messages[i18next.language]?.websiteUrl ?? venue.messages[venue.locales[0] ?? 'ar']?.websiteUrl;
   const domain = website ? plainDomain(website) : null;
   return (
-    <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-sm text-muted">
+    <footer className="flex flex-wrap items-center justify-center gap-x-4 px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-xs text-muted">
       {domain && (
-        <a href={website} rel="noopener noreferrer nofollow" target="_blank" className="inline-flex min-h-12 items-center underline decoration-line underline-offset-4 hover:text-ink">
+        <a href={website} rel="noopener noreferrer nofollow" target="_blank" className="inline-flex min-h-12 items-center hover:text-ink">
           {domain}
         </a>
       )}
-      <Link to="/privacy" className="inline-flex min-h-12 items-center underline decoration-line underline-offset-4 hover:text-ink">
+      <Link to="/privacy" className="inline-flex min-h-12 items-center hover:text-ink">
         {t('privacy.title')}
       </Link>
       {venue.showPoweredBy && <span className="inline-flex min-h-12 items-center">{t('common:poweredBy')}</span>}

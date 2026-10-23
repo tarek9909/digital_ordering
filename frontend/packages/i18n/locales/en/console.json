@@ -253,8 +253,6 @@
     "name": "Restaurant name",
     "slug": "Address (slug)",
     "slugHint": "3–40 lowercase letters, digits or hyphens, e.g. burger-house.",
-    "country": "Country code",
-    "countryHint": "Two letters, e.g. SA.",
     "locale": "Default language",
     "ownerEmail": "Owner email (an invitation is sent)",
     "complimentary": "Complimentary",
@@ -320,26 +318,9 @@
   "settings": {
     "title": "Platform settings",
     "savedKey": "{{key}} saved.",
-    "platform": "Settings (JSON)",
-    "invalidJson": "This is not valid JSON. {{detail}}",
-    "wrongShape": "This setting must be {{expected}}.",
-    "kind": {
-      "array": "a list",
-      "object": "an object",
-      "null": "empty",
-      "string": "text",
-      "number": "a number",
-      "boolean": "true or false"
-    },
     "updatedAt": "Changed {{date}}",
-    "default": "Default value",
-    "revert": "Revert",
     "languages": "Languages",
     "code": "Code",
-    "langName": "Name",
-    "direction": "Direction",
-    "customerEnabled": "Customer pages",
-    "tts": "Voice language",
     "rtl": "Right to left",
     "ltr": "Left to right",
     "enabledFor": "Enable {{name}}",
@@ -588,11 +569,7 @@
     "nameInvalid": "Enter a name of 1 to 80 characters.",
     "isPublic": "Shown on the public pricing page",
     "limits": "Limits",
-    "limitsJson": "Limits (JSON)",
-    "limitsHint": "All seven keys, whole numbers: maxVenues, maxCountersPerVenue, maxLanguages (≥ 1), maxDisplaysPerVenue, maxStaffDevicesPerVenue, maxApiKeysPerVenue, trialTicketsPerDay (≥ 1).",
-    "limitsInvalid": "Check these limits: {{keys}}.",
     "features": "Features",
-    "featuresHint": "One feature key per line.",
     "featuresInvalid": "Up to 50 features of at most 60 characters.",
     "prices": "Prices",
     "noPrices": "No prices.",
@@ -635,8 +612,6 @@
       "tenants": "Selected tenants",
       "plans": "Tenants on plans"
     },
-    "tenantIds": "Tenant IDs",
-    "tenantIdsHint": "Separate IDs with commas, spaces or new lines.",
     "targetEmpty": "Choose at least one tenant or plan.",
     "targetBadId": "This is not a tenant ID: {{id}}",
     "starts": "Starts",
@@ -673,7 +648,6 @@
       "htmlInvalid": "Enter the document content.",
       "createDraft": "Create draft",
       "created": "Draft created.",
-      "drafts": "Drafts created in this visit",
       "state": "State",
       "isDraft": "Draft",
       "isPublished": "Published",
@@ -881,6 +855,406 @@
       "whatsapp": "WhatsApp button",
       "photoSlot": "Photo placeholders",
       "local": "Made for Lebanon"
+    }
+  },
+  "list": {
+    "remove": "Remove {{item}}",
+    "duplicate": "This is already in the list."
+  },
+  "picker": {
+    "chosen": "Chosen restaurants",
+    "add": "Add {{name}}",
+    "noResults": "Nothing found. Try another name."
+  },
+  "tenantsUx": {
+    "searchPlaceholder": "Restaurant name or address",
+    "searchButton": "Search",
+    "allPlans": "All plans",
+    "allStatuses": "All",
+    "clear": "Clear filters",
+    "restaurant": "Restaurant",
+    "trialEnds": "Ends {{date}}",
+    "createdOn": "Joined {{date}}"
+  },
+  "tenantUx": {
+    "summary": "At a glance",
+    "venues": "Venues",
+    "devicesDisplays": "{{devices}} staff devices · {{displays}} displays",
+    "complimentaryLine": "Complimentary, no payment due",
+    "trialLine": "Trial until {{date}}",
+    "paidLine": "Paid until {{date}}",
+    "noPaidPeriod": "No paid period",
+    "noDevices": "No staff devices are paired.",
+    "noDisplays": "No pickup screens yet."
+  },
+  "createUx": {
+    "restaurant": "The restaurant",
+    "restaurantHint": "Its name and the web address its staff and customers will use.",
+    "namePlaceholder": "e.g. Burger House",
+    "slugPreview": "Address: {{url}}",
+    "country": "Country",
+    "owner": "The owner",
+    "ownerHint": "We email this person an invitation to set a password and sign in.",
+    "plan": "Plan",
+    "planHint": "Start on a trial, a paid plan, or make the account complimentary.",
+    "summary": "Summary",
+    "unnamed": "New restaurant",
+    "next": {
+      "create": "The restaurant is created with one venue.",
+      "invite": "The owner gets an invitation email.",
+      "inviteTo": "An invitation is sent to {{email}}.",
+      "trial": "The trial runs {{days}} days, until {{date}}.",
+      "plan": "It starts on the {{plan}} plan.",
+      "complimentary": "It is active on {{plan}} with nothing to pay."
+    }
+  },
+  "actionsUx": {
+    "intro": "Change the account's status. Every action is written to the audit log.",
+    "danger": "Danger zone",
+    "hint": {
+      "reactivate": "Bring a suspended account back to normal service.",
+      "extend": "Give the restaurant more days on its current trial.",
+      "complimentaryOn": "Keep the account active without a subscription.",
+      "complimentaryOff": "Stop the free access; the restaurant then has 14 days to subscribe.",
+      "suspend": "Stop new tickets now. Open tickets can still be finished, and the owner is emailed.",
+      "cancel": "Close the account. Its data is kept for the retention period.",
+      "delete": "Remove the account and all its data for good. This cannot be undone."
+    }
+  },
+  "commercialUx": {
+    "intro": "Payments received outside the platform, plan changes and ownership.",
+    "hint": {
+      "payment": "Record cash, a transfer or a wallet payment and extend the paid period.",
+      "plan": "Move the restaurant to another plan. It applies at once.",
+      "freeMonths": "Add free months to the trial or the paid period.",
+      "transfer": "Hand the account to another person, after verifying the request."
+    }
+  },
+  "plansUx": {
+    "emptyTitle": "No plans yet",
+    "emptyHint": "Create a plan, set its limits, then add a price.",
+    "archivedPlans": "Archived plans ({{count}})",
+    "createIntro": "Choose a name, what the plan allows, and whether it shows on the website. Add prices after saving.",
+    "namePlaceholder": "e.g. Pro",
+    "publicHint": "Public plans can be picked on the website's pricing section.",
+    "limitsHint": "What a restaurant on this plan may use. 0 means none.",
+    "limitInvalid": "Enter a whole number of {{min}} or more.",
+    "featuresHint": "Type a feature key and press Enter.",
+    "suggestions": "Used by other plans:",
+    "noFeatures": "No extra features.",
+    "pricePreview": "Customers see {{price}}.",
+    "replaces": "This replaces the current {{price}} price for this period."
+  },
+  "announcementsUx": {
+    "createIntro": "A banner at the top of the restaurant admin, for the time you choose.",
+    "chars": "{{count}} of 500 characters",
+    "preview": "Preview",
+    "previewEmpty": "Your message appears here.",
+    "chooseTenants": "Restaurants",
+    "lasts": "Show for:",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "shown": "Shown",
+    "tenantCount_one": "{{count}} restaurant",
+    "tenantCount_other": "{{count}} restaurants",
+    "when": {
+      "live": "Live now",
+      "scheduled": "Scheduled",
+      "ended": "Ended"
+    }
+  },
+  "usersUx": {
+    "summary": "Team by role",
+    "you": "You",
+    "never": "Never",
+    "noMfa_one": "{{count}} active person has not set up two-factor sign-in yet.",
+    "noMfa_other": "{{count}} active people have not set up two-factor sign-in yet.",
+    "inviteIntro": "They get an email to set a password, then set up two-factor sign-in.",
+    "roleHint": {
+      "super_admin": "Everything, including settings, plans and team.",
+      "support": "Tenants, notes and support access.",
+      "finance": "Billing and reports."
+    }
+  },
+  "contentUx": {
+    "newDraft": "New draft",
+    "draftIntro": "Write the document, check the preview, save it as a draft, then publish it from the list.",
+    "versionHint": "For example the month it takes effect.",
+    "write": "Write",
+    "preview": "Preview",
+    "previewEmpty": "Nothing to preview yet.",
+    "htmlHint": "HTML: use <h2>, <p>, <ul> and <a> for headings, paragraphs, lists and links.",
+    "noVersions": "No versions yet.",
+    "current": "Current",
+    "findEmail": "Find an email",
+    "emailPreview": "Preview the email",
+    "lostPlaceholders": "These placeholders were removed: {{list}}. The email will be sent without that detail.",
+    "emailNames": {
+      "verify_email": "Confirm email address",
+      "welcome": "Welcome",
+      "password_reset": "Password reset",
+      "invitation_manager": "Manager invitation",
+      "invitation_owner": "Owner invitation",
+      "ownership_transferred": "Ownership transferred",
+      "trial_ending": "Trial ending soon",
+      "trial_ended": "Trial ended",
+      "payment_failed": "Payment failed",
+      "payment_reminder": "Payment reminder",
+      "suspended_billing": "Suspended for payment",
+      "suspended_platform": "Suspended by the platform",
+      "reactivated": "Account reactivated",
+      "subscription_cancelled": "Subscription cancelled",
+      "subscription_reactivated": "Subscription reactivated",
+      "deletion_requested": "Deletion requested",
+      "deletion_completed": "Deletion completed",
+      "staff_pin_lock": "Staff PIN locked",
+      "export_ready": "Data export ready",
+      "platform_user_invitation": "Console invitation",
+      "platform_mfa_reset": "Console two-factor reset",
+      "support_requested": "Support access requested",
+      "support_started": "Support session started",
+      "emergency_access": "Emergency access opened",
+      "weekly_summary": "Weekly summary",
+      "webhook_disabled": "Webhook turned off",
+      "email_change": "Confirm new email",
+      "email_changed": "Email changed",
+      "mfa_changed": "Two-factor changed"
+    }
+  },
+  "pilotUx": {
+    "restaurants": "Restaurants to compare",
+    "quickRange": "Quick range:",
+    "lastDays_one": "Last {{count}} day",
+    "lastDays_other": "Last {{count}} days",
+    "guide": {
+      "title": "How to read this report",
+      "intro": "The pilot report checks whether Tanbeeh does its job at each restaurant: customers are told when their order is ready, and they come to collect it. Figures come from the daily roll-up, so today can be incomplete.",
+      "tickets": {
+        "term": "Tickets",
+        "text": "Order numbers created in the date range, whether by staff, the POS or the API."
+      },
+      "ready": {
+        "term": "Marked ready",
+        "text": "Tickets staff marked ready at least once. Every percentage below is out of this number."
+      },
+      "reach": {
+        "term": "Push sent or page open",
+        "text": "Share of ready tickets where the customer could be alerted: a push notification was sent to their phone, or their order page was open. The rest had the page closed with no push, or no phone following. This is the main health figure: aim high."
+      },
+      "acknowledged": {
+        "term": "Acknowledged",
+        "text": "Share of ready tickets where the customer tapped to confirm they saw the alert. It shows real attention; customers who simply walk up do not tap, so it is always lower than reach."
+      },
+      "prep": {
+        "term": "Preparation (median and 90th percentile)",
+        "text": "Time from ticket creation to marked ready. The median is the typical order; the 90th percentile is the slow end: 9 in 10 orders were faster."
+      },
+      "pickup": {
+        "term": "Pickup after ready (median and 90th percentile)",
+        "text": "Time from ready to collected. Short times mean the alerts bring people to the counter."
+      },
+      "uncollected": {
+        "term": "Ready but not collected",
+        "text": "Tickets marked ready that expired without being collected. A high count points to customers who were not reached or left."
+      },
+      "undo": {
+        "term": "Ready undone",
+        "text": "Share of ready tickets staff moved back, usually a mistap. A high value means staff need help with the board."
+      },
+      "tip": "Compare restaurants over the same range. Low reach with many uncollected tickets usually means customers are not keeping the order page open or allowing notifications: ask the restaurant to show the QR poster and the \"keep this page open\" hint at the counter."
+    }
+  },
+  "settingsForm": {
+    "tabs": {
+      "general": "General"
+    },
+    "save": "Save changes",
+    "discard": "Discard",
+    "unsaved_one": "{{count}} unsaved change",
+    "unsaved_other": "{{count}} unsaved changes",
+    "savedCount_one": "{{count}} setting saved.",
+    "savedCount_other": "{{count}} settings saved.",
+    "rangeHint": "From {{min}} to {{max}}.",
+    "minHint": "At least {{min}}.",
+    "inLanguage": "In {{lang}}",
+    "noEnd": "Empty means no end time is shown.",
+    "clearTime": "Remove the end time",
+    "secondsListHint": "Seconds after Ready, from {{min}} to {{max}}, up to {{n}}. Press Enter after each one.",
+    "secondsPlaceholder": "e.g. 120",
+    "languagesIntro": "Languages restaurants can offer on their customer pages, and the voice used to read numbers aloud on pickup screens.",
+    "customerPagesHint": "Offered on customer pages",
+    "ttsHint": "Language tag for spoken numbers, e.g. ar-SA.",
+    "waitMode": {
+      "manual": "Staff enter it",
+      "auto": "Estimated",
+      "off": "Hidden"
+    },
+    "waitModeHint": {
+      "manual": "Staff type the waiting time for each order.",
+      "auto": "The waiting time is estimated from recent orders.",
+      "off": "Customers see no waiting time."
+    },
+    "unit": {
+      "days": "days",
+      "minutes": "minutes",
+      "seconds": "seconds",
+      "perSecond": "per second",
+      "alerts": "alerts",
+      "minutesShort_one": "{{count}} min",
+      "minutesShort_other": "{{count}} min",
+      "secondsShort_one": "{{count}} s",
+      "secondsShort_other": "{{count}} s"
+    },
+    "invalid": {
+      "whole": "Enter a whole number.",
+      "range": "Enter a whole number from {{min}} to {{max}}.",
+      "atLeast": "Enter a whole number of {{min}} or more.",
+      "time": "Enter a time such as 04:00.",
+      "oneLanguage": "Choose at least one language.",
+      "currency": "Choose a currency.",
+      "required": "Required.",
+      "address": "Enter an IP address or range, e.g. 203.0.113.7 or 203.0.113.0/24."
+    },
+    "groups": {
+      "newTenants": {
+        "title": "New restaurants",
+        "hint": "Starting values for restaurants created from now on. Existing restaurants keep their own settings."
+      },
+      "billing": {
+        "title": "Billing and overdue accounts",
+        "hint": "What happens when a paid period ends without a new payment."
+      },
+      "maintenance": {
+        "title": "Maintenance mode",
+        "hint": "Use during planned work. The console keeps working."
+      },
+      "delivery": {
+        "title": "Alerts and delivery",
+        "hint": "Limits that keep one busy restaurant from slowing down the others."
+      },
+      "data": {
+        "title": "Support and data",
+        "hint": "How long support sessions last and how long data is kept."
+      },
+      "security": {
+        "title": "Console security",
+        "hint": "Who can reach this console."
+      },
+      "other": {
+        "title": "Other settings",
+        "hint": "Settings without their own section."
+      }
+    },
+    "f": {
+      "tenant_defaults": {
+        "label": "Defaults for a new restaurant",
+        "hint": "Its first venue starts with these values; the owner can change them later."
+      },
+      "tenant_defaults_timeZone": {
+        "label": "Time zone"
+      },
+      "tenant_defaults_locales": {
+        "label": "Customer languages",
+        "hint": "The first one is the main language."
+      },
+      "tenant_defaults_currency": {
+        "label": "Currency"
+      },
+      "tenant_defaults_resetTime": {
+        "label": "Numbers restart at",
+        "hint": "Order numbers start again from 1 at this time each day."
+      },
+      "tenant_defaults_autoCloseTime": {
+        "label": "Open tickets close at",
+        "hint": "Tickets still open at this time are closed automatically."
+      },
+      "tenant_defaults_wait": {
+        "label": "Waiting time shown to customers"
+      },
+      "tenant_defaults_wait_mode": {
+        "label": "How it is set"
+      },
+      "tenant_defaults_wait_defaultMinutes": {
+        "label": "Default waiting time"
+      },
+      "tenant_defaults_alerts": {
+        "label": "Repeat alerts"
+      },
+      "tenant_defaults_alerts_repeatOffsetsSec": {
+        "label": "Remind the customer again after"
+      },
+      "tenant_defaults_alerts_maxAutoAlerts": {
+        "label": "Most automatic alerts per order"
+      },
+      "tenant_defaults_chime": {
+        "label": "Alert sound"
+      },
+      "trial_days": {
+        "label": "Trial length",
+        "hint": "Used when a restaurant is created without its own trial length."
+      },
+      "billing_retryDays": {
+        "label": "Retry period",
+        "hint": "After a paid period ends, the account is past due for this many days…"
+      },
+      "billing_graceDays": {
+        "label": "Grace period",
+        "hint": "…plus this many days before it is suspended."
+      },
+      "billing_suspendedToCancelDays": {
+        "label": "Cancel after suspension",
+        "hint": "An account suspended for non-payment is cancelled after this many days."
+      },
+      "maintenance": {
+        "label": "Maintenance"
+      },
+      "maintenance_enabled": {
+        "label": "Maintenance mode is on",
+        "hint": "While on, every restaurant, staff, customer and display app shows the message below instead of working."
+      },
+      "maintenance_message": {
+        "label": "Message shown",
+        "hint": "Leave a language empty to show the default text."
+      },
+      "maintenance_until": {
+        "label": "Expected back"
+      },
+      "push_ttlSeconds": {
+        "label": "Push notification lifetime",
+        "hint": "How long a push service keeps trying to deliver a notification."
+      },
+      "fairness_perTenantPerSecond": {
+        "label": "Sending limit per restaurant"
+      },
+      "fairness_perTenantPerSecond_push": {
+        "label": "Push notifications"
+      },
+      "fairness_perTenantPerSecond_webhook": {
+        "label": "Webhooks"
+      },
+      "fairness_perTenantPerSecond_email": {
+        "label": "Emails"
+      },
+      "customer_supportedLanguages": {
+        "label": "Customer page languages",
+        "hint": "Languages customer pages may be shown in."
+      },
+      "support_defaultMinutes": {
+        "label": "Support session length",
+        "hint": "Proposed length when asking a restaurant for access."
+      },
+      "retention_ticketDays": {
+        "label": "Keep tickets for",
+        "hint": "Older tickets are removed."
+      },
+      "retention_closedTenantDays": {
+        "label": "Keep cancelled accounts for",
+        "hint": "A cancelled account's data is deleted after this many days."
+      },
+      "console_ipAllowList": {
+        "label": "Allowed networks",
+        "hint": "Empty means any network. Once set, the console only opens from these addresses, and your current address must be one of them."
+      }
     }
   }
 }

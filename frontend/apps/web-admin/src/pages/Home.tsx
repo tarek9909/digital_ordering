@@ -1,9 +1,9 @@
 import { useTranslation } from '@dop/i18n';
-import { EmptyState, PageShell, Pill, Stat as UiStat } from '@dop/ui';
+import { EmptyState, Pill } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { LoadingShape, QueryView, Section, Stat, Table, Td, linkClass, usePageEyebrow } from '../components/common';
+import { Figures, LoadingShape, Page, QueryView, Section, Stat, Table, Td, linkClass } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration, pct } from '../lib/format';
 import { useCurrentVenueId } from '../lib/venue';
@@ -49,13 +49,10 @@ function Checklist() {
               total: o.steps.length,
             })}
           >
-            <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden="true">
-              <div
-                className="h-full rounded-full bg-ink transition-[width] duration-500"
-                style={{
-                  width: `${Math.round((done / Math.max(1, o.steps.length)) * 100)}%`,
-                }}
-              />
+            <div className="mb-3 flex gap-1" aria-hidden="true">
+              {o.steps.map((s) => (
+                <span key={s.key} className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${s.done ? 'bg-ink' : s.key === next ? 'bg-ink/25' : 'bg-line'}`} />
+              ))}
             </div>
             <ol className="flex flex-col">
               {o.steps.map((s, i) => {
@@ -118,7 +115,7 @@ function ReachBar({ reach }: { reach: Reach }) {
             reach[k] > 0 ? <span key={k} className={`${REACH_TONE[k]} h-full border-e-2 border-surface last:border-e-0`} style={{ width: `${(reach[k] / total) * 100}%` }} /> : null,
           )}
       </div>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4 xl:grid-cols-2">
         {REACH_KEYS.map((k) => (
           <div key={k} className="flex flex-col gap-1">
             <dt className="flex items-center gap-2 text-sm text-ink-2">
@@ -133,18 +130,22 @@ function ReachBar({ reach }: { reach: Reach }) {
   );
 }
 
-/** The live figures first, then (optionally) what to do next, then how alerts reached customers. */
+/**
+ * The live board first, then (optionally) what to do next, then how alerts reached customers beside the orders
+ * waiting longest. Open orders lead the board as the page's one ember figure.
+ */
 export function TodayStats({ r, next }: { r: TodayReport; next?: ReactNode }) {
   const { t } = useTranslation();
+  const statuses = Object.entries(r.byStatus ?? {});
   return (
     <>
-      <div data-motion="stagger" className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <UiStat
-          accent
-          className="col-span-2 lg:col-span-1"
+      <Figures className="mb-6 grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <Stat
+          lead
+          className="col-span-2 lg:col-span-1 lg:row-span-2 lg:justify-between"
           label={
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="size-2 rounded-full bg-glow motion-safe:animate-pulse" />
+              <span aria-hidden="true" className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
               {t('today.open')}
             </span>
           }
@@ -154,40 +155,44 @@ export function TodayStats({ r, next }: { r: TodayReport; next?: ReactNode }) {
         <Stat label={t('today.tickets')} value={r.tickets} />
         <Stat label={t('today.prep')} value={formatDuration(r.prepSecondsP50)} hint={t('reports.prepNote')} />
         <Stat className="col-span-2 lg:col-span-1" label={t('today.pickup')} value={formatDuration(r.pickupSecondsP50)} hint={t('reports.pickupNote')} />
-      </div>
-      {r.byStatus && Object.keys(r.byStatus).length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-2 bg-surface px-5 py-4 lg:col-span-3">
           <span className="eyebrow me-1">{t('today.byStatus')}</span>
-          <ul className="flex flex-wrap gap-2" aria-label={t('today.byStatus')}>
-            {Object.entries(r.byStatus).map(([s, n]) => (
-              <li key={s}>
-                <Pill tone="neutral">
-                  {t(`common:status.${s}`, { defaultValue: s })} <span className="num">{n}</span>
-                </Pill>
-              </li>
-            ))}
-          </ul>
+          {statuses.length > 0 ? (
+            <ul className="flex flex-wrap gap-2" aria-label={t('today.byStatus')}>
+              {statuses.map(([s, n]) => (
+                <li key={s}>
+                  <Pill tone="neutral">
+                    {t(`common:status.${s}`, { defaultValue: s })} <span className="num">{n}</span>
+                  </Pill>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className="text-sm text-muted">—</span>
+          )}
         </div>
-      )}
+      </Figures>
       {next}
-      <Section title={t('today.reachTitle')} description={t('reports.wordingNote')}>
-        <ReachBar reach={r.alertReach} />
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-5">
-          <div className="flex flex-col gap-1">
-            <span className="eyebrow">{t('today.reachPct')}</span>
-            <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
-              {pct(r.reachPushOrLivePct)}
-            </span>
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <Section className="m-0" title={t('today.reachTitle')} description={t('reports.wordingNote')}>
+          <ReachBar reach={r.alertReach} />
+          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-5">
+            <div className="flex flex-col gap-1">
+              <span className="eyebrow">{t('today.reachPct')}</span>
+              <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
+                {pct(r.reachPushOrLivePct)}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="eyebrow">{t('today.ackPct')}</span>
+              <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
+                {pct(r.acknowledgedPct)}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="eyebrow">{t('today.ackPct')}</span>
-            <span data-motion="count" className="num font-display text-3xl font-extrabold tracking-tight">
-              {pct(r.acknowledgedPct)}
-            </span>
-          </div>
-        </div>
-      </Section>
-      <LongestWaiting items={r.longestWaiting ?? []} />
+        </Section>
+        <LongestWaiting items={r.longestWaiting ?? []} />
+      </div>
     </>
   );
 }
@@ -196,7 +201,7 @@ export function TodayStats({ r, next }: { r: TodayReport; next?: ReactNode }) {
 export function LongestWaiting({ items }: { items: WaitingTicket[] }) {
   const { t } = useTranslation();
   return (
-    <Section title={t('today.longestTitle')} description={t('today.longestNote')}>
+    <Section className="m-0" title={t('today.longestTitle')} description={t('today.longestNote')}>
       {items.length === 0 ? (
         <p className="text-muted">{t('today.longestEmpty')}</p>
       ) : (
@@ -257,8 +262,7 @@ function Today({ venueId }: { venueId: string }) {
 export function HomePage() {
   const { t } = useTranslation();
   const venueId = useCurrentVenueId();
-  const eyebrow = usePageEyebrow('venue');
-  // Reads what <Today> loads (same query key) for the header line.
+  // Reads what <Today> loads (same query key) for the header line. The staff board is one tap away on the pass.
   const today = useQuery({
     queryKey: ['today', venueId],
     queryFn: () => api.get<TodayReport>('/reports/today', { venueId: venueId ?? '' }),
@@ -266,21 +270,8 @@ export function HomePage() {
   }).data;
   const date = today?.businessDate;
   return (
-    <PageShell
-      eyebrow={eyebrow}
-      title={t('nav.home')}
-      description={date ? t('today.businessDate', { date }) : t('today.description')}
-      actions={
-        venueId &&
-        today &&
-        today.tickets > 0 && (
-          <a className={linkClass('ink')} href={staffBoardUrl(venueId)}>
-            {t('onboarding.openBoard')}
-          </a>
-        )
-      }
-    >
+    <Page title={t('nav.home')} description={date ? t('today.businessDate', { date }) : t('today.description')}>
       {venueId ? <Today venueId={venueId} /> : <LoadingShape kind="tiles" />}
-    </PageShell>
+    </Page>
   );
 }

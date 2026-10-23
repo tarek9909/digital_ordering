@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { api } from '../lib/api';
 import { applyFieldErrors } from '../lib/errors';
 import type { TenantDetail } from '../lib/types';
-import { ErrorNote, TextArea } from './common';
+import { ActionRow, ErrorNote, Section, TextArea } from './common';
 import { MfaCancelled, useFreshMfa } from './FreshMfa';
 
 // Lifecycle actions (FR-SA-06 – FR-SA-08, TR-FE-23). Suspend and delete need the tenant slug typed and a fresh
@@ -35,34 +35,41 @@ export function TenantActions({ tenant }: { tenant: Tenant }) {
   };
 
   const s = tenant.status;
-  const available: Kind[] = [
-    ...(['trial', 'active', 'past_due'].includes(s) ? (['suspend'] as const) : []),
-    ...(s === 'suspended' ? (['reactivate'] as const) : []),
-    ...(s === 'trial' ? (['extend'] as const) : []),
-    'complimentary',
-    ...(s !== 'cancelled' ? (['cancel'] as const) : []),
-    'delete',
-  ];
+  const safe: Kind[] = [...(s === 'suspended' ? (['reactivate'] as const) : []), ...(s === 'trial' ? (['extend'] as const) : []), 'complimentary'];
+  const danger: Kind[] = [...(['trial', 'active', 'past_due'].includes(s) ? (['suspend'] as const) : []), ...(s !== 'cancelled' ? (['cancel'] as const) : []), 'delete'];
+  const label = (k: Kind) => (k === 'complimentary' ? t(tenant.complimentary ? 'actions.complimentary.off' : 'actions.complimentary.on') : t(`actions.${k}.button`));
+  const hint = (k: Kind) => (k === 'complimentary' ? t(tenant.complimentary ? 'actionsUx.hint.complimentaryOff' : 'actionsUx.hint.complimentaryOn') : t(`actionsUx.hint.${k}`));
 
   return (
-    <section aria-labelledby="actions-h" className="mt-6">
-      <h2 id="actions-h" className="mb-2 text-lg font-bold">
-        {t('actions.title')}
-      </h2>
+    <Section title={t('actions.title')} description={t('actionsUx.intro')}>
       <LiveRegion text={announce} />
-      <div className="flex flex-wrap gap-2">
-        {available.map((k) => (
-          <Button key={k} variant={k === 'delete' || k === 'suspend' || k === 'cancel' ? 'danger' : 'secondary'} onClick={() => setOpen(k)}>
-            {k === 'complimentary' ? t(tenant.complimentary ? 'actions.complimentary.off' : 'actions.complimentary.on') : t(`actions.${k}.button`)}
-          </Button>
+      <ul className="flex flex-col divide-y divide-line">
+        {safe.map((k) => (
+          <ActionRow key={k} hint={hint(k)}>
+            <Button variant="secondary" onClick={() => setOpen(k)}>
+              {label(k)}
+            </Button>
+          </ActionRow>
         ))}
+      </ul>
+      <div className="mt-5 rounded-input border border-danger/25 bg-danger-bg/40 p-4">
+        <h3 className="mb-3 text-sm font-bold text-danger">{t('actionsUx.danger')}</h3>
+        <ul className="flex flex-col divide-y divide-danger/15">
+          {danger.map((k) => (
+            <ActionRow key={k} hint={hint(k)}>
+              <Button variant={k === 'delete' ? 'danger' : 'secondary'} className={k === 'delete' ? undefined : 'text-danger'} onClick={() => setOpen(k)}>
+                {label(k)}
+              </Button>
+            </ActionRow>
+          ))}
+        </ul>
       </div>
       {open && (
         <Modal open onOpenChange={(o) => !o && setOpen(null)} title={t(`actions.${open}.title`)} description={t(`actions.${open}.body`, { slug: tenant.slug })}>
           <ActionForm kind={open} tenant={tenant} onDone={() => done(open)} onCancel={() => setOpen(null)} />
         </Modal>
       )}
-    </section>
+    </Section>
   );
 }
 

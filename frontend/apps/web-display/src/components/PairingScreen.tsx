@@ -31,60 +31,56 @@ export function PairingScreen() {
   };
 
   return (
-    <main className="grid min-h-dvh bg-surface text-ink landscape:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      <aside className="ember-glow flex flex-col justify-between gap-[4vmin] bg-ink p-[6vmin] text-white portrait:min-h-[34vh]">
-        <span className="flex items-center gap-[2vmin] font-display text-[3.4vmin] font-bold">
-          <span data-motion="draw" className="contents">
-            <BrandMark tone="light" className="size-[8vmin]" />
-          </span>
-          {t('common:appName')}
+    <main className="grid min-h-dvh grid-rows-[auto_1fr_auto] gap-[4vmin] bg-surface p-[5vmin] text-ink">
+      <span className="flex items-center gap-[1.6vmin] font-display text-[2.8vmin] font-bold">
+        <span data-motion="draw" className="contents">
+          <BrandMark className="size-[6vmin]" />
         </span>
-        <div className="flex flex-col gap-[2.4vmin]">
-          <p className="font-display text-[7.4vmin] leading-[1.02] font-extrabold tracking-tight text-balance">{t('pairing.title')}</p>
-          <p className="max-w-[60vmin] text-[2.8vmin] leading-snug text-white/70">{t('pairing.lead')}</p>
-        </div>
-      </aside>
+        {t('common:appName')}
+      </span>
 
-      <div className="flex flex-col items-center justify-center p-[6vmin]">
-        <form onSubmit={submit} className="flex w-full max-w-[78vmin] flex-col gap-[3vmin]">
-          <h1 className="sr-only">{t('pairing.title')}</h1>
-          <label htmlFor="pair-code" className="font-display text-[3.2vmin] font-bold text-ink">
-            {t('pairing.code')}
-          </label>
-          <input
-            id="pair-code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            maxLength={6}
-            placeholder="••••••"
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? 'pair-error' : 'pair-help'}
-            className="pair-code num w-full rounded-[3vmin] border-[0.4vmin] border-line bg-canvas py-[2.6vmin] text-center text-[11vmin] leading-none font-medium text-ink focus-visible:border-primary focus-visible:bg-surface focus-visible:shadow-[0_0_0_1vmin_var(--color-primary-soft)] focus-visible:outline-none"
-          />
-          {error && (
-            <p id="pair-error" role="alert" className="flex items-center gap-[1.4vmin] rounded-[2vmin] bg-danger-bg px-[2.4vmin] py-[1.6vmin] text-[2.6vmin] font-semibold text-danger">
-              <span aria-hidden="true" className="size-[1.4vmin] shrink-0 rounded-full bg-danger" />
-              {error}
-            </p>
-          )}
-          <Button type="submit" size="xl" busy={busy} disabled={!valid} className="min-h-[10vmin] w-full text-[3.2vmin]">
-            {t('pairing.submit')}
-          </Button>
-          <ol id="pair-help" className="mt-[1.6vmin] flex flex-col gap-[1.6vmin] border-t border-line pt-[3vmin] text-[2.5vmin] leading-snug text-ink-2">
-            {(['step1', 'step2', 'step3'] as const).map((k, i) => (
-              <li key={k} className="flex items-baseline gap-[1.8vmin]">
-                <span aria-hidden="true" className="num flex size-[4vmin] shrink-0 items-center justify-center self-start rounded-full bg-ink/[0.06] font-mono text-[2vmin] font-medium text-ink">
-                  {i + 1}
-                </span>
-                <span>{t(`pairing.${k}`)}</span>
-              </li>
-            ))}
-          </ol>
-        </form>
-      </div>
+      <form onSubmit={submit} className="mx-auto flex w-full max-w-[84vmin] flex-col items-center justify-center gap-[3vmin] text-center">
+        <div className="flex flex-col items-center gap-[1.6vmin]">
+          <h1 className="font-display text-[6.4vmin] leading-[1.05] font-extrabold tracking-tight text-balance">{t('pairing.title')}</h1>
+          <p className="max-w-[70vmin] text-[2.6vmin] leading-snug text-muted">{t('pairing.lead')}</p>
+        </div>
+        <label htmlFor="pair-code" className="sr-only">
+          {t('pairing.code')}
+        </label>
+        <input
+          id="pair-code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          autoFocus
+          maxLength={6}
+          placeholder="••••••"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'pair-error' : 'pair-help'}
+          className="pair-code num mt-[1vmin] w-full rounded-[2.4vmin] border-[0.3vmin] border-line bg-canvas py-[2.4vmin] text-center text-[10vmin] leading-none font-medium text-ink focus-visible:border-primary focus-visible:bg-surface focus-visible:shadow-[0_0_0_1vmin_var(--color-primary-soft)] focus-visible:outline-none"
+        />
+        {error && (
+          <p id="pair-error" role="alert" className="flex w-full items-center gap-[1.4vmin] rounded-[2vmin] bg-danger-bg px-[2.4vmin] py-[1.6vmin] text-start text-[2.4vmin] font-semibold text-danger">
+            <span aria-hidden="true" className="size-[1.4vmin] shrink-0 rounded-full bg-danger" />
+            {error}
+          </p>
+        )}
+        <Button type="submit" size="xl" busy={busy} disabled={!valid} className="min-h-[9vmin] w-full text-[3vmin]">
+          {t('pairing.submit')}
+        </Button>
+      </form>
+
+      <ol id="pair-help" className="mx-auto grid w-full max-w-[150vmin] gap-[2.4vmin] text-[2.2vmin] leading-snug text-ink-2 landscape:grid-cols-3">
+        {(['step1', 'step2', 'step3'] as const).map((k, i) => (
+          <li key={k} className="flex items-baseline gap-[1.4vmin]">
+            <span aria-hidden="true" className="num shrink-0 font-mono text-[2vmin] font-medium text-muted">
+              0{i + 1}
+            </span>
+            <span>{t(`pairing.${k}`)}</span>
+          </li>
+        ))}
+      </ol>
     </main>
   );
 }

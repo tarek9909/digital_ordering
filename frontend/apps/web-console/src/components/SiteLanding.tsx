@@ -7,7 +7,7 @@ import { useState, type FormEvent } from 'react';
 import { api } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { diffCopy, EDITED_ELSEWHERE, getIn, humanize, isObject, loadSiteCopy, missingPlaceholders, setIn, type CopyLangs } from '../lib/siteCopy';
-import { Checkbox, ErrorNote, TextArea } from './common';
+import { ErrorNote, TextArea, Toggle } from './common';
 import { MfaCancelled, useFreshMfa } from './FreshMfa';
 
 const LANGS = ['ar', 'en'] as const;
@@ -76,13 +76,13 @@ function LandingForm({ builtIn, value, onSaved }: { builtIn: CopyLangs; value: L
   const failed = save.error && !(save.error instanceof MfaCancelled) ? save.error : null;
   return (
     <Card>
-      <form onSubmit={submit} className="flex flex-col gap-6 p-5" noValidate>
+      <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
         <fieldset className="flex flex-col gap-1">
           <legend className="mb-1 font-semibold">{t('siteLanding.sections')}</legend>
           <p className="text-sm text-muted">{t('siteLanding.sectionsHint')}</p>
-          <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-2 grid gap-x-8 gap-y-1 rounded-input border border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
             {SITE_LANDING_SECTIONS.map((s) => (
-              <Checkbox key={s} label={groupLabel(s)} checked={!hidden.includes(s)} onChange={(e) => setHidden((h) => (e.target.checked ? h.filter((x) => x !== s) : [...h, s]))} />
+              <Toggle key={s} label={groupLabel(s)} checked={!hidden.includes(s)} onChange={(e) => setHidden((h) => (e.target.checked ? h.filter((x) => x !== s) : [...h, s]))} />
             ))}
           </div>
         </fieldset>

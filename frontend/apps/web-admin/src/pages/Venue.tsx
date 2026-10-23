@@ -1,7 +1,7 @@
 import { useTranslation } from '@dop/i18n';
-import { Card, PageShell } from '@dop/ui';
+import { Card } from '@dop/ui';
 import { useSearchParams } from 'react-router';
-import { QueryView, Tabs, usePageEyebrow } from '../components/common';
+import { Page, QueryView, Tabs } from '../components/common';
 import { BrandingForm } from '../components/venue/BrandingForm';
 import { FlowForm } from '../components/venue/FlowForm';
 import { GeneralForm } from '../components/venue/GeneralForm';
@@ -19,7 +19,7 @@ export function VenuePage() {
   const q = useVenue(venueId);
 
   return (
-    <PageShell eyebrow={usePageEyebrow('venue')} title={t('nav.venue')} description={t('venue.description')}>
+    <Page title={t('nav.venue')} description={t('venue.description')}>
       <Tabs label={t('venue.tabsLabel')} tabs={TABS} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} idPrefix="" labelOf={(k) => t(`venue.tabs.${k}`)} />
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         <QueryView q={q} skeleton="form">
@@ -28,7 +28,7 @@ export function VenuePage() {
             const key = `${venue.id}-${tab}`;
             if (tab === 'flow') return <FlowForm key={key} venue={venue} />;
             return (
-              <Card className="p-5 sm:p-6">
+              <Card flat className="p-5 sm:p-6">
                 {tab === 'general' && <GeneralForm key={key} venue={venue} />}
                 {tab === 'branding' && <BrandingForm key={key} venue={venue} />}
                 {tab === 'messages' && <MessagesForm key={key} venue={venue} />}
@@ -37,6 +37,6 @@ export function VenuePage() {
           }}
         </QueryView>
       </div>
-    </PageShell>
+    </Page>
   );
 }

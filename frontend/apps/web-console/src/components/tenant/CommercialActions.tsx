@@ -10,7 +10,7 @@ import { can } from '../../lib/roles';
 import { useMe } from '../../lib/me';
 import { fmtDate } from '../../lib/format';
 import type { DowngradeExcess, Plan, TenantDetail } from '../../lib/types';
-import { ErrorNote, FormButtons, TextArea } from '../common';
+import { ActionRow, ErrorNote, FormButtons, Section, TextArea } from '../common';
 import { MfaCancelled, useFreshMfa } from '../FreshMfa';
 
 // Commercial actions (FR-SA-07) and ownership transfer (FR-SA-08, TR-FE-23), super admin only.
@@ -42,18 +42,17 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
   const close = () => setOpen(null);
 
   return (
-    <section aria-labelledby="commercial-h" className="mt-6">
-      <h2 id="commercial-h" className="mb-2 text-lg font-bold">
-        {t('commercial.title')}
-      </h2>
+    <Section title={t('commercial.title')} description={t('commercialUx.intro')}>
       <LiveRegion text={announce} />
-      <div className="flex flex-wrap gap-2">
+      <ul className="flex flex-col divide-y divide-line">
         {kinds.map((k) => (
-          <Button key={k} variant={k === 'transfer' ? 'danger' : 'secondary'} onClick={() => setOpen(k)}>
-            {t(`commercial.${k}.button`)}
-          </Button>
+          <ActionRow key={k} hint={t(`commercialUx.hint.${k}`)}>
+            <Button variant={k === 'payment' ? 'ink' : 'secondary'} className={k === 'transfer' ? 'text-danger' : undefined} onClick={() => setOpen(k)}>
+              {t(`commercial.${k}.button`)}
+            </Button>
+          </ActionRow>
         ))}
-      </div>
+      </ul>
       {open && (
         <Modal open onOpenChange={(o) => !o && close()} title={t(`commercial.${open}.title`)} description={t(`commercial.${open}.body`, { slug: tenant.slug })}>
           {open === 'plan' && <PlanForm tenant={tenant} onCancel={close} onDone={(effective) => done(t(`commercial.plan.done.${effective}`, { defaultValue: t('commercial.plan.done.now') }))} />}
@@ -62,7 +61,7 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
           {open === 'transfer' && <TransferForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.transfer.done'))} />}
         </Modal>
       )}
-    </section>
+    </Section>
   );
 }
 

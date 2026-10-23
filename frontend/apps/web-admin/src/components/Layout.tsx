@@ -1,18 +1,21 @@
 import { useTranslation } from '@dop/i18n';
-import { AccountChip, Button, EmptyState, NavGroup, NavMarker, PageShell, Pill, SidebarShell, navItemClass } from '@dop/ui';
-import { useId, useState } from 'react';
+import { Button, EmptyState, Pill } from '@dop/ui';
+import { useState } from 'react';
 import { Navigate, NavLink, Outlet, useMatches } from 'react-router';
 import { canReach, homeSection, isLimited, type Section } from '../lib/access';
 import { authApi, BASENAME } from '../lib/api';
 import { switchLang } from '../lib/lang';
 import { useMe, useTenant, viewerRole } from '../lib/me';
 import { setSupportMode } from '../lib/support';
-import { useCurrentVenueId, useVenues, useVenueStore } from '../lib/venue';
+import { useCurrentVenueId } from '../lib/venue';
+import { staffBoardUrl } from '../pages/Home';
 import { Banners } from './Banners';
-import { LoadingShape } from './common';
+import { LoadingShape, Page } from './common';
+import { AccountLink, Frame, Pass, SideGroup, sideItemClass } from './Frame';
 import { LegalGate } from './LegalGate';
 
-// Grouped like the work: running today's service, reading how it went, and running the business.
+// Grouped like the work: running today's service, reading how it went, and running the business. Account is
+// reached from the signed-in person at the foot of the sidebar.
 const NAV: Array<{
   group: 'service' | 'insights' | 'business';
   items: Array<{ section: Section; to: string }>;
@@ -44,7 +47,6 @@ const NAV: Array<{
       { section: 'support', to: '/support' },
       { section: 'billing', to: '/billing' },
       { section: 'settings', to: '/settings' },
-      { section: 'account', to: '/account' },
     ],
   },
 ];
@@ -66,41 +68,12 @@ async function signOut(support: boolean) {
   }
 }
 
-function VenuePicker({ enabled, className }: { enabled: boolean; className?: string }) {
-  const { t } = useTranslation();
-  const id = useId();
-  const venues = useVenues(enabled).data ?? [];
-  const current = useCurrentVenueId(enabled);
-  const set = useVenueStore((s) => s.setVenueId);
-  // Venue switcher for multi-site tenants (TR-FE-26); the choice is remembered on this device.
-  if (venues.length < 2) return null;
-  return (
-    <div className={`flex flex-col gap-1.5 ${className ?? ''}`}>
-      <label htmlFor={id} className="eyebrow px-1">
-        {t('nav.switchVenue')}
-      </label>
-      <select
-        id={id}
-        className="select-chevron min-h-12 w-full appearance-none rounded-input border border-line bg-surface ps-3.5 pe-10 font-semibold hover:border-ink-2/30"
-        value={current ?? ''}
-        onChange={(e) => set(e.target.value)}
-      >
-        {venues.map((v) => (
-          <option key={v.id} value={v.id}>
-            {v.name}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 function LimitedAccess() {
   const { t } = useTranslation();
   return (
-    <PageShell title={t('limited.title')} description={t('limited.body')}>
+    <Page title={t('limited.title')} description={t('limited.body')}>
       <EmptyState title={t('limited.reachableTitle')}>{t('limited.reachable')}</EmptyState>
-    </PageShell>
+    </Page>
   );
 }
 
@@ -123,26 +96,23 @@ export function Layout() {
   const lng = i18n.language === 'ar' ? 'ar' : 'en';
   const [menuOpen, setMenuOpen] = useState(false);
   const pickVenue = (Boolean(tenant.data) || isSupport) && !limited;
+  const venueId = useCurrentVenueId(pickVenue);
+  // Live figures need the Today report; Today itself shows them in full, so the pass leaves them out there.
+  const live = pickVenue && canReach('home', status, role);
   const groups = NAV.map((g) => ({
     ...g,
     items: g.items.filter((n) => canReach(n.section, status, role)),
   })).filter((g) => g.items.length > 0);
 
-  const title = (
-    <span className="flex min-w-0 flex-col leading-tight">
-      <span className="truncate">{tenant.data?.name ?? t('common:appName')}</span>
-      {tenant.data && <span className="truncate font-sans text-xs font-medium text-muted">{t('common:appName')}</span>}
-    </span>
-  );
-
   const account = me && (
-    <div className="flex flex-col gap-2">
-      <AccountChip
+    <div className="flex flex-col gap-1">
+      <AccountLink
         name={isSupport ? (me.agentName ?? t('nav.supportMode')) : me.user.name || me.user.email}
         detail={isSupport ? t('nav.supportMode') : role ? t(`roles.${role}`, { defaultValue: role }) : undefined}
+        to={canReach('account', status, role) ? '/account' : undefined}
       />
       {isSupport && (
-        <span className="px-1">
+        <span className="px-2.5 pb-1">
           <Pill tone="warn">{t('nav.supportMode')}</Pill>
         </span>
       )}
@@ -154,39 +124,30 @@ export function Layout() {
       <Button variant="ghost" className="shrink-0 px-3" onClick={() => switchLang(lng === 'ar' ? 'en' : 'ar')} lang={lng === 'ar' ? 'en' : 'ar'}>
         {lng === 'ar' ? 'English' : 'العربية'}
       </Button>
-      <Button variant="secondary" className="flex-1 px-3 whitespace-nowrap" onClick={() => void signOut(isSupport)}>
+      <Button variant="ghost" className="flex-1 px-3 whitespace-nowrap text-ink-2" onClick={() => void signOut(isSupport)}>
         {isSupport ? t('nav.leaveSupport') : t('common:signOut')}
       </Button>
     </div>
   );
 
-  const nav = (
-    <>
-      <VenuePicker enabled={pickVenue} className="hidden px-1 pt-1 lg:flex" />
-      {groups.map((g) => (
-        <NavGroup key={g.group} label={t(`nav.groups.${g.group}`)}>
-          {g.items.map((n) => (
-            <NavLink key={n.section} to={n.to} end={n.to === '/'} onClick={() => setMenuOpen(false)} className={({ isActive }) => navItemClass(isActive)}>
-              {({ isActive }) => (
-                <>
-                  <NavMarker active={isActive} />
-                  {t(`nav.${n.section}`)}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </NavGroup>
+  const nav = groups.map((g) => (
+    <SideGroup key={g.group} label={t(`nav.groups.${g.group}`)}>
+      {g.items.map((n) => (
+        <NavLink key={n.section} to={n.to} end={n.to === '/'} onClick={() => setMenuOpen(false)} className={({ isActive }) => sideItemClass(isActive)}>
+          {t(`nav.${n.section}`)}
+        </NavLink>
       ))}
-    </>
-  );
+    </SideGroup>
+  ));
 
   return (
     <>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-input focus:bg-surface focus:p-3 focus:shadow-card">
         {t('nav.skip')}
       </a>
-      <SidebarShell
-        title={title}
+      <Frame
+        title={tenant.data?.name ?? t('common:appName')}
+        subtitle={tenant.data ? t('common:appName') : undefined}
         nav={nav}
         account={account}
         footer={footer}
@@ -196,16 +157,15 @@ export function Layout() {
         menuText={{ open: t('nav.menu'), close: t('nav.closeMenu') }}
         top={
           <div className="print:hidden">
-            {/* On small screens the sidebar is a top bar, so the venue switch sits above the page. */}
-            <VenuePicker enabled={pickVenue} className="border-b border-line bg-surface px-4 py-3 lg:hidden" />
+            {pickVenue && venueId && <Pass venueEnabled={pickVenue} live={live} showFigures={section !== 'home'} boardHref={live ? staffBoardUrl(venueId) : null} />}
             <Banners />
           </div>
         }
       >
-        {/* Pages render their own <main> through PageShell. */}
+        {/* Pages render their own <main> through Page. */}
         <div id="main" tabIndex={-1} className="outline-none">
           {tenant.isLoading ? (
-            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+            <div className="max-w-6xl px-4 py-8 sm:px-8 lg:px-10">
               <LoadingShape kind="tiles" />
             </div>
           ) : allowed ? (
@@ -215,14 +175,14 @@ export function Layout() {
           ) : limited ? (
             <LimitedAccess />
           ) : (
-            <PageShell title={t(`nav.${section}`)}>
+            <Page title={t(`nav.${section}`)}>
               <p role="alert" className="font-semibold text-danger">
                 {t('limited.notAllowed')}
               </p>
-            </PageShell>
+            </Page>
           )}
         </div>
-      </SidebarShell>
+      </Frame>
       {!isSupport && <LegalGate />}
     </>
   );

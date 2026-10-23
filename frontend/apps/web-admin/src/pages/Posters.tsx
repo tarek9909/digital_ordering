@@ -1,8 +1,8 @@
 import { useTranslation } from '@dop/i18n';
-import { PageShell, Select } from '@dop/ui';
+import { Select } from '@dop/ui';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Section, linkClass, usePageEyebrow } from '../components/common';
+import { Page, Section, linkClass } from '../components/common';
 import { useCurrentVenueId, useVenue } from '../lib/venue';
 
 const KINDS = ['a4', 'tent', 'door'] as const;
@@ -14,10 +14,9 @@ export function PostersPage() {
   const venue = useVenue(venueId).data;
   const [locale, setLocale] = useState<string>('ar');
   const locales = venue?.locales ?? ['ar', 'en'];
-  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.posters')} description={t('posters.description')}>
+    <Page title={t('nav.posters')} description={t('posters.description')}>
       <Section title={t('posters.pdfTitle')} description={t('posters.pdfHint')}>
         <Select
           className="mb-4 max-w-xs"
@@ -56,7 +55,7 @@ export function PostersPage() {
           {t('posters.openPrint')}
         </Link>
       </Section>
-    </PageShell>
+    </Page>
   );
 }
 

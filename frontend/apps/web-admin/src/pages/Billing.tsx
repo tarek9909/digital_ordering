@@ -1,8 +1,8 @@
 import { formatDateTime, formatMoney } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Banner, EmptyState, PageShell } from '@dop/ui';
+import { Banner, EmptyState } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
-import { QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
+import { Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
 import { canManage } from '../lib/access';
 import { api } from '../lib/api';
 import { useRole } from '../lib/me';
@@ -37,9 +37,8 @@ export function BillingPage() {
     queryFn: () => api.get<Billing>('/billing'),
   });
   const date = (iso: string) => formatDateTime(iso, i18n.language);
-  const eyebrow = usePageEyebrow('tenant');
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.billing')} description={t('billing.description')}>
+    <Page title={t('nav.billing')} description={t('billing.description')}>
       <QueryView q={q} skeleton="form">
         {(b) => (
           <>
@@ -117,6 +116,6 @@ export function BillingPage() {
           </>
         )}
       </QueryView>
-    </PageShell>
+    </Page>
   );
 }

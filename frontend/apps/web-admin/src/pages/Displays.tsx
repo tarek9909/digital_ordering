@@ -1,12 +1,12 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { displayCreateBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, EmptyState, Field, LiveRegion, Modal, PageShell } from '@dop/ui';
+import { Banner, Button, Card, EmptyState, Field, LiveRegion, Modal } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, StatusPill, usePageEyebrow } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill } from '../components/common';
 import { api } from '../lib/api';
 import { MAX_ANNOUNCE_LANGUAGES, MAX_QUIET_HOURS, displayToForm, validateDisplayForm, type DisplayForm, type DisplayFormField } from '../lib/displayForm';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -317,7 +317,7 @@ function DisplayCard({ d, venueId }: { d: DisplayItem; venueId: string }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: displaysKey(venueId) }),
   });
   return (
-    <Card className="flex flex-col gap-4">
+    <Card flat className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-input bg-canvas ring-1 ring-line">
@@ -421,10 +421,9 @@ export function DisplaysPage() {
     enabled: Boolean(venueId),
     refetchInterval: 30_000,
   });
-  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.displays')} description={t('displays.description')}>
+    <Page title={t('nav.displays')} description={t('displays.description')}>
       {role !== 'support' && (
         <Section title={t('displays.addTitle')} description={t('displays.addHint')}>
           <CreateDisplay venueId={venueId} />
@@ -443,6 +442,6 @@ export function DisplaysPage() {
           )
         }
       </QueryView>
-    </PageShell>
+    </Page>
   );
 }

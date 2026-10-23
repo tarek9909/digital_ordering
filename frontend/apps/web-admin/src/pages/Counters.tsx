@@ -1,11 +1,11 @@
 import { counterCreateBody, type VenueSettings } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Field, LiveRegion, Modal, PageShell, useFlip } from '@dop/ui';
+import { Button, EmptyState, Field, LiveRegion, Modal, useFlip } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, Table, Td, usePageEyebrow } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, isCode } from '../lib/errors';
 import type { Counter, VenueAdmin } from '../lib/types';
@@ -195,7 +195,6 @@ export function CountersPage() {
     },
     onSettled: refresh,
   });
-  const eyebrow = usePageEyebrow('venue');
   const active = (q.data ?? []).filter((c) => !c.archived);
   // Reordered rows glide to their new place (FLIP); reduced motion skips it.
   const list = useRef<HTMLTableSectionElement>(null);
@@ -203,7 +202,7 @@ export function CountersPage() {
   if (!venueId) return null;
 
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.counters')} description={t('counters.description')}>
+    <Page title={t('nav.counters')} description={t('counters.description')}>
       <Section title={t('counters.addTitle')} description={t('counters.addHint')}>
         <AddCounter venueId={venueId} nextOrder={active.length * 10} />
       </Section>
@@ -225,7 +224,7 @@ export function CountersPage() {
         }
       </QueryView>
       <LiveRegion text={archive.isSuccess ? t('counters.archived') : ''} />
-    </PageShell>
+    </Page>
   );
 }
 

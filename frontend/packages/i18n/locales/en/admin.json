@@ -30,6 +30,10 @@
     "menu": "Menu",
     "closeMenu": "Close"
   },
+  "pass": {
+    "label": "Service now",
+    "live": "Live"
+  },
   "limited": {
     "title": "Limited access",
     "body": "This account is not active right now, so only some sections are available. Staff boards can still finish open orders but cannot create new tickets.",

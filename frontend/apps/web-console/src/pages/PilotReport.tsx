@@ -3,10 +3,11 @@ import { Button, Card, EmptyState, Field, PageShell, Stat } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Checkbox, ErrorNote, Table, TableSkeleton, Td } from '../components/common';
+import { ErrorNote, Table, TableSkeleton, Td } from '../components/common';
+import { TenantPicker } from '../components/TenantPicker';
 import { api } from '../lib/api';
 import { fmtDuration, fmtPct } from '../lib/format';
-import type { ConsolePilotItem, Paged, TenantRow } from '../lib/types';
+import type { ConsolePilotItem } from '../lib/types';
 
 // Pilot report across tenants (FR-RPT-10). Wording: push sent / page open / acknowledged — never "heard"
 // (FR-ALR-11); preparation time is measured from ticket creation (TR-RPT-05).
@@ -53,7 +54,7 @@ export function PilotReportPage() {
     <PageShell wide eyebrow={t('layout.groups.insights')} title={t('pilot.title')} description={t('pilot.description')}>
       <Card className="mb-6">
         <form onSubmit={run} className="flex flex-col gap-4" noValidate>
-          <TenantPicker selected={selected} onChange={setSelected} />
+          <TenantPicker label={t('pilotUx.restaurants')} selected={selected} onChange={setSelected} />
           <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
             <Field label={t('pilot.from')} type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} />
             <Field
@@ -67,51 +68,27 @@ export function PilotReportPage() {
               {t('pilot.run')}
             </Button>
           </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm text-muted">{t('pilotUx.quickRange')}</span>
+            {[7, 14, 30].map((n) => (
+              <button
+                key={n}
+                type="button"
+                className="min-h-10 rounded-full px-3 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink"
+                onClick={() => setRange({ from: isoDay(new Date(Date.now() - (n - 1) * 86_400_000)), to: isoDay(new Date()) })}
+              >
+                {t('pilotUx.lastDays', { count: n })}
+              </button>
+            ))}
+          </div>
         </form>
       </Card>
       <ErrorNote error={report.error} />
       {report.isFetching && !report.data && <TableSkeleton label={t('common:loading')} rows={3} />}
       {report.data && <Results items={report.data.items} />}
       {query === null && <EmptyState title={t('pilot.pickTenantsTitle')}>{t('pilot.pickTenants')}</EmptyState>}
+      <HowToRead />
     </PageShell>
-  );
-}
-
-function TenantPicker({ selected, onChange }: { selected: Map<string, string>; onChange: (m: Map<string, string>) => void }) {
-  const { t } = useTranslation();
-  const [q, setQ] = useState('');
-  const [term, setTerm] = useState('');
-  const list = useQuery({
-    queryKey: ['tenants', 'picker', term],
-    queryFn: () => api.get<Paged<TenantRow>>('/tenants', { q: term, limit: 20 }),
-  });
-  const toggle = (id: string, name: string, on: boolean) => {
-    const m = new Map(selected);
-    if (on) m.set(id, name);
-    else m.delete(id);
-    onChange(m);
-  };
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 font-semibold">{t('pilot.tenants', { count: selected.size })}</legend>
-      <div className="flex items-end gap-2">
-        <Field label={t('tenants.search')} type="search" className="flex-1" value={q} onChange={(e) => setQ(e.target.value)} />
-        <Button type="button" variant="secondary" onClick={() => setTerm(q)}>
-          {t('pilot.find')}
-        </Button>
-      </div>
-      <ErrorNote error={list.error} />
-      <div className="grid max-h-64 gap-1 overflow-auto sm:grid-cols-2">
-        {[...selected].map(([id, name]) => (
-          <Checkbox key={id} label={name} checked onChange={() => toggle(id, name, false)} />
-        ))}
-        {list.data?.items
-          .filter((r) => !selected.has(r.id))
-          .map((r) => (
-            <Checkbox key={r.id} label={`${r.name} (${r.slug})`} checked={false} onChange={(e) => toggle(r.id, r.name, e.target.checked)} />
-          ))}
-      </div>
-    </fieldset>
   );
 }
 
@@ -192,5 +169,34 @@ export function Results({ items }: { items: ConsolePilotItem[] }) {
         </div>
       </Card>
     </div>
+  );
+}
+
+const GUIDE = ['tickets', 'ready', 'reach', 'acknowledged', 'prep', 'pickup', 'uncollected', 'undo'] as const;
+
+/** What each figure means and how to use it, under the report. */
+function HowToRead() {
+  const { t } = useTranslation();
+  return (
+    <details className="group mt-6 rounded-[var(--radius-card)] bg-surface shadow-card">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 font-semibold">
+        {t('pilotUx.guide.title')}
+        <span aria-hidden="true" className="text-muted transition-transform group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <div className="flex flex-col gap-4 border-t border-line px-5 py-4">
+        <p className="text-ink-2">{t('pilotUx.guide.intro')}</p>
+        <dl className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+          {GUIDE.map((k) => (
+            <div key={k} className="flex flex-col gap-0.5">
+              <dt className="font-semibold">{t(`pilotUx.guide.${k}.term`)}</dt>
+              <dd className="text-sm text-ink-2">{t(`pilotUx.guide.${k}.text`)}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="rounded-input bg-canvas px-4 py-3 text-sm text-ink-2">{t('pilotUx.guide.tip')}</p>
+      </div>
+    </details>
   );
 }

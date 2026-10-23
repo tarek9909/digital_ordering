@@ -1,8 +1,8 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { EmptyState, LiveRegion, PageShell, Stat } from '@dop/ui';
+import { EmptyState, LiveRegion } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ConfirmButton, ErrorNote, QueryView, Section, Table, Td, usePageEyebrow } from '../components/common';
+import { ConfirmButton, ErrorNote, Figures, Page, QueryView, Section, Stat, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import type { Rating, RatingSummary } from '../lib/types';
 import { useRole } from '../lib/me';
@@ -76,25 +76,26 @@ export function RatingsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
   const summary = q.data?.summary;
-  const eyebrow = usePageEyebrow('venue');
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.ratings')} description={t('ratings.intro')}>
+    <Page title={t('nav.ratings')} description={t('ratings.intro')}>
       {summary && summary.count > 0 && (
         <div className="mb-5 grid gap-5 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start">
           {summary.average !== null ? (
-            <Stat
-              accent
-              label={t('trends.rating')}
-              value={`${summary.average}`}
-              hint={t('ratings.average', {
-                avg: summary.average,
-                n: summary.count,
-              })}
-            />
+            <Figures>
+              <Stat
+                lead
+                label={t('trends.rating')}
+                value={`${summary.average}`}
+                hint={t('ratings.average', {
+                  avg: summary.average,
+                  n: summary.count,
+                })}
+              />
+            </Figures>
           ) : (
             <div />
           )}
-          <div className="[&>div]:mb-0">
+          <div className="[&>section]:mb-0">
             <Distribution summary={summary} />
           </div>
         </div>
@@ -140,6 +141,6 @@ export function RatingsPage() {
         }
       </QueryView>
       <LiveRegion text={remove.isSuccess ? t('ratings.deleted') : ''} />
-    </PageShell>
+    </Page>
   );
 }

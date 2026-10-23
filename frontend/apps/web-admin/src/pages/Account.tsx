@@ -1,12 +1,12 @@
 import { changeEmailBody, changePasswordBody, deleteMeBody, mePatch, totpConfirmBody, totpRemoveBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion, PageShell, Select } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Checkbox, ConfirmButton, ErrorNote, QueryView, Section, StatusPill } from '../components/common';
+import { Checkbox, ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill } from '../components/common';
 import { api, authApi, BASENAME } from '../lib/api';
 import { applyFieldErrors, errorText, isCode } from '../lib/errors';
 import { meKey, useMe } from '../lib/me';
@@ -389,9 +389,8 @@ function DeleteAccount() {
 export function AccountPage() {
   const { t } = useTranslation();
   const me = useMe();
-  const eyebrow = me.data?.user.email;
   return (
-    <PageShell eyebrow={eyebrow ? <span dir="ltr">{eyebrow}</span> : undefined} title={t('nav.account')} description={t('account.description')}>
+    <Page title={t('nav.account')} description={t('account.description')}>
       <QueryView q={me} skeleton="form">
         {(m) => (
           <>
@@ -418,6 +417,6 @@ export function AccountPage() {
           </>
         )}
       </QueryView>
-    </PageShell>
+    </Page>
   );
 }

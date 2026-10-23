@@ -1,11 +1,11 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Field, LiveRegion, PageShell } from '@dop/ui';
+import { Button, EmptyState, Field, LiveRegion } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, linkClass, usePageEyebrow } from '../components/common';
+import { ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td, linkClass } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, isCode } from '../lib/errors';
 import { useRole } from '../lib/me';
@@ -66,7 +66,7 @@ export function VenuesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: venuesKey }),
   });
   return (
-    <PageShell eyebrow={usePageEyebrow('tenant')} title={t('nav.venues')} description={t('venues.description')}>
+    <Page title={t('nav.venues')} description={t('venues.description')}>
       {/* A venue changes what the tenant pays, so only the owner adds one (M-9). */}
       {isOwner && (
         <Section title={t('venues.addTitle')} description={t('venues.addHint')}>
@@ -136,6 +136,6 @@ export function VenuesPage() {
         {t('venues.billingNote')}
       </p>
       <LiveRegion text={archive.isSuccess ? t('venues.archived') : ''} />
-    </PageShell>
+    </Page>
   );
 }

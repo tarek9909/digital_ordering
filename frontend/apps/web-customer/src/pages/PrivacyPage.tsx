@@ -72,7 +72,7 @@ export function PrivacyPage() {
           {t('common:back')}
         </button>
       )}
-      <h1 className="mb-2 font-display text-[2rem] leading-tight font-extrabold tracking-tight">{t('privacy.title')}</h1>
+      <h1 className="mb-2 font-display text-[2rem] leading-tight font-bold tracking-tight">{t('privacy.title')}</h1>
       {body}
     </main>
   );

@@ -1,12 +1,12 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { deletionRequestBody, slugChangeBody, tenantPatch } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion, PageShell } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ErrorNote, QueryView, Section, StatusPill, Table, Td, linkClass, usePageEyebrow } from '../components/common';
+import { ErrorNote, Page, QueryView, Section, StatusPill, Table, Td, linkClass } from '../components/common';
 import { isLimited } from '../lib/access';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText, isCode } from '../lib/errors';
@@ -279,9 +279,8 @@ export function SettingsPage() {
   const tenant = useTenant();
   const isOwner = useMe().data?.currentRole === 'owner';
   const limited = isLimited(tenant.data?.status);
-  const eyebrow = usePageEyebrow('tenant');
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.settings')} description={t('settings.description')}>
+    <Page title={t('nav.settings')} description={t('settings.description')}>
       <QueryView q={tenant} skeleton="form">
         {(ten) => (
           <>
@@ -315,6 +314,6 @@ export function SettingsPage() {
           </>
         )}
       </QueryView>
-    </PageShell>
+    </Page>
   );
 }

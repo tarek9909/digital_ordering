@@ -2,6 +2,9 @@ import { formatDateTime } from '@dop/client-sdk';
 
 export const fmtDate = (iso: string | null | undefined, locale: string) => (iso ? formatDateTime(iso, locale) : '—');
 
+/** Date only (no time), in the reader's language. */
+export const fmtDay = (iso: string | null | undefined, locale: string) => (iso ? new Date(iso).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' }) : '—');
+
 /** Seconds → "m:ss" (null → "—"). */
 export function fmtDuration(sec: number | null | undefined): string {
   if (sec === null || sec === undefined) return '—';

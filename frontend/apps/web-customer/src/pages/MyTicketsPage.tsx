@@ -49,7 +49,7 @@ export function MyTicketsPage() {
   const sorted = [...tickets.filter((tk) => OPEN.has(tk.status)), ...tickets.filter((tk) => !OPEN.has(tk.status))];
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 bg-canvas px-4 pt-10 pb-8">
-      <h1 className="font-display text-[1.875rem] leading-tight font-extrabold tracking-tight">{t('tickets.title')}</h1>
+      <h1 className="font-display text-[1.875rem] leading-tight font-bold tracking-tight">{t('tickets.title')}</h1>
       {failed.length > 0 && (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] bg-danger-bg p-4">
           <p className="font-medium text-danger">{t(tickets.length > 0 ? 'tickets.partialFailed' : 'tickets.loadFailed')}</p>

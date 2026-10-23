@@ -1,12 +1,12 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { invitationBody, ownershipTransferBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, EmptyState, Field, LiveRegion, Modal, PageShell } from '@dop/ui';
+import { Banner, Button, EmptyState, Field, LiveRegion, Modal } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
+import { ConfirmButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
 import { meKey, useMe } from '../lib/me';
@@ -116,14 +116,13 @@ export function TeamPage() {
     mutationFn: (id: string) => api.delete(`/invitations/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: teamKey }),
   });
-  const eyebrow = usePageEyebrow('tenant');
   const removeMember = useMutation({
     mutationFn: (id: string) => api.delete(`/members/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: teamKey }),
   });
 
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.team')} description={t('team.description')}>
+    <Page title={t('nav.team')} description={t('team.description')}>
       <Section title={t('team.inviteTitle')} description={t('team.inviteHint')}>
         <InviteForm />
       </Section>
@@ -196,6 +195,6 @@ export function TeamPage() {
         )}
       </QueryView>
       <LiveRegion text={removeMember.isSuccess ? t('team.removed') : revoke.isSuccess ? t('team.revoked') : ''} />
-    </PageShell>
+    </Page>
   );
 }

@@ -1,10 +1,10 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, EmptyState, Field, LiveRegion, PageShell, Select } from '@dop/ui';
+import { Button, Card, EmptyState, Field, LiveRegion, Select } from '@dop/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ErrorNote, QueryView, Section, Table, Td, Tabs, usePageEyebrow } from '../components/common';
+import { ErrorNote, Figures, Page, QueryView, Section, Table, Tabs, Td } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration, isoDate, pct } from '../lib/format';
 import { ALL_VENUES, activeHours, csvQuery, delta, heatLevel, heatmapMax, heatmapRows, hourLabel, reportQuery, type ReportFilter } from '../lib/reports';
@@ -237,29 +237,26 @@ function Trends({ f }: { f: ReportFilter }) {
               to: r.previous.to,
             })}
           >
-            <div data-motion="stagger" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {/* Ten figures: five columns (two on small screens) fill every cell. The ticket count leads in ember. */}
+            <Figures flat className="grid-cols-2 lg:grid-cols-5">
               {metrics.map((m, i) => {
                 const cur = r.current[m.key] as number | null;
                 const prev = r.previous[m.key] as number | null;
-                // The period's ticket count leads, as the one ink tile.
                 const lead = i === 0;
                 return (
-                  <div
-                    key={m.key}
-                    className={`flex flex-col gap-2 rounded-[var(--radius-card)] p-4 ${lead ? 'ember-glow ember-glow-sm col-span-2 bg-ink text-white lg:col-span-1' : 'border border-line bg-surface'}`}
-                  >
-                    <div className={`text-sm ${lead ? 'text-white/70' : 'text-muted'}`}>{m.label}</div>
-                    <div data-motion="count" className={`num font-display text-3xl leading-none font-extrabold tracking-tight ${lead ? 'text-glow' : ''}`}>
+                  <div key={m.key} className="flex flex-col gap-2 bg-surface p-4">
+                    <div className="text-sm text-muted">{m.label}</div>
+                    <div data-motion="count" className={`num font-display text-3xl leading-none font-extrabold tracking-tight ${lead ? 'text-primary' : ''}`}>
                       {m.format(cur)}
                     </div>
-                    <div className={`text-sm ${lead ? '[&_.text-danger]:text-white [&_.text-muted]:text-white/70 [&_.text-ok]:text-white' : ''}`}>
+                    <div className="mt-auto text-sm">
                       <DeltaText cur={cur} prev={prev} m={m} />
                     </div>
-                    <div className={`text-xs ${lead ? 'text-white/60' : 'text-muted'}`}>{t('trends.previous', { value: m.format(prev) })}</div>
+                    <div className="text-xs text-muted">{t('trends.previous', { value: m.format(prev) })}</div>
                   </div>
                 );
               })}
-            </div>
+            </Figures>
             <p className="mt-3 text-sm text-muted">
               {t('reports.prepNote')} {t('reports.wordingNote')}
             </p>
@@ -505,11 +502,9 @@ export function ReportsPage() {
   }, [current]);
   const counters = useCounters(draft.venueId).data ?? [];
   const venueOptions = [...(venues.length > 1 ? [{ value: ALL_VENUES, label: t('reports.allVenues') }] : []), ...venues.map((v) => ({ value: v.id, label: v.name }))];
-
-  const eyebrow = usePageEyebrow('tenant');
   return (
-    <PageShell eyebrow={eyebrow} title={t('reports.title')} description={t('reports.description')}>
-      <Card className="mb-5 flex flex-col gap-4 p-5 sm:p-6">
+    <Page title={t('reports.title')} description={t('reports.description')}>
+      <Card flat className="mb-5 flex flex-col gap-4 p-5 sm:p-6">
         <h2 className="sr-only">{t('reports.filters')}</h2>
         <form
           className="flex flex-wrap items-end gap-3"
@@ -557,6 +552,6 @@ export function ReportsPage() {
         {tab === 'heatmap' && <Heatmap f={filter} />}
         {tab === 'daily' && <Daily f={filter} />}
       </div>
-    </PageShell>
+    </Page>
   );
 }

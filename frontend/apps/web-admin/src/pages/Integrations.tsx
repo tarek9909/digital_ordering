@@ -1,13 +1,13 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, EmptyState, Field, LiveRegion, Modal, PageShell, Select } from '@dop/ui';
+import { Banner, Button, EmptyState, Field, LiveRegion, Modal, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router';
 import { z } from 'zod';
-import { Checkbox, ConfirmButton, CopyButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
+import { Checkbox, ConfirmButton, CopyButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
 import { canManage } from '../lib/access';
 import { api } from '../lib/api';
 import { applyFieldErrors } from '../lib/errors';
@@ -554,9 +554,8 @@ export function IntegrationsPage() {
   const role = useRole();
   const manage = canManage('integrations', role);
   const venueId = useCurrentVenueId();
-  const eyebrow = usePageEyebrow('venue');
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.integrations')} description={t('integrations.intro')}>
+    <Page title={t('nav.integrations')} description={t('integrations.intro')}>
       {!manage && (
         <div className="mb-5">
           <Banner tone="info">{t('integrations.viewOnly')}</Banner>
@@ -565,6 +564,6 @@ export function IntegrationsPage() {
       {venueId && <ApiKeys venueId={venueId} manage={manage} />}
       <Webhooks manage={manage} />
       <PosConnections manage={manage} />
-    </PageShell>
+    </Page>
   );
 }

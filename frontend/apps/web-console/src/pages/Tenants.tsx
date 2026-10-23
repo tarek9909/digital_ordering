@@ -1,12 +1,12 @@
 import { PLAN_CODES, TENANT_STATUSES } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Field, PageShell, Select } from '@dop/ui';
+import { Button, EmptyState, Field, PageShell, Pill, Select } from '@dop/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
-import { ErrorNote, PagerControls, StatusBadge, Table, TableSkeleton, Td } from '../components/common';
+import { ErrorNote, Initials, PagerControls, primaryLinkClass, StatusBadge, Table, TableSkeleton, Td } from '../components/common';
 import { api } from '../lib/api';
-import { fmtDate } from '../lib/format';
+import { fmtDate, fmtDay } from '../lib/format';
 import { useMe } from '../lib/me';
 import { useCursorPager } from '../lib/pager';
 import { can } from '../lib/roles';
@@ -35,11 +35,13 @@ export function usePlanOptions() {
   });
 }
 
+const STATUS_FILTERS = ['', ...TENANT_STATUSES.filter((s) => s !== 'deleted')] as const;
+
 export function TenantsPage() {
   const { t, i18n } = useTranslation();
   const role = useMe().data?.platformUser.role;
-  const [draft, setDraft] = useState({ q: '', status: '', plan: '' });
-  const [filters, setFilters] = useState(draft);
+  const [q, setQ] = useState('');
+  const [filters, setFilters] = useState({ q: '', status: '', plan: '' });
   const pager = useCursorPager();
   const planOptions = usePlanOptions();
   const list = useQuery({
@@ -47,11 +49,19 @@ export function TenantsPage() {
     queryFn: () => api.get<Paged<TenantRow>>('/tenants', { ...filters, limit: 50, cursor: pager.cursor }),
     placeholderData: keepPreviousData,
   });
-
-  const apply = (e: FormEvent) => {
-    e.preventDefault();
+  // Status and plan apply at once; the search applies on Enter or the Search button.
+  const apply = (next: Partial<typeof filters>) => {
     pager.reset();
-    setFilters(draft);
+    setFilters((f) => ({ ...f, ...next }));
+  };
+  const search = (e: FormEvent) => {
+    e.preventDefault();
+    apply({ q: q.trim() });
+  };
+  const filtered = Boolean(filters.q || filters.status || filters.plan);
+  const clear = () => {
+    setQ('');
+    apply({ q: '', status: '', plan: '' });
   };
 
   return (
@@ -62,45 +72,57 @@ export function TenantsPage() {
       description={t('tenants.description')}
       actions={
         can(role, 'tenants.lifecycle') && (
-          <Link
-            to="/tenants/new"
-            className="inline-flex min-h-12 items-center gap-2 rounded-control bg-primary px-5 font-semibold text-on-primary shadow-button transition-[background-color,transform] duration-150 hover:-translate-y-px hover:bg-primary-hover active:scale-[.98]"
-          >
+          <Link to="/tenants/new" className={primaryLinkClass}>
             <span aria-hidden="true">+</span>
             {t('nav.createTenant')}
           </Link>
         )
       }
     >
-      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card sm:grid-cols-4 sm:items-end">
-        <Field label={t('tenants.search')} type="search" value={draft.q} maxLength={100} onChange={(e) => setDraft({ ...draft, q: e.target.value })} />
-        <Select
-          label={t('tenants.status')}
-          value={draft.status}
-          onChange={(e) => setDraft({ ...draft, status: e.target.value })}
-          options={[{ value: '', label: t('tenants.any') }, ...TENANT_STATUSES.filter((s) => s !== 'deleted').map((s) => ({ value: s, label: t(`tenantStatus.${s}`) }))]}
-        />
-        <Select
-          label={t('tenants.plan')}
-          value={draft.plan}
-          onChange={(e) => setDraft({ ...draft, plan: e.target.value })}
-          options={[{ value: '', label: t('tenants.any') }, ...planOptions]}
-        />
-        <Button type="submit">{t('tenants.apply')}</Button>
-      </form>
+      <div className="mb-5 flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-4 shadow-card">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <form role="search" onSubmit={search} className="flex flex-1 items-end gap-2">
+            <Field label={t('tenants.search')} type="search" className="flex-1" placeholder={t('tenantsUx.searchPlaceholder')} value={q} maxLength={100} onChange={(e) => setQ(e.target.value)} />
+            <Button type="submit" variant="ink">
+              {t('tenantsUx.searchButton')}
+            </Button>
+          </form>
+          <Select label={t('tenants.plan')} className="lg:w-56" value={filters.plan} onChange={(e) => apply({ plan: e.target.value })} options={[{ value: '', label: t('tenantsUx.allPlans') }, ...planOptions]} />
+        </div>
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('tenants.status')}>
+          {STATUS_FILTERS.map((s) => {
+            const on = filters.status === s;
+            return (
+              <button
+                key={s || 'all'}
+                type="button"
+                aria-pressed={on}
+                onClick={() => apply({ status: s })}
+                className={`inline-flex min-h-10 items-center rounded-full px-3.5 text-sm font-semibold ring-1 transition-colors ${on ? 'bg-ink text-white ring-ink' : 'bg-surface text-ink-2 ring-line hover:text-ink'}`}
+              >
+                {s ? t(`tenantStatus.${s}`) : t('tenantsUx.allStatuses')}
+              </button>
+            );
+          })}
+          {filtered && (
+            <Button variant="ghost" className="ms-auto text-sm" onClick={clear}>
+              {t('tenantsUx.clear')}
+            </Button>
+          )}
+        </div>
+      </div>
       <ErrorNote error={list.error} />
       {list.isPending ? (
         <TableSkeleton label={t('common:loading')} />
       ) : (
         list.data &&
         (list.data.items.length === 0 && !pager.canPrev ? (
-          <EmptyState title={t('tenants.empty')}>{t('tenants.emptyHint')}</EmptyState>
+          <EmptyState title={t('tenants.empty')} action={filtered ? <Button variant="secondary" onClick={clear}>{t('tenantsUx.clear')}</Button> : undefined}>
+            {t('tenants.emptyHint')}
+          </EmptyState>
         ) : (
           <>
-            <Table
-              caption={t('tenants.title')}
-              head={[t('tenants.name'), t('tenants.slug'), t('tenants.status'), t('tenants.plan'), t('tenants.owner'), t('tenants.ticketsMonth'), t('tenants.lastActivity'), t('tenants.created')]}
-            >
+            <Table caption={t('tenants.title')} head={[t('tenantsUx.restaurant'), t('tenants.status'), t('tenants.plan'), t('tenants.owner'), t('tenants.ticketsMonth'), t('tenants.lastActivity')]}>
               {list.data.items.length === 0 && (
                 <tr>
                   <Td className="text-muted">{t('tenants.empty')}</Td>
@@ -109,26 +131,38 @@ export function TenantsPage() {
               {list.data.items.map((r) => (
                 <tr key={r.id}>
                   <Td>
-                    <Link to={`/tenants/${r.id}`} className="inline-flex min-h-12 items-center font-semibold whitespace-nowrap text-ink underline decoration-primary/40 underline-offset-4 hover:text-primary hover:decoration-primary">
-                      {r.name}
+                    <Link to={`/tenants/${r.id}`} className="group flex min-h-12 items-center gap-3">
+                      <Initials name={r.name} tone="soft" />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-semibold whitespace-nowrap text-ink underline decoration-transparent underline-offset-4 group-hover:text-primary group-hover:decoration-primary">{r.name}</span>
+                        <span dir="ltr" className="self-start font-mono text-xs whitespace-nowrap text-muted">
+                          {r.slug}
+                        </span>
+                      </span>
                     </Link>
                   </Td>
                   <Td>
-                    <span dir="ltr" className="font-mono text-xs whitespace-nowrap text-muted">{r.slug}</span>
-                  </Td>
-                  <Td>
                     <StatusBadge status={r.status} />
+                    {r.status === 'trial' && r.trialEndsAt && <span className="mt-1 block text-xs whitespace-nowrap text-muted">{t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}</span>}
                   </Td>
-                  <Td>
+                  <Td className="whitespace-nowrap">
                     {t(`plan.${r.plan}`, { defaultValue: r.plan })}
-                    {r.complimentary && <span className="ms-1 text-xs text-muted">({t('tenants.complimentary')})</span>}
+                    {r.complimentary && (
+                      <Pill tone="ink" className="ms-2">
+                        {t('tenants.complimentary')}
+                      </Pill>
+                    )}
                   </Td>
                   <Td>
-                    <span dir="ltr">{r.ownerEmail ?? '—'}</span>
+                    <span dir="ltr" className="text-ink-2">
+                      {r.ownerEmail ?? '—'}
+                    </span>
                   </Td>
-                  <Td className="num">{r.ticketsThisMonth}</Td>
-                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(r.lastActivityAt, i18n.language)}</Td>
-                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(r.createdAt, i18n.language)}</Td>
+                  <Td className="num font-semibold">{r.ticketsThisMonth}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">
+                    {fmtDate(r.lastActivityAt, i18n.language)}
+                    <span className="block text-xs text-muted">{t('tenantsUx.createdOn', { date: fmtDay(r.createdAt, i18n.language) })}</span>
+                  </Td>
                 </tr>
               ))}
             </Table>

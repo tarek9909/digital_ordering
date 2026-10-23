@@ -2,7 +2,7 @@ import { loadMotion, prefersReducedMotion } from '@dop/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 // The call ring (the ticket page's signature, after the brand mark "Almost ready"): a ring around the order number
-// that closes as the order moves on, with a dot riding its leading tip. On Ready it snaps shut, the dot ignites and a
+// that closes as the order moves on, with a dot riding its leading tip. Drawn thin and untinted so the number leads. On Ready it snaps shut, the dot ignites and a
 // pulse radiates. It is drawn in the venue's colour (`band`) on light pages, or in the text colour (`current`) on
 // the venue-coloured Ready screen, so it reads with any brand colour. Without motion it simply shows the state.
 
@@ -21,7 +21,6 @@ export function OrderRing({
   ready = false,
   tone = 'band',
   idle = false,
-  live = false,
   children,
   className = '',
 }: {
@@ -32,8 +31,6 @@ export function OrderRing({
   tone?: 'band' | 'current';
   /** A closed-off ticket (cancelled, expired): only the track, no arc or dot. */
   idle?: boolean;
-  /** The order is still open: a slow halo breathes around the tip. */
-  live?: boolean;
   children?: ReactNode;
   className?: string;
 }) {
@@ -74,9 +71,7 @@ export function OrderRing({
   return (
     <div className={`relative grid aspect-square place-items-center ${className}`}>
       <svg ref={ref} viewBox="0 0 200 200" aria-hidden="true" className="ring-svg absolute inset-0 size-full">
-        {/* Soft venue tint inside the ring on light pages. */}
-        {tone === 'band' && !idle && <circle cx={CX} cy={CX} r={R - 6} fill="var(--venue-tint)" />}
-        <circle cx={CX} cy={CX} r={R} fill="none" stroke={idle ? 'var(--color-line)' : stroke} strokeOpacity={idle ? 1 : 0.16} strokeWidth="6" strokeDasharray={idle ? '0.5 9' : undefined} strokeLinecap="round" />
+        <circle cx={CX} cy={CX} r={R} fill="none" stroke={idle ? 'var(--color-line)' : stroke} strokeOpacity={idle ? 1 : 0.12} strokeWidth="3.5" strokeDasharray={idle ? '0.5 9' : undefined} strokeLinecap="round" />
         {!idle && (
           <>
             <circle data-ring-pulse cx={CX} cy={CX} r={R} fill="none" stroke={stroke} strokeWidth="2.5" opacity="0" />
@@ -88,7 +83,7 @@ export function OrderRing({
               r={R}
               fill="none"
               stroke={stroke}
-              strokeWidth="7"
+              strokeWidth="3.5"
               strokeLinecap="round"
               pathLength={1}
               strokeDasharray="1 1"
@@ -96,16 +91,7 @@ export function OrderRing({
               transform={`rotate(-90 ${CX} ${CX})`}
             />
             <g className="ring-tip" data-ready={ready} style={{ transform: `rotate(${tip * 360}deg)` }}>
-              {live && !ready && <circle className="ring-halo" cx={CX} cy={CX - R} r="12" fill={stroke} />}
-              <circle
-                data-ring-dot
-                cx={CX}
-                cy={CX - R}
-                r={ready ? 11 : 8.5}
-                fill={stroke}
-                stroke={tone === 'band' ? 'var(--color-surface)' : 'none'}
-                strokeWidth="3.5"
-              />
+              <circle data-ring-dot cx={CX} cy={CX - R} r={ready ? 8 : 6} fill={stroke} />
             </g>
           </>
         )}

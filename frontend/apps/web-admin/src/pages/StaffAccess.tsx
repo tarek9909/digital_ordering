@@ -1,13 +1,13 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { staffPinBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, EmptyState, Field, LiveRegion, PageShell } from '@dop/ui';
+import { Banner, Button, EmptyState, Field, LiveRegion } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ConfirmButton, CopyButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
+import { ConfirmButton, CopyButton, ErrorNote, Page, QueryView, Section, StatusPill, Table, Td } from '../components/common';
 import { StaffMembers } from '../components/StaffMembers';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -135,10 +135,9 @@ export function StaffAccessPage() {
       void qc.invalidateQueries({ queryKey: ['devices', venueId] });
     },
   });
-  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
-    <PageShell eyebrow={eyebrow} title={t('nav.staff')} description={t('staff.description')}>
+    <Page title={t('nav.staff')} description={t('staff.description')}>
       {support ? (
         <div className="mb-5">
           <Banner tone="info">{t('staff.supportNoCredentials')}</Banner>
@@ -193,6 +192,6 @@ export function StaffAccessPage() {
       )}
       <Devices venueId={venueId} />
       <StaffMembers venueId={venueId} />
-    </PageShell>
+    </Page>
   );
 }
