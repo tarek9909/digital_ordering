@@ -39,7 +39,9 @@ export function createQueryClient() {
   return new QueryClient({
     // The /me query is handled by RequireAuth, which keeps the page the user wanted.
     queryCache: new QueryCache({ onError: (e, query) => query.queryKey[0] !== 'me' && onError(e) }),
-    mutationCache: new MutationCache({ onError }),
+    // A mutation that checks a password or code (meta.credentialCheck) shows a wrong one on its field instead of
+    // treating the 401 as an ended session (AS11); it re-reads /me, which still redirects if the session is gone.
+    mutationCache: new MutationCache({ onError: (e, _v, _c, m) => (m.meta?.credentialCheck ? undefined : onError(e)) }),
     defaultOptions: {
       queries: {
         refetchOnReconnect: true,

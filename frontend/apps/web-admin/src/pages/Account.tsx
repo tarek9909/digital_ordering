@@ -196,7 +196,10 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
   } | null>(null);
   const [password, setPassword] = useState('');
   // Starting an authenticator re-proves the account (H-5): the password, or a recent sign-in for Google-only accounts.
+  const qcEnroll = useQueryClient();
   const enroll = useMutation({
+    meta: { credentialCheck: true },
+    onError: () => qcEnroll.invalidateQueries({ queryKey: meKey }),
     mutationFn: () => authApi.post<{ secret: string; uri: string }>('/mfa/totp/enroll', password ? { password } : {}),
     onSuccess: (r) => {
       setPassword('');
@@ -284,13 +287,12 @@ function TwoFactor({ me }: { me: Me }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   // Turning two-factor off needs a code from the current authenticator (H-5).
-  const form = useForm({
-    resolver: zodResolver(totpRemoveBody),
-    defaultValues: { code: '' },
-  });
+  const form = useForm({ resolver: zodResolver(totpRemoveBody), defaultValues: { code: '' } });
   const remove = useMutation({
+    meta: { credentialCheck: true },
     mutationFn: (body: { code: string }) => authApi.delete('/mfa/totp', body),
     onSuccess: () => qc.invalidateQueries({ queryKey: meKey }),
+    onError: () => qc.invalidateQueries({ queryKey: meKey }),
   });
 
   if (me.user.mfaEnrolled)

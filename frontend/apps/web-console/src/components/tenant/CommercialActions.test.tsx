@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import type { TenantDetail } from '../../lib/types';
+import { FreshMfaProvider } from '../FreshMfa';
 import { PlanForm } from './CommercialActions';
 
 // W02 / FR-SA-10: the console can assign any non-archived catalogue plan, including Multi-site and custom plans.
@@ -38,7 +39,10 @@ afterEach(cleanup);
 const renderForm = (onDone = vi.fn()) => {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <PlanForm tenant={tenant} onCancel={() => {}} onDone={onDone} />
+      {/* Plan changes ask for a fresh second factor when the server says so (L-6). */}
+      <FreshMfaProvider>
+        <PlanForm tenant={tenant} onCancel={() => {}} onDone={onDone} />
+      </FreshMfaProvider>
     </QueryClientProvider>,
   );
   return onDone;

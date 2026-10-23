@@ -239,7 +239,8 @@ export const recordPaymentBody = z
     requestId: uuidSchema.optional(),
   })
   .strict();
-export const freeMonthsBody = z.object({ months: z.number().int().min(1).max(12) }).strict();
+/** `requestId`: generated once per form; a repeated submit grants the months once (BW02). */
+export const freeMonthsBody = z.object({ months: z.number().int().min(1).max(12), requestId: uuidSchema.optional() }).strict();
 export const flagOverrideBody = z.object({ enabled: z.boolean() }).strict();
 export const transferOwnershipPlatformBody = z.object({ email: emailSchema, verificationNote: z.string().trim().min(10).max(1000) }).strict();
 export const legalDocumentBody = z.object({ kind: z.enum(['terms', 'privacy', 'dpa', 'customer_privacy']), version: z.string().min(1).max(20), locale: z.string().min(2).max(10), html: z.string().min(1).max(500_000) }).strict();

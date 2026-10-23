@@ -4,6 +4,7 @@ import { Banner, Button, Card, Field, LiveRegion, Modal, PageShell, Select, Spin
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { ErrorNote, FormButtons, Table, Td, TextArea } from '../components/common';
+import { MfaCancelled, useFreshMfa } from '../components/FreshMfa';
 import { api } from '../lib/api';
 import { blocksToText, EMAIL_TEMPLATE_KEYS, placeholdersIn, textToBlocks } from '../lib/emailTemplates';
 import type { PushKeyStatus } from '../lib/types';
@@ -47,6 +48,7 @@ function Legal({ onAnnounce }: { onAnnounce: (s: string) => void }) {
   });
   const drafts: Draft[] = (docs.data?.items ?? []).map((d) => ({ id: d.id, kind: d.kind, version: d.version, locale: d.locale, published: d.publishedAt !== null }));
   const [publish, setPublish] = useState<Draft | null>(null);
+  const run = useFreshMfa(); // publishing asks every tenant user to accept: the server asks for a recent code
   const create = useMutation({
     mutationFn: (body: unknown) => api.post<{ id: string }>('/legal-documents', body),
     onSuccess: () => {
@@ -56,7 +58,7 @@ function Legal({ onAnnounce }: { onAnnounce: (s: string) => void }) {
     },
   });
   const pub = useMutation({
-    mutationFn: (id: string) => api.post(`/legal-documents/${id}/publish`),
+    mutationFn: (id: string) => run(() => api.post(`/legal-documents/${id}/publish`)),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['legal-documents'] });
       setPublish(null);
@@ -132,7 +134,7 @@ function Legal({ onAnnounce }: { onAnnounce: (s: string) => void }) {
             }}
             className="flex flex-col gap-4"
           >
-            <ErrorNote error={pub.error} />
+            <ErrorNote error={pub.error instanceof MfaCancelled ? null : pub.error} />
             <FormButtons onCancel={() => setPublish(null)} busy={pub.isPending} label={t('content.legal.publish')} />
           </form>
         </Modal>
@@ -187,7 +189,8 @@ function TemplateForm({ path, locale, initial, onSaved }: { path: string; locale
   const [subject, setSubject] = useState(initial.subject ?? '');
   const [text, setText] = useState(blocksToText(initial.blocks ?? []));
   const [errs, setErrs] = useState<{ subject?: boolean; blocks?: boolean }>({});
-  const save = useMutation({ mutationFn: (body: unknown) => api.put(path, body), onSuccess: onSaved });
+  const run = useFreshMfa(); // email texts reach every user (password resets too): the server asks for a recent code
+  const save = useMutation({ mutationFn: (body: unknown) => run(() => api.put(path, body)), onSuccess: onSaved });
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const r = emailTemplateBody.safeParse({ subject: subject.trim(), blocks: textToBlocks(text) });
@@ -201,7 +204,7 @@ function TemplateForm({ path, locale, initial, onSaved }: { path: string; locale
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
       {initial.subject === null && <Banner tone="info">{t('content.email.usingDefault')}</Banner>}
-      <ErrorNote error={save.error} />
+      <ErrorNote error={save.error instanceof MfaCancelled ? null : save.error} />
       <Field label={t('content.email.subject')} dir={dir} maxLength={200} value={subject} error={errs.subject ? t('content.email.subjectInvalid') : undefined} onChange={(e) => setSubject(e.target.value)} />
       <TextArea
         label={t('content.email.blocks')}

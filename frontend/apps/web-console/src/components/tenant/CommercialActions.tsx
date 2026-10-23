@@ -87,6 +87,7 @@ export function PlanForm({ tenant, onCancel, onDone }: FormProps & { onDone: (ef
   const plan = chosen ?? (codes.includes(tenant.plan) ? tenant.plan : (codes[0] ?? ''));
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const run = useFreshMfa();
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const r = changePlanBody.safeParse({ planCode: plan });
@@ -94,10 +95,10 @@ export function PlanForm({ tenant, onCancel, onDone }: FormProps & { onDone: (ef
     setBusy(true);
     setError(null);
     try {
-      const res = await api.post<{ effective: string }>(`/tenants/${tenant.id}/plan`, r.data);
+      const res = await run(() => api.post<{ effective: string }>(`/tenants/${tenant.id}/plan`, r.data));
       onDone(res.effective);
     } catch (x) {
-      setError(x);
+      if (!(x instanceof MfaCancelled)) setError(x);
     } finally {
       setBusy(false);
     }
@@ -128,6 +129,9 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
   const { t, i18n } = useTranslation();
   const run = useFreshMfa();
   const [v, setV] = useState({ amount: '', currency: 'USD', months: '1', method: 'cash', reference: '', note: '' });
+  // One id per opened form: a repeated or retried submit (double click, MFA prompt, lost response) records the
+  // payment once (BW02).
+  const [requestId] = useState(() => crypto.randomUUID());
   const [errs, setErrs] = useState<{ amountMinor?: boolean; months?: boolean }>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -141,6 +145,7 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
       method: v.method,
       ...(v.reference.trim() && { reference: v.reference.trim() }),
       ...(v.note.trim() && { note: v.note.trim() }),
+      requestId,
     });
     const paths = new Set(r.success ? [] : r.error.issues.map((i) => i.path[0]));
     setErrs({ amountMinor: paths.has('amountMinor'), months: paths.has('months') });
@@ -176,13 +181,14 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
 function FreeMonthsForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => void }) {
   const { t } = useTranslation();
   const run = useFreshMfa();
+  const [requestId] = useState(() => crypto.randomUUID()); // one grant per opened form (BW02)
   const [months, setMonths] = useState('1');
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const r = freeMonthsBody.safeParse({ months: Number(months) });
+    const r = freeMonthsBody.safeParse({ months: Number(months), requestId });
     setInvalid(!r.success);
     if (!r.success) return;
     setBusy(true);
