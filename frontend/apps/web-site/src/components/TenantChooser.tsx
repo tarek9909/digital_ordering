@@ -7,6 +7,7 @@ import { Link } from 'react-router';
 import { authApi, type MeResponse, type Membership } from '../lib/api';
 import { errorText, isApiError } from '../lib/errors';
 import { FormError } from './FormCard';
+import { textLink } from './PageHeader';
 
 /**
  * After a www sign-in: list the restaurants of this account and hand off to the chosen one's admin
@@ -31,12 +32,18 @@ export function TenantChooser({ onSignedOut }: { onSignedOut: () => void }) {
   }, [q.error, onSignedOut]);
 
   const handoff = useMutation({
-    mutationFn: (slug: string) => authApi.post<{ code: string; url: string }>('/handoff', { tenantSlug: slug }),
+    mutationFn: (slug: string) =>
+      authApi.post<{ code: string; url: string }>('/handoff', {
+        tenantSlug: slug,
+      }),
     onSuccess: (r) => window.location.assign(r.url),
     onError: (e) => setError(errorText(t, e)),
   });
 
-  const signOut = useMutation({ mutationFn: () => authApi.post<void>('/sign-out'), onSettled: onSignedOut });
+  const signOut = useMutation({
+    mutationFn: () => authApi.post<void>('/sign-out'),
+    onSettled: onSignedOut,
+  });
 
   if (q.isPending) return <Spinner label={t('common:loading')} />;
   if (q.isError) return <FormError text={errorText(t, q.error)} />;
@@ -48,7 +55,7 @@ export function TenantChooser({ onSignedOut }: { onSignedOut: () => void }) {
       {tenants.length === 0 ? (
         <p>
           {t('signin.noTenants')}{' '}
-          <Link to="/contact" className="font-semibold underline">
+          <Link to="/contact" className={textLink}>
             {t('nav.contact')}
           </Link>
         </p>
@@ -63,11 +70,11 @@ export function TenantChooser({ onSignedOut }: { onSignedOut: () => void }) {
                   handoff.mutate(m.slug);
                 }}
                 disabled={handoff.isPending}
-                className="flex min-h-16 w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-2 text-start hover:bg-canvas disabled:opacity-60"
+                className="flex min-h-16 w-full items-center justify-between gap-3 rounded-input border border-line bg-surface px-4 py-2 text-start transition-colors hover:border-ink-2/30 hover:bg-primary-wash disabled:opacity-60"
               >
                 <span className="flex flex-col">
                   <span className="font-semibold">{m.name}</span>
-                  <span className="text-sm text-muted" dir="ltr">
+                  <span className="font-mono text-xs text-muted" dir="ltr">
                     {m.slug}
                   </span>
                 </span>

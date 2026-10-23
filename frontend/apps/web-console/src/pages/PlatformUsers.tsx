@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PLATFORM_ROLES, platformUserCreateBody, type PlatformRole } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Field, LiveRegion, Modal, PageShell, Select, Spinner } from '@dop/ui';
+import { Button, Card, Field, LiveRegion, Modal, PageShell, Pill, Select, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -37,7 +37,7 @@ export function PlatformUsersPage() {
   const roleOptions = PLATFORM_ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }));
 
   return (
-    <PageShell title={t('users.title')}>
+    <PageShell eyebrow={t('layout.groups.platform')} title={t('users.title')} description={t('users.description')}>
       <LiveRegion text={announce} />
       <InviteForm onDone={() => setAnnounce(t('users.invited'))} />
       <ErrorNote error={list.error ?? patch.error} />
@@ -50,7 +50,7 @@ export function PlatformUsersPage() {
               const self = u.id === me?.platformUser.id;
               return (
                 <tr key={u.id}>
-                  <Td>{u.name}</Td>
+                  <Td className="font-semibold whitespace-nowrap">{u.name}</Td>
                   <Td>
                     <span dir="ltr">{u.email}</span>
                   </Td>
@@ -64,9 +64,11 @@ export function PlatformUsersPage() {
                       onChange={(e) => patch.mutate({ id: u.id, body: { role: e.target.value as PlatformRole } })}
                     />
                   </Td>
-                  <Td>{t(`users.statusValue.${u.status}`, { defaultValue: u.status })}</Td>
-                  <Td>{u.mfa_enrolled_at ? `✓ ${t('users.mfaOn')}` : `✗ ${t('users.mfaOff')}`}</Td>
-                  <Td>{fmtDate(u.last_sign_in_at, i18n.language)}</Td>
+                  <Td>
+                    <Pill tone={u.status === 'active' ? 'ok' : u.status === 'invited' ? 'info' : 'neutral'}>{t(`users.statusValue.${u.status}`, { defaultValue: u.status })}</Pill>
+                  </Td>
+                  <Td>{u.mfa_enrolled_at ? <Pill tone="ok">{t('users.mfaOn')}</Pill> : <Pill tone="warn">{t('users.mfaOff')}</Pill>}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(u.last_sign_in_at, i18n.language)}</Td>
                   <Td>
                     <div className="flex flex-wrap gap-2">
                       {!self && (

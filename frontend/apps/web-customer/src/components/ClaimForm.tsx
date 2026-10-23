@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Field } from '@dop/ui';
+import { Button, Field, Spinner } from '@dop/ui';
 import { useEffect, useState } from 'react';
 import { publicApi } from '../lib/api';
 import { navigate } from '../lib/router';
@@ -54,14 +54,54 @@ export function ClaimForm({ venueCode, mode }: { venueCode: string; mode: 'code'
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold">{t('claim.title')}</h2>
-      <Field label={t('claim.number')} inputMode="text" autoComplete="off" value={number} onChange={(e) => setNumber(e.target.value)} required maxLength={8} />
-      {mode === 'code' && <Field label={t('claim.code')} autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} required minLength={4} maxLength={4} />}
-      {state === 'invalid' && <p role="alert" className="text-danger">{t('claim.invalid')}</p>}
-      {state === 'pending' && <p role="status">{t('claim.pending')}</p>}
-      {(state === 'refused' || state === 'expired') && <p role="alert" className="text-danger">{t(`claim.${state}`)}</p>}
-      <Button type="submit" busy={state === 'busy'} disabled={state === 'pending'}>
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <div>
+        <h2 className="font-display text-xl font-bold tracking-tight">{t('claim.title')}</h2>
+        <p className="mt-1 text-ink-2">{t(mode === 'code' ? 'claim.introCode' : 'claim.introStaff')}</p>
+      </div>
+      <div className={mode === 'code' ? 'grid grid-cols-2 items-end gap-3' : ''}>
+        <Field
+          label={t('claim.number')}
+          inputMode="text"
+          autoComplete="off"
+          dir="ltr"
+          className="[&_input]:font-display [&_input]:text-xl [&_input]:font-bold [&_input]:tabular-nums"
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          required
+          maxLength={8}
+        />
+        {mode === 'code' && (
+          <Field
+            label={t('claim.code')}
+            autoComplete="off"
+            dir="ltr"
+            className="[&_input]:font-mono [&_input]:text-xl [&_input]:tracking-[0.3em]"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+            minLength={4}
+            maxLength={4}
+          />
+        )}
+      </div>
+      {state === 'invalid' && (
+        <p role="alert" className="text-danger">
+          {t('claim.invalid')}
+        </p>
+      )}
+      {state === 'pending' && (
+        <p role="status" className="flex items-center gap-2 rounded-input bg-primary-wash p-3 text-ink-2">
+          <Spinner />
+          {t('claim.pending')}
+        </p>
+      )}
+      {(state === 'refused' || state === 'expired') && (
+        <p role="alert" className="text-danger">
+          {t(`claim.${state}`)}
+        </p>
+      )}
+      <Button type="submit" size="lg" className="w-full" busy={state === 'busy'} disabled={state === 'pending'}>
         {t('claim.submit')}
       </Button>
     </form>

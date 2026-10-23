@@ -1,10 +1,14 @@
 import type { PublicTicket } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
 import { Button } from '@dop/ui';
+import { useState } from 'react';
 import { unlockAudio } from '../lib/audio';
+import { SoundIcon } from './icons';
+import { lastRingProgress, numberSize, OrderRing } from './OrderRing';
 
-// Full-screen Ready view (FR-CUS-04/05, TR-ALR-11/12): flashing brand colour at 1 Hz (static for reduced motion),
-// "I'm coming", and the check code once acknowledged.
+// Full-screen Ready view (FR-CUS-04/05, TR-ALR-11/12): the venue's colour, the call ring snapping shut around the
+// number, flashing at 1 Hz while alerting (static for reduced motion), "I'm coming", and the check code once
+// acknowledged.
 export function ReadyScreen({
   ticket,
   alerting,
@@ -19,44 +23,58 @@ export function ReadyScreen({
   onComing: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  // The colour floods out from the ring only when this page watched the order turn ready.
+  const [flood] = useState(() => {
+    const p = lastRingProgress(ticket.token);
+    return p !== undefined && p < 1;
+  });
   // The customer's selected language first, then the venue default (CSD09, TR-L10N-02).
   const messages = ticket.venue.messages;
   const collection = messages[i18n.language]?.collection || messages[ticket.venue.locales[0] ?? 'ar']?.collection;
   if (needsTap && !ticket.acknowledged) {
     return (
       <button
-        className="flash fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 p-6 text-center"
+        className="flash fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 p-6 text-center"
         onClick={async () => {
           await unlockAudio();
           onTapToHear();
         }}
       >
-        <span className="num font-display text-[30vw] font-extrabold leading-none tracking-tight">{ticket.displayNumber}</span>
-        <span className="font-display text-3xl font-bold">🔊 {t('tapToHear')}</span>
+        <span className="num font-display leading-none font-extrabold tracking-tight" style={{ fontSize: 'min(40vw, 14rem)' }}>
+          {ticket.displayNumber}
+        </span>
+        <span className="inline-flex min-h-16 w-full max-w-sm items-center justify-center gap-3 rounded-control px-6 py-3 font-display text-xl font-bold ring-2 ring-current">
+          <SoundIcon className="size-7 shrink-0" />
+          {t('tapToHear')}
+        </span>
       </button>
     );
   }
+  const flashing = alerting && !ticket.acknowledged;
   return (
-    <main
-      className={`flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8 text-center ${alerting && !ticket.acknowledged ? 'flash' : ''}`}
-      style={alerting && !ticket.acknowledged ? undefined : { background: 'var(--brand-band)', color: 'var(--on-band)' }}
-    >
-      <p className="font-display text-3xl font-extrabold">{ticket.acknowledged ? t('status.readyAck') : t('status.ready')}</p>
-      <div className="num font-display font-extrabold leading-none tracking-tight" style={{ fontSize: 'clamp(33vw, 40vw, 14rem)' }}>
-        {ticket.displayNumber}
+    <main className={`flex flex-1 flex-col ${flood ? 'ready-flood' : ''}`} style={{ background: 'var(--brand)', color: 'var(--on-brand)' }}>
+      <div className={`flex flex-1 flex-col items-center justify-center gap-6 px-4 pt-8 pb-6 text-center ${flashing ? 'flash' : ''}`}>
+        <h1 className="font-display text-[2rem] leading-tight font-extrabold tracking-tight text-balance">
+          {ticket.acknowledged ? t('status.readyAck') : t('status.ready')}
+        </h1>
+        <OrderRing token={ticket.token} progress={1} ready tone="current" className="w-[min(78vw,20rem)]">
+          <div className="num font-display leading-[0.95] font-extrabold tracking-tight" style={{ fontSize: numberSize(ticket.displayNumber) }}>
+            {ticket.displayNumber}
+          </div>
+        </OrderRing>
+        {collection && <p className="max-w-sm text-xl font-semibold text-balance">{collection}</p>}
+        {ticket.checkCode && ticket.acknowledged && (
+          <div className="flex flex-col items-center gap-1 rounded-[var(--radius-card)] bg-surface px-8 py-5 text-ink shadow-card">
+            <p className="eyebrow">{t('checkCode')}</p>
+            <p className="num font-display text-5xl font-extrabold tracking-[0.3em]">{ticket.checkCode}</p>
+          </div>
+        )}
+        {!ticket.acknowledged && (
+          <Button size="xl" variant="secondary" className="mt-2 w-full max-w-md border-0 shadow-card" onClick={onComing}>
+            {t('comingButton')}
+          </Button>
+        )}
       </div>
-      {collection && <p className="text-xl font-semibold">{collection}</p>}
-      {ticket.checkCode && ticket.acknowledged && (
-        <div className="rounded-[1.75rem] bg-white px-8 py-5 text-ink shadow-card">
-          <p className="eyebrow">{t('checkCode')}</p>
-          <p className="num font-display text-5xl font-extrabold tracking-[0.3em]">{ticket.checkCode}</p>
-        </div>
-      )}
-      {!ticket.acknowledged && (
-        <Button size="xl" variant="secondary" className="w-full max-w-md" onClick={onComing}>
-          {t('comingButton')}
-        </Button>
-      )}
     </main>
   );
 }

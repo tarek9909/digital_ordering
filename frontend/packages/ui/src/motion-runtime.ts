@@ -127,7 +127,9 @@ export function flip(items: HTMLElement[], prev: Map<string, DOMRect>, next: Map
     const dx = a.left - b.left;
     const dy = a.top - b.top;
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
-    gsap.fromTo(item, { x: dx, y: dy, zIndex: 2 }, { x: 0, y: 0, duration: 0.55, ease: 'power3.inOut', clearProps: 'transform,zIndex' });
+    // The item that travels furthest (the one that changed column) passes over neighbours that only shift.
+    const z = 2 + Math.min(50, Math.round(Math.hypot(dx, dy) / 24));
+    gsap.fromTo(item, { x: dx, y: dy, zIndex: z, position: 'relative' }, { x: 0, y: 0, duration: 0.55, ease: 'power3.inOut', clearProps: 'transform,zIndex,position' });
   }
 }
 
@@ -143,7 +145,8 @@ export const moments = {
     const pulse = el.querySelector('[data-ring-pulse]');
     const p = Math.max(0, Math.min(1, a?.progress ?? 0));
     const tl = gsap.timeline();
-    if (arc) tl.to(arc, { strokeDashoffset: 1 - (a?.ready ? 1 : p), duration: a?.ready ? 0.7 : 1.1, ease: a?.ready ? 'power4.inOut' : 'power2.out' });
+    // pathLength=1 means the offset is a fraction, not pixels: tween the attribute without rounding.
+    if (arc) tl.to(arc, { attr: { 'stroke-dashoffset': 1 - (a?.ready ? 1 : p) }, autoRound: false, duration: a?.ready ? 0.7 : 1.1, ease: a?.ready ? 'power4.inOut' : 'power2.out' });
     if (a?.ready) {
       if (dot) tl.fromTo(dot, { scale: 0.4, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.5, ease: 'elastic.out(1, 0.45)' }, '-=0.1');
       if (pulse)

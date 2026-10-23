@@ -78,7 +78,9 @@
     "created": "Created",
     "empty": "No tenants match.",
     "complimentary": "complimentary",
-    "planArchived": "{{name}} (archived)"
+    "planArchived": "{{name}} (archived)",
+    "description": "Every restaurant on the platform. Find one, check its plan and open it with a stated reason.",
+    "emptyHint": "Try another name or clear the filters."
   },
   "tenantStatus": {
     "trial": "Trial",
@@ -119,7 +121,9 @@
     "actorId": "Actor ID",
     "uuidInvalid": "Enter a full ID (UUID).",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "description": "Every action taken on the platform, with who did it and why.",
+    "emptyHint": "Nothing was recorded for these filters."
   },
   "actorType": {
     "platform_user": "Platform user",
@@ -210,7 +214,8 @@
     "noVenues": "No venues.",
     "moreAudit": "Open in the audit log explorer",
     "paidUntil": "Paid until",
-    "lastPayment": "Last payment"
+    "lastPayment": "Last payment",
+    "eyebrow": "Tenant"
   },
   "memberRole": {
     "owner": "Owner",
@@ -276,7 +281,8 @@
     "plansUnavailable": "The plan list could not be loaded; the default plans are offered.",
     "trialDays": "Trial length (days)",
     "trialDaysHint": "Leave empty for the platform default ({{days}} days). 1–90.",
-    "trialDaysHintDefault": "Leave empty for the platform default. 1–90."
+    "trialDaysHintDefault": "Leave empty for the platform default. 1–90.",
+    "description": "Set up a restaurant and send its owner an invitation to sign in."
   },
   "lang": {
     "ar": "Arabic",
@@ -308,7 +314,8 @@
     "resetMfaTitle": "Reset two-factor",
     "resetMfaBody": "{{email}} is signed out everywhere and must set up two-factor again.",
     "typeEmail": "Type \"{{email}}\" to confirm",
-    "emailMismatch": "The email does not match."
+    "emailMismatch": "The email does not match.",
+    "description": "The platform team. Invite people, set their role and reset two-factor sign-in."
   },
   "settings": {
     "title": "Platform settings",
@@ -368,7 +375,8 @@
       "fileMissing": "Choose an MP3 file.",
       "fileSize": "The file must be an MP3 of 512 KB or less.",
       "fileType": "The file must be an MP3."
-    }
+    },
+    "description": "Platform-wide values, languages and alert chimes. Changes apply to every tenant."
   },
   "pilot": {
     "title": "Pilot report",
@@ -391,7 +399,11 @@
     "prepNote": "Preparation time is measured from ticket creation. Alert reach shows what the system could deliver; it does not tell whether a customer noticed it.",
     "reachChart": "Alert reach when ready",
     "reachChartNote": "Number of tickets by the best alert channel at the moment they were marked ready.",
-    "pickupP90": "90th percentile pickup after ready"
+    "pickupP90": "90th percentile pickup after ready",
+    "description": "Compare alert reach, preparation and pickup times across the restaurants you choose.",
+    "pickTenants": "Choose restaurants and a date range, then show the report.",
+    "pickTenantsTitle": "No report yet",
+    "summary": "Selected restaurants combined"
   },
   "reach": {
     "push": "Push sent",
@@ -601,7 +613,8 @@
     "deactivate": "Deactivate",
     "deactivateTitle": "Deactivate price",
     "deactivateBody": "The {{price}} price is removed from the price list. Payments already recorded are not changed.",
-    "deactivated": "Price deactivated."
+    "deactivated": "Price deactivated.",
+    "description": "Limits, features and monthly prices for each plan. Public plans appear on the pricing page."
   },
   "announcements": {
     "title": "Announcements",
@@ -637,7 +650,9 @@
     "delete": "Delete",
     "deleteTitle": "Delete announcement",
     "deleteBody": "The banner disappears from tenant admin areas.",
-    "deleted": "Announcement deleted."
+    "deleted": "Announcement deleted.",
+    "description": "Messages shown in the restaurant admin, to every tenant or a chosen group, for a set time.",
+    "emptyHint": "Nothing is scheduled. New announcements appear here."
   },
   "content": {
     "title": "Legal documents and emails",
@@ -686,7 +701,8 @@
       "fingerprint": "Public key fingerprint",
       "subscriptions": "Active subscriptions",
       "viewOnly": "View only. Keys are rotated through deployment configuration."
-    }
+    },
+    "description": "Publish the terms and privacy documents, and edit the emails the platform sends."
   },
   "platformReport": {
     "title": "Platform report",
@@ -743,7 +759,11 @@
       "inapp-tiktok": "TikTok in-app browser",
       "other": "Other",
       "none": "No phone following"
-    }
+    },
+    "description": "Tenants, sign-ups, revenue and delivery across the whole platform, day by day.",
+    "emptyHint": "Choose a wider date range. Figures are rolled up once a day.",
+    "mrrNow": "MRR ({{currency}})",
+    "mrrNowHint": "On the last day of the range"
   },
   "layout": {
     "groups": {

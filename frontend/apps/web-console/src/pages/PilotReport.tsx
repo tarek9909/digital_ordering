@@ -1,9 +1,9 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Field, PageShell, Spinner } from '@dop/ui';
+import { Button, Card, EmptyState, Field, PageShell, Stat } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Checkbox, ErrorNote, Table, Td } from '../components/common';
+import { Checkbox, ErrorNote, Table, TableSkeleton, Td } from '../components/common';
 import { api } from '../lib/api';
 import { fmtDuration, fmtPct } from '../lib/format';
 import type { ConsolePilotItem, Paged, TenantRow } from '../lib/types';
@@ -13,17 +13,34 @@ import type { ConsolePilotItem, Paged, TenantRow } from '../lib/types';
 
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 const REACH = ['push', 'live', 'closed', 'none'] as const;
-const COLORS: Record<(typeof REACH)[number], string> = { push: '#0f7b3e', live: '#1f4fa3', closed: '#8a5300', none: '#6b7280' };
+const COLORS: Record<(typeof REACH)[number], string> = {
+  push: 'var(--color-ok)',
+  live: 'var(--color-info)',
+  closed: 'var(--color-warn)',
+  none: 'var(--color-muted)',
+};
 
 export function PilotReportPage() {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<Map<string, string>>(new Map());
-  const [range, setRange] = useState(() => ({ from: isoDay(new Date(Date.now() - 13 * 86_400_000)), to: isoDay(new Date()) }));
-  const [query, setQuery] = useState<{ ids: string[]; from: string; to: string } | null>(null);
+  const [range, setRange] = useState(() => ({
+    from: isoDay(new Date(Date.now() - 13 * 86_400_000)),
+    to: isoDay(new Date()),
+  }));
+  const [query, setQuery] = useState<{
+    ids: string[];
+    from: string;
+    to: string;
+  } | null>(null);
   const report = useQuery({
     queryKey: ['pilot', query],
     enabled: query !== null,
-    queryFn: () => api.get<{ items: ConsolePilotItem[] }>('/reports/pilot', { tenantIds: query!.ids.join(','), from: query!.from, to: query!.to }),
+    queryFn: () =>
+      api.get<{ items: ConsolePilotItem[] }>('/reports/pilot', {
+        tenantIds: query!.ids.join(','),
+        from: query!.from,
+        to: query!.to,
+      }),
   });
 
   const run = (e: FormEvent) => {
@@ -33,7 +50,7 @@ export function PilotReportPage() {
   };
 
   return (
-    <PageShell title={t('pilot.title')}>
+    <PageShell wide eyebrow={t('layout.groups.insights')} title={t('pilot.title')} description={t('pilot.description')}>
       <Card className="mb-6">
         <form onSubmit={run} className="flex flex-col gap-4" noValidate>
           <TenantPicker selected={selected} onChange={setSelected} />
@@ -53,8 +70,9 @@ export function PilotReportPage() {
         </form>
       </Card>
       <ErrorNote error={report.error} />
-      {report.isFetching && <Spinner label={t('common:loading')} />}
+      {report.isFetching && !report.data && <TableSkeleton label={t('common:loading')} rows={3} />}
       {report.data && <Results items={report.data.items} />}
+      {query === null && <EmptyState title={t('pilot.pickTenantsTitle')}>{t('pilot.pickTenants')}</EmptyState>}
     </PageShell>
   );
 }
@@ -63,7 +81,10 @@ function TenantPicker({ selected, onChange }: { selected: Map<string, string>; o
   const { t } = useTranslation();
   const [q, setQ] = useState('');
   const [term, setTerm] = useState('');
-  const list = useQuery({ queryKey: ['tenants', 'picker', term], queryFn: () => api.get<Paged<TenantRow>>('/tenants', { q: term, limit: 20 }) });
+  const list = useQuery({
+    queryKey: ['tenants', 'picker', term],
+    queryFn: () => api.get<Paged<TenantRow>>('/tenants', { q: term, limit: 20 }),
+  });
   const toggle = (id: string, name: string, on: boolean) => {
     const m = new Map(selected);
     if (on) m.set(id, name);
@@ -96,9 +117,22 @@ function TenantPicker({ selected, onChange }: { selected: Map<string, string>; o
 
 export function Results({ items }: { items: ConsolePilotItem[] }) {
   const { t } = useTranslation();
-  const chart = items.map((i) => ({ name: i.tenant.name, ...i.report.total.alertReach }));
+  const chart = items.map((i) => ({
+    name: i.tenant.name,
+    ...i.report.total.alertReach,
+  }));
+  // Combined figures for the selected restaurants: counts add up; reach is recomputed from the summed channels.
+  const sum = (f: (s: ConsolePilotItem['report']['total']) => number) => items.reduce((a, i) => a + f(i.report.total), 0);
+  const reachAll = sum((s) => REACH.reduce((a, k) => a + (s.alertReach[k] ?? 0), 0));
+  const reachOk = sum((s) => (s.alertReach.push ?? 0) + (s.alertReach.live ?? 0));
   return (
     <div className="flex flex-col gap-6">
+      <section aria-label={t('pilot.summary')} data-motion="stagger" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat accent label={t('pilot.reachPct')} value={fmtPct(reachAll ? Math.round((reachOk / reachAll) * 1000) / 10 : null)} hint={t('pilot.summary')} />
+        <Stat label={t('pilot.tickets')} value={String(sum((s) => s.tickets))} />
+        <Stat label={t('pilot.ready')} value={String(sum((s) => s.readyTickets))} />
+        <Stat label={t('pilot.uncollected')} value={String(sum((s) => s.uncollected))} />
+      </section>
       <Table
         caption={t('pilot.title')}
         head={[
@@ -117,7 +151,7 @@ export function Results({ items }: { items: ConsolePilotItem[] }) {
       >
         {items.map(({ tenant, report: { total: s } }) => (
           <tr key={tenant.id}>
-            <Td>{tenant.name}</Td>
+            <Td className="font-semibold whitespace-nowrap">{tenant.name}</Td>
             <Td className="num">{s.tickets}</Td>
             <Td className="num">{s.readyTickets}</Td>
             <Td className="num">{fmtPct(s.reachPushOrLivePct)}</Td>
@@ -138,11 +172,18 @@ export function Results({ items }: { items: ConsolePilotItem[] }) {
         <div className="h-72" dir="ltr" role="img" aria-label={t('pilot.reachChart')}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-line)" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="var(--color-line)" tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="var(--color-line)" tickLine={false} axisLine={false} />
+              <Tooltip
+                cursor={{ fill: 'var(--color-primary-wash)' }}
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid var(--color-line)',
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              />
+              <Legend iconType="circle" />
               {REACH.map((k) => (
                 <Bar key={k} dataKey={k} stackId="r" name={t(`reach.${k}`)} fill={COLORS[k]} />
               ))}

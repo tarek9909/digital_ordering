@@ -1,6 +1,6 @@
 import { announcementBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Field, LiveRegion, Modal, PageShell, Select, Spinner } from '@dop/ui';
+import { Button, Card, EmptyState, Field, LiveRegion, Modal, PageShell, Select, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Checkbox, ErrorNote, FormButtons, Table, Td, TextArea } from '../components/common';
@@ -33,7 +33,7 @@ export function AnnouncementsPage() {
   });
   const l = i18n.language;
   return (
-    <PageShell title={t('announcements.title')}>
+    <PageShell eyebrow={t('layout.groups.platform')} title={t('announcements.title')} description={t('announcements.description')}>
       <LiveRegion text={announce} />
       <div className="flex flex-col gap-6">
         <CreateForm
@@ -45,13 +45,10 @@ export function AnnouncementsPage() {
         <ErrorNote error={q.error} />
         {q.isPending ? (
           <Spinner label={t('common:loading')} />
+        ) : q.data?.items.length === 0 ? (
+          <EmptyState title={t('announcements.none')}>{t('announcements.emptyHint')}</EmptyState>
         ) : (
           <Table caption={t('announcements.list')} head={[t('announcements.message'), t('announcements.severity'), t('announcements.target'), t('announcements.starts'), t('announcements.ends'), '']}>
-            {q.data?.items.length === 0 && (
-              <tr>
-                <Td className="text-muted">{t('announcements.none')}</Td>
-              </tr>
-            )}
             {q.data?.items.map((a) => {
               const msg = jsonValue<Record<string, string>>(a.message, {});
               const target = describeTarget(a.target);
@@ -73,8 +70,8 @@ export function AnnouncementsPage() {
                       </span>
                     )}
                   </Td>
-                  <Td>{fmtDate(a.starts_at, l)}</Td>
-                  <Td>{fmtDate(a.ends_at, l)}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(a.starts_at, l)}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">{fmtDate(a.ends_at, l)}</Td>
                   <Td>
                     <Button variant="ghost" onClick={() => setRemove(a)}>
                       {t('announcements.delete')}

@@ -18,18 +18,23 @@ export function PurposeGate({ tenantId, children }: { tenantId: string; children
     setPurpose(choice);
   };
   return (
-    <Card className="mx-auto max-w-md">
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <h1 className="text-xl font-bold">{t('purpose.title')}</h1>
-        <p className="text-muted">{t('purpose.body')}</p>
-        <Select
-          label={t('purpose.label')}
-          value={choice}
-          onChange={(e) => setChoice(e.target.value as AuditPurpose)}
-          options={AUDIT_PURPOSES.map((p) => ({ value: p, label: t(`purpose.${p}`) }))}
-        />
-        <Button type="submit">{t('purpose.open')}</Button>
-      </form>
-    </Card>
+    <div className="px-4 py-10 sm:px-6 sm:py-16">
+      <Card className="mx-auto max-w-md p-6">
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div data-motion="page" className="flex flex-col gap-1.5">
+            <span className="eyebrow">{t('tenant.eyebrow')}</span>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('purpose.title')}</h1>
+            <p className="text-ink-2">{t('purpose.body')}</p>
+          </div>
+          <Select
+            label={t('purpose.label')}
+            value={choice}
+            onChange={(e) => setChoice(e.target.value as AuditPurpose)}
+            options={AUDIT_PURPOSES.map((p) => ({ value: p, label: t(`purpose.${p}`) }))}
+          />
+          <Button type="submit">{t('purpose.open')}</Button>
+        </form>
+      </Card>
+    </div>
   );
 }

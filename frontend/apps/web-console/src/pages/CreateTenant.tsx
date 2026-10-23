@@ -78,7 +78,7 @@ export function CreateTenantPage() {
   const compReg = form.register('complimentary');
   const planError = msg('planCode');
   return (
-    <PageShell title={t('create.title')}>
+    <PageShell eyebrow={t('layout.groups.tenants')} title={t('create.title')} description={t('create.description')}>
       <Card className="max-w-xl">
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <ErrorNote error={error} />

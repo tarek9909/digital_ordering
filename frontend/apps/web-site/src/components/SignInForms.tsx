@@ -11,6 +11,7 @@ import { authApi, type SignInResponse } from '../lib/api';
 import { errorText, fieldMessage } from '../lib/errors';
 import { mapFieldErrors } from '../lib/forms';
 import { FormError } from './FormCard';
+import { pillLink, textLink } from './PageHeader';
 
 type Next = { kind: 'session' } | { kind: 'mfa'; mfaToken: string };
 
@@ -27,7 +28,10 @@ export function CredentialsForm({ onDone }: { onDone: (n: Next) => void }) {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(signInBody), defaultValues: { email: '', password: '' } });
+  } = useForm({
+    resolver: zodResolver(signInBody),
+    defaultValues: { email: '', password: '' },
+  });
   const m = useMutation({
     mutationFn: (b: { email: string; password: string }) => authApi.post<SignInResponse>('/sign-in', b),
     onSuccess: (r) => onDone(toNext(r)),
@@ -52,17 +56,17 @@ export function CredentialsForm({ onDone }: { onDone: (n: Next) => void }) {
         {t('common:signIn')}
       </Button>
       {/* Google sign-in for existing accounts (AS02); the API answers 404 when it is not configured. */}
-      <a className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 font-semibold" href="/api/auth/v1/oauth/google/start">
+      <a className={pillLink.quiet} href="/api/auth/v1/oauth/google/start">
         <span aria-hidden="true" className="font-black text-[#4285f4]">
           G
         </span>
         {t('signin.google')}
       </a>
-      <div className="flex flex-wrap justify-between gap-2 text-sm">
-        <Link to="/forgot-password" className="inline-flex min-h-12 items-center underline">
+      <div className="-mb-2 flex flex-wrap justify-between gap-x-4 border-t border-line pt-2 text-sm">
+        <Link to="/forgot-password" className={textLink}>
           {t('signin.forgot')}
         </Link>
-        <Link to="/contact" className="inline-flex min-h-12 items-center underline">
+        <Link to="/contact" className={textLink}>
           {t('signin.noAccount')}
         </Link>
       </div>
@@ -79,7 +83,11 @@ export function LinkGoogleForm({ linkToken, onDone, onBack }: { linkToken: strin
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const m = useMutation({
-    mutationFn: () => authApi.post<SignInResponse>('/oauth/google/link', { linkToken, password }),
+    mutationFn: () =>
+      authApi.post<SignInResponse>('/oauth/google/link', {
+        linkToken,
+        password,
+      }),
     onSuccess: (r) => onDone(toNext(r)),
     onError: (e) => setFormError(e instanceof ApiError && e.code === 'UNAUTHENTICATED' ? t('signin.linkWrong') : errorText(t, e)),
   });
@@ -100,10 +108,10 @@ export function LinkGoogleForm({ linkToken, onDone, onBack }: { linkToken: strin
         {t('signin.linkSubmit')}
       </Button>
       <div className="flex flex-wrap justify-between gap-2 text-sm">
-        <Link to="/forgot-password" className="inline-flex min-h-12 items-center underline">
+        <Link to="/forgot-password" className={textLink}>
           {t('signin.forgot')}
         </Link>
-        <button type="button" className="inline-flex min-h-12 items-center underline" onClick={onBack}>
+        <button type="button" className={textLink} onClick={onBack}>
           {t('signin.linkCancel')}
         </button>
       </div>
@@ -119,7 +127,10 @@ export function MfaForm({ mfaToken, onDone, onBack }: { mfaToken: string; onDone
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(signInMfaBody), defaultValues: { mfaToken, code: '' } });
+  } = useForm({
+    resolver: zodResolver(signInMfaBody),
+    defaultValues: { mfaToken, code: '' },
+  });
   const m = useMutation({
     mutationFn: (b: { mfaToken: string; code: string }) => authApi.post<SignInResponse>('/sign-in/mfa', b),
     onSuccess: () => onDone(),

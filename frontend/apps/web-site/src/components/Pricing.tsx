@@ -8,6 +8,7 @@ import { useSiteInfo } from '../landing/lib';
 import { publicApi, type PublicPlan, type PublicPlansResponse } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { FormError } from './FormCard';
+import { pillLink } from './PageHeader';
 
 // Public prices from the plan catalogue (BRD §16, FR-BIL-02, W02): one card per public plan with its monthly price
 // per venue, key limits and features. VAT is added at checkout. Super admins set each plan's site name, tagline and the
@@ -42,7 +43,8 @@ export function pickPrice(prices: PublicPlan['prices'], preferred = 'USD', perio
   return pool.find((p) => p.currency === preferred) ?? pool[0] ?? null;
 }
 
-export function Pricing({ period = 'month' }: { period?: BillingPeriod } = {}) {
+/** `stagger`: the plan cards arrive in order (the pricing page's entrance; the landing has its own motion). */
+export function Pricing({ period = 'month', stagger }: { period?: BillingPeriod; stagger?: boolean } = {}) {
   const { t } = useTranslation();
   const site = useSiteInfo();
   const looks = site.data?.pricing?.plans ?? {};
@@ -56,7 +58,7 @@ export function Pricing({ period = 'month' }: { period?: BillingPeriod } = {}) {
     return (
       <div className="flex flex-col items-start gap-3">
         <FormError text={errorText(t, q.error)} />
-        <button type="button" onClick={() => void q.refetch()} className="inline-flex min-h-12 items-center rounded-full border border-line px-5 font-semibold">
+        <button type="button" onClick={() => void q.refetch()} className={pillLink.quiet}>
           {t('pricing.retry')}
         </button>
       </div>
@@ -65,7 +67,7 @@ export function Pricing({ period = 'month' }: { period?: BillingPeriod } = {}) {
   if (q.data.items.length === 0) return <p className="text-muted">{t('pricing.none')}</p>;
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div data-motion={stagger ? 'stagger' : undefined} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {q.data.items.map((p) => (
           <PlanCard key={p.code} plan={p} look={looks[p.code]} trialDays={days} period={period} />
         ))}
@@ -101,20 +103,25 @@ function PlanCard({ plan, look, trialDays, period }: { plan: PublicPlan; look?: 
         </p>
       )}
       {shownLimits.length > 0 && (
-        <ul className="flex flex-col gap-1 text-sm" aria-label={t('pricing.limitsLabel')}>
+        <ul className={`flex flex-col gap-1 border-y py-3 text-sm ${featured ? 'border-white/10 text-white/80' : 'border-line text-ink-2'}`} aria-label={t('pricing.limitsLabel')}>
           {shownLimits.map((k) => (
             <li key={k}>{t(`pricing.limits.${k}`, { n: limits[k] as number })}</li>
           ))}
         </ul>
       )}
       {features.length > 0 && (
-        <ul className="flex flex-col gap-1 ps-5" style={{ listStyleType: 'disc' }} aria-label={t('pricing.featuresLabel')}>
+        <ul className="flex flex-col gap-1.5" aria-label={t('pricing.featuresLabel')}>
           {features.map((f) => (
-            <li key={f}>{t(`pricing.features.${f}`)}</li>
+            <li key={f} className="flex items-start gap-2">
+              <svg viewBox="0 0 24 24" className={`mt-1 size-4 shrink-0 ${featured ? 'text-glow' : 'text-ok'}`} fill="none" stroke="currentColor" strokeWidth={3} aria-hidden="true">
+                <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t(`pricing.features.${f}`)}
+            </li>
           ))}
         </ul>
       )}
-      <p className="text-sm">{trialDays ? t('pricing.trialNoteDays', { days: trialDays }) : t('pricing.trialNoteGeneric')}</p>
+      <p className={`text-sm ${featured ? 'text-white/70' : 'text-muted'}`}>{trialDays ? t('pricing.trialNoteDays', { days: trialDays }) : t('pricing.trialNoteGeneric')}</p>
       <Link
         to="/contact"
         className={`mt-auto inline-flex min-h-12 items-center justify-center rounded-full px-4 font-semibold ${featured ? 'bg-white text-ink hover:bg-canvas' : 'bg-ink text-white hover:bg-ink-2'}`}

@@ -55,11 +55,12 @@ export function KeyBuffer({ buffer, kitchen }: { buffer: string; kitchen: boolea
   const { t } = useTranslation();
   if (!buffer) return null;
   return (
-    <div className="pointer-events-none fixed start-4 bottom-24 z-30 flex flex-col gap-1 rounded-xl bg-ink px-5 py-3 text-white shadow-xl" aria-hidden="true">
-      <span className="num text-5xl font-black" dir="ltr">
+    <div className="pointer-events-none fixed start-4 bottom-24 z-30 flex min-w-48 flex-col gap-2 rounded-[var(--radius-card)] bg-ink px-6 py-4 text-white shadow-dialog" aria-hidden="true">
+      <span className="num font-display text-6xl leading-none font-extrabold tracking-tight" dir="ltr">
         {buffer}
+        <span className="ms-1 inline-block h-12 w-1 translate-y-1 rounded-full bg-white/40 motion-safe:animate-pulse" />
       </span>
-      <span className="text-sm">{kitchen ? t('keys.hintKitchen') : t('keys.hint')}</span>
+      <span className="text-sm text-white/70">{kitchen ? t('keys.hintKitchen') : t('keys.hint')}</span>
     </div>
   );
 }

@@ -1,11 +1,12 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Field } from '@dop/ui';
+import { AuthShell, Button, Field } from '@dop/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { BOARD_KEY } from '../board/boardData';
 import { Icon } from '../components/Icon';
 import { LangSwitch } from '../components/LangSwitch';
+import { PIN_MAX, PinPad } from '../components/PinPad';
 import { Notice } from '../components/Notice';
 import { errorText, isApiError, signInApi } from '../lib/api';
 import { usePinLock } from '../lib/pinLock';
@@ -13,7 +14,6 @@ import { storeDeviceName, storedDeviceName } from '../lib/lang';
 import { useStaff } from '../lib/store';
 
 const STAFF_KEY = /^[0-9A-Za-z]{32}$/;
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 /** Staff link + PIN sign-in (FR-ACC-01, FR-ACC-05, FR-ACC-06). */
 export function SignInPage() {
@@ -33,7 +33,7 @@ export function SignInPage() {
 
   if (!STAFF_KEY.test(staffKey)) return <Notice title={t('signIn.badLink')}>{t('signIn.badLinkBody')}</Notice>;
 
-  const press = (d: string) => setPin((p) => (p.length < 6 ? p + d : p));
+  const press = (d: string) => setPin((p) => (p.length < PIN_MAX ? p + d : p));
   const back = () => setPin((p) => p.slice(0, -1));
   const name = deviceName.trim();
   const ready = /^\d{4,6}$/.test(pin) && name.length > 0 && !busy;
@@ -64,18 +64,26 @@ export function SignInPage() {
   };
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-canvas p-4">
-      <div className="absolute end-3 top-3">
-        <LangSwitch />
-      </div>
-      <h1 className="text-3xl font-bold">{t('signIn.title')}</h1>
-      <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-4">
+    <AuthShell
+      appTitle={t('signIn.appTitle')}
+      panelEyebrow={t('signIn.panelEyebrow')}
+      headline={t('signIn.headline')}
+      points={[t('signIn.points.tap'), t('signIn.points.undo'), t('signIn.points.devices')]}
+      eyebrow={t('signIn.eyebrow')}
+      title={t('signIn.title')}
+      corner={<LangSwitch />}
+    >
+      <form onSubmit={submit} className="flex flex-col gap-6">
         {editName ? (
           <Field label={t('signIn.deviceName')} hint={t('signIn.deviceNameHint')} value={deviceName} maxLength={60} required onChange={(e) => setDeviceName(e.target.value)} />
         ) : (
-          <div className="flex items-center justify-between gap-2">
-            <span>
-              {t('signIn.device')}: <strong>{deviceName}</strong>
+          <div className="flex items-center gap-3 rounded-input bg-canvas py-1.5 ps-3 pe-1.5 ring-1 ring-line ring-inset">
+            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-surface text-ink-2 ring-1 ring-line">
+              <Icon name="device" className="size-5" />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="eyebrow">{t('signIn.device')}</span>
+              <strong className="truncate font-semibold">{deviceName}</strong>
             </span>
             <Button type="button" variant="ghost" onClick={() => setEditName(true)}>
               {t('signIn.changeName')}
@@ -83,46 +91,24 @@ export function SignInPage() {
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-2">
-          <span id="pin-label" className="font-medium">
+        <div className="flex flex-col gap-3">
+          <span id="pin-label" className="text-sm font-semibold text-ink-2">
             {t('signIn.pin')}
           </span>
-          <output aria-labelledby="pin-label" aria-live="polite" className="num flex h-14 items-center gap-3 text-4xl tracking-widest">
-            {pin.length === 0 ? <span className="text-lg text-muted">{t('signIn.pinHint')}</span> : '•'.repeat(pin.length)}
-          </output>
-          <span className="sr-only">{t('signIn.digitsEntered', { n: pin.length })}</span>
-        </div>
-
-        <div className="num grid grid-cols-3 gap-3" dir="ltr">
-          {KEYS.map((d) => (
-            <Button key={d} type="button" variant="secondary" size="xl" disabled={busy || locked} onClick={() => press(d)}>
-              {d}
-            </Button>
-          ))}
-          <Button type="button" variant="ghost" size="xl" onClick={back} aria-label={t('signIn.delete')} disabled={busy}>
-            <Icon name="close" className="size-7" />
-          </Button>
-          <Button type="button" variant="secondary" size="xl" disabled={busy || locked} onClick={() => press('0')}>
-            0
-          </Button>
-          <span />
+          <PinPad pin={pin} labelId="pin-label" disabled={locked} busy={busy} onPress={press} onBack={back} large />
         </div>
 
         {error && (
-          <p role="alert" className={`rounded-lg p-3 text-center font-semibold ${error.locked ? 'bg-danger text-white' : 'bg-danger-bg text-danger'}`}>
+          <p role="alert" className={`rounded-input px-4 py-3 text-center font-semibold ${error.locked ? 'bg-danger text-white' : 'bg-danger-bg text-danger'}`}>
             {error.text}
-            {locked && (
-              <span className="num mt-1 block">
-                {t('signIn.lockedFor', { time: lock.timeLeft })}
-              </span>
-            )}
+            {locked && <span className="num mt-1 block font-medium">{t('signIn.lockedFor', { time: lock.timeLeft })}</span>}
           </p>
         )}
 
-        <Button type="submit" size="lg" busy={busy} disabled={!ready || locked}>
+        <Button type="submit" size="lg" className="w-full" busy={busy} disabled={!ready || locked}>
           {t('signIn.open')}
         </Button>
       </form>
-    </main>
+    </AuthShell>
   );
 }

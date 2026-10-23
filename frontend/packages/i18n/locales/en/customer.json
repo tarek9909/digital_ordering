@@ -30,6 +30,7 @@
   "activation": {
     "title": "Turn on alerts",
     "step1": "We will play a short sound.",
+    "play": "Play test sound",
     "heard": "Did you hear that?",
     "yes": "Yes",
     "no": "No",
@@ -66,7 +67,8 @@
     "title": "Orders on this phone",
     "empty": "No orders yet.",
     "loadFailed": "Your orders could not be loaded. Check your connection and try again.",
-    "partialFailed": "Some orders could not be loaded. Check your connection and try again."
+    "partialFailed": "Some orders could not be loaded. Check your connection and try again.",
+    "emptyHint": "Scan the QR code on your ticket and your order will appear here."
   },
   "privacy": {
     "title": "Privacy",
@@ -87,6 +89,8 @@
   },
   "claim": {
     "title": "Already ordered?",
+    "introCode": "Enter the number and the 4-character code printed on your receipt.",
+    "introStaff": "Enter your order number and staff will confirm it.",
     "number": "Order number",
     "code": "Claim code (on your receipt)",
     "submit": "Show my order",

@@ -1,10 +1,10 @@
 import type { PublicTicket } from '@dop/contracts';
 import { ApiError, brandTokens } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, Spinner } from '@dop/ui';
+import { Button, EmptyState, Skeleton } from '@dop/ui';
 import { useQueries } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { Link } from '../lib/router';
+import { TicketCard } from '../components/TicketCard';
 import { publicApi } from '../lib/api';
 import { forgetTicket, markClosed, storedTickets } from '../lib/storage';
 
@@ -45,35 +45,45 @@ export function MyTicketsPage() {
     for (const token of goneKey.split(',').filter(Boolean)) forgetTicket(token);
   }, [goneKey]);
 
+  // Open orders first; the list keeps the newest-first order within each group.
+  const sorted = [...tickets.filter((tk) => OPEN.has(tk.status)), ...tickets.filter((tk) => !OPEN.has(tk.status))];
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-4 px-4 py-6">
-      <h1 className="text-2xl font-bold">{t('tickets.title')}</h1>
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 bg-canvas px-4 pt-10 pb-8">
+      <h1 className="font-display text-[1.875rem] leading-tight font-extrabold tracking-tight">{t('tickets.title')}</h1>
       {failed.length > 0 && (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface p-4">
-          <p className="text-danger">{t(tickets.length > 0 ? 'tickets.partialFailed' : 'tickets.loadFailed')}</p>
-          <Button busy={retrying} onClick={retryFailed}>
+        <div role="alert" className="flex flex-col items-start gap-3 rounded-[var(--radius-card)] bg-danger-bg p-4">
+          <p className="font-medium text-danger">{t(tickets.length > 0 ? 'tickets.partialFailed' : 'tickets.loadFailed')}</p>
+          <Button busy={retrying} variant="secondary" onClick={retryFailed}>
             {t('common:retry')}
           </Button>
         </div>
       )}
-      {loading && tickets.length === 0 && failed.length === 0 && <Spinner label={t('common:loading')} />}
-      {!loading && tickets.length === 0 && failed.length === 0 && <p className="text-muted">{t('tickets.empty')}</p>}
-      {tickets.map((tk) => {
-        const b = brandTokens(tk.venue.brandColor);
-        return (
-          <Link key={tk.token} to={`/${tk.token}`}>
-            <Card className="flex items-center justify-between overflow-hidden p-0">
-              <div className="flex flex-col gap-1 p-4">
-                <span className="font-semibold">{tk.venue.name}</span>
-                <span className="text-muted">{t(`common:status.${tk.status}`)}</span>
-              </div>
-              <span className="num self-stretch px-6 py-4 text-4xl font-black" style={{ background: b['--brand-band'], color: b['--on-band'] }}>
-                {tk.displayNumber}
-              </span>
-            </Card>
-          </Link>
-        );
-      })}
+      {loading && tickets.length === 0 && failed.length === 0 && (
+        <div role="status" className="flex flex-col gap-3">
+          <span className="sr-only">{t('common:loading')}</span>
+          <Skeleton className="h-21 rounded-[var(--radius-card)]" />
+          <Skeleton className="h-21 rounded-[var(--radius-card)]" />
+        </div>
+      )}
+      {!loading && tickets.length === 0 && failed.length === 0 && <EmptyState title={t('tickets.empty')}>{t('tickets.emptyHint')}</EmptyState>}
+      {sorted.length > 0 && (
+        <div data-motion="stagger" className="flex flex-col gap-3">
+          {sorted.map((tk) => {
+            const b = brandTokens(tk.venue.brandColor);
+            return (
+              <TicketCard
+                key={tk.token}
+                token={tk.token}
+                displayNumber={tk.displayNumber}
+                status={tk.status}
+                venueName={tk.venue.name}
+                band={b['--brand-band']}
+                onBand={b['--on-band']}
+              />
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }

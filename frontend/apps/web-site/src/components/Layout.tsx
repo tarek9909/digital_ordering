@@ -17,7 +17,11 @@ function useScrollToHash() {
   useEffect(() => {
     if (!hash) return;
     const el = document.getElementById(decodeURIComponent(hash.slice(1)));
-    if (el) el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    if (el)
+      el.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
   }, [hash, pathname]);
 }
 
@@ -28,8 +32,10 @@ export function Layout() {
   const contact = site.data?.contact;
   const hidden = useHidden();
   const year = new Date().getFullYear();
+  // Inner pages sit on the canvas tone from the top, so their white cards lift off it; the landing stays white.
+  const inner = useLocation().pathname !== '/';
   return (
-    <div className="flex min-h-dvh flex-col bg-surface">
+    <div className={`flex min-h-dvh flex-col ${inner ? 'bg-canvas' : 'bg-surface'}`}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:p-3">
         {t('nav.skip')}
       </a>

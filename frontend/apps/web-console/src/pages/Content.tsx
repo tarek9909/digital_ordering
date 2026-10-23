@@ -18,7 +18,7 @@ export function ContentPage() {
   const { t } = useTranslation();
   const [announce, setAnnounce] = useState('');
   return (
-    <PageShell title={t('content.title')}>
+    <PageShell eyebrow={t('layout.groups.platform')} title={t('content.title')} description={t('content.description')}>
       <LiveRegion text={announce} />
       <div className="flex flex-col gap-8">
         <Legal onAnnounce={setAnnounce} />

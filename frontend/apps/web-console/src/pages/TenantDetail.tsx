@@ -57,10 +57,15 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
     document.getElementById(`tab-${next}`)?.focus();
   };
 
-  if (detail.isPending) return <Spinner label={t('common:loading')} />;
+  if (detail.isPending)
+    return (
+      <div className="px-4 py-8 sm:px-6">
+        <Spinner label={t('common:loading')} />
+      </div>
+    );
   if (detail.error)
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 px-4 py-8 sm:px-6">
         <ErrorNote error={detail.error} />
         <Link to="/tenants" className="text-primary underline">
           {t('tenant.backToList')}
@@ -71,6 +76,18 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
 
   return (
     <PageShell
+      wide
+      eyebrow={
+        <span className="inline-flex items-center gap-2">
+          {t('tenant.eyebrow')}
+          <span dir="ltr" className="font-mono normal-case">
+            {d.tenant.slug}
+          </span>
+          <span className="font-sans tracking-normal normal-case">
+            <StatusBadge status={d.tenant.status} />
+          </span>
+        </span>
+      }
       title={d.tenant.name}
       actions={
         <div className="flex items-center gap-2">
@@ -98,7 +115,7 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
             tabIndex={tab === x ? 0 : -1}
             onClick={() => setTab(x)}
             onKeyDown={(e) => onKey(e, i)}
-            className={`min-h-12 border-b-4 px-4 font-semibold ${tab === x ? 'border-primary text-primary' : 'border-transparent'}`}
+            className={`-mb-px min-h-12 border-b-2 px-4 font-semibold transition-colors ${tab === x ? 'border-primary text-ink' : 'border-transparent text-ink-2 hover:text-ink'}`}
           >
             {t(`tenant.tab.${x}`)}
           </button>

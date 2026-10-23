@@ -1,9 +1,10 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, LiveRegion, Spinner } from '@dop/ui';
+import { Banner, Button, LiveRegion, Spinner } from '@dop/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { FormCard, FormError } from '../components/FormCard';
+import { pillLink, textLink } from '../components/PageHeader';
 import { authApi } from '../lib/api';
 import { errorText, isApiError } from '../lib/errors';
 
@@ -18,7 +19,9 @@ export function ConfirmEmailPage() {
   const token = params.get('token') ?? '';
   const valid = token.length >= 16 && token.length <= 100;
   const sent = useRef(false);
-  const m = useMutation({ mutationFn: (tk: string) => authApi.post<{ email: string }>('/email/change/confirm', { token: tk }) });
+  const m = useMutation({
+    mutationFn: (tk: string) => authApi.post<{ email: string }>('/email/change/confirm', { token: tk }),
+  });
   const { mutate } = m;
 
   useEffect(() => {
@@ -33,7 +36,7 @@ export function ConfirmEmailPage() {
       <FormCard title={t('confirmEmail.title')}>
         <FormError text={t('confirmEmail.expired')} />
         <p>{t('confirmEmail.expiredHelp')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center underline">
+        <Link to="/sign-in" className={textLink}>
           {t('common:signIn')}
         </Link>
       </FormCard>
@@ -44,7 +47,7 @@ export function ConfirmEmailPage() {
       <FormCard title={t('confirmEmail.title')}>
         <FormError text={t('confirmEmail.taken')} />
         <p>{t('confirmEmail.takenHelp')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center underline">
+        <Link to="/sign-in" className={textLink}>
           {t('common:signIn')}
         </Link>
       </FormCard>
@@ -65,15 +68,14 @@ export function ConfirmEmailPage() {
     return (
       <FormCard title={t('confirmEmail.title')}>
         <LiveRegion text={done} />
-        <p className="font-semibold text-ok">
-          <span aria-hidden="true">✓ </span>
+        <Banner tone="ok">
           {t('confirmEmail.doneLead')}{' '}
           <bdi dir="ltr" className="break-all">
             {m.data.email}
           </bdi>
-        </p>
+        </Banner>
         <p>{t('confirmEmail.signedOut')}</p>
-        <Link to="/sign-in" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 font-semibold text-on-primary">
+        <Link to="/sign-in" className={pillLink.primary}>
           {t('confirmEmail.continue')}
         </Link>
       </FormCard>

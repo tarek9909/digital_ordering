@@ -5,6 +5,7 @@ import { Button, Field, Modal, Spinner } from '@dop/ui';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, errorText, vq } from '../lib/api';
 import { canReopen } from '../lib/ticketState';
+import { StatusLabel } from './TicketCard';
 
 interface RowProps {
   ticket: StaffTicket;
@@ -19,17 +20,19 @@ function TicketRow({ ticket, now, disabled, timeZone, onReopen, onOpen }: RowPro
   const { t, i18n } = useTranslation();
   const when = ticket.collectedAt ?? ticket.readyAt ?? ticket.createdAt;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2">
-      <button type="button" className="flex min-h-12 flex-1 items-center gap-3 text-start" onClick={() => onOpen(ticket)}>
-        <span className="num text-3xl font-black">{ticket.displayNumber}</span>
-        <span className="flex flex-col text-sm">
-          <span className="font-semibold">{t(`common:status.${ticket.status}`)}</span>
+    <li className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-1.5 last:border-b-0">
+      <button type="button" className="-mx-2 flex min-h-14 flex-1 items-center gap-4 rounded-input px-2 text-start transition-colors hover:bg-primary-wash" onClick={() => onOpen(ticket)}>
+        <span className="num min-w-16 font-display text-3xl leading-none font-extrabold tracking-tight">{ticket.displayNumber}</span>
+        <span className="flex min-w-0 flex-col gap-0.5 text-sm">
+          <StatusLabel status={ticket.status} className="font-semibold text-ink" />
           <span className="text-muted">
-            {formatTime(when, i18n.language, timeZone)}
+            <span className="num">{formatTime(when, i18n.language, timeZone)}</span>
             {ticket.externalRef && (
               <>
-                {' · '}
-                {t('receipt')}: <span className="num">{ticket.externalRef}</span>
+                <span aria-hidden="true" className="mx-1.5">
+                  /
+                </span>
+                {t('receipt')} <span className="num">{ticket.externalRef}</span>
               </>
             )}
           </span>
@@ -51,7 +54,7 @@ export function RecentDrawer(props: Omit<RowProps, 'ticket'> & { tickets: StaffT
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} title={t('recent.title')} description={t('recent.description')}>
       {tickets.length === 0 ? (
-        <p className="text-muted">{t('recent.empty')}</p>
+        <p className="rounded-input bg-canvas px-4 py-8 text-center text-muted">{t('recent.empty')}</p>
       ) : (
         <ul>
           {tickets.map((tk) => (
@@ -98,17 +101,21 @@ export function SearchDialog(props: Omit<RowProps, 'ticket' | 'onReopen'> & { in
     <Modal open onOpenChange={(o) => !o && onClose()} title={t('search.title')}>
       <form onSubmit={search} className="mb-4 flex items-end gap-2">
         <Field className="flex-1" label={t('search.label')} type="search" autoFocus value={q} onChange={(e) => setQ(e.target.value)} />
-        <Button type="submit" busy={busy}>
+        <Button type="submit" variant="ink" busy={busy}>
           {t('search.go')}
         </Button>
       </form>
       {error && (
-        <p role="alert" className="text-danger">
+        <p role="alert" className="mb-3 rounded-input bg-danger-bg px-4 py-3 font-medium text-danger">
           {error}
         </p>
       )}
-      {busy && <Spinner label={t('common:loading')} />}
-      {items && items.length === 0 && <p className="text-muted">{t('search.none')}</p>}
+      {busy && (
+        <div className="flex justify-center py-6 text-muted">
+          <Spinner label={t('common:loading')} />
+        </div>
+      )}
+      {items && items.length === 0 && <p className="rounded-input bg-canvas px-4 py-8 text-center text-muted">{t('search.none')}</p>}
       {items && items.length > 0 && (
         <ul>
           {items.map((tk) => (

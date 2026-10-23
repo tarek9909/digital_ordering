@@ -29,14 +29,16 @@ export function SoundOverlay() {
     <button
       type="button"
       onClick={() => void enable()}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-[3vmin] bg-ink/95 text-white"
+      className="ember-glow fixed inset-0 z-50 flex flex-col items-center justify-center gap-[3.4vmin] bg-ink p-[6vmin] text-center text-white focus-visible:outline-none"
       autoFocus
     >
-      <svg viewBox="0 0 24 24" className="size-[16vmin] text-glow" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-        <path d="M3 10v4h4l6 5V5L7 10H3zm13.5-2.5a6 6 0 0 1 0 9M19 5a9.5 9.5 0 0 1 0 14" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <span className="font-display text-[6vmin] font-bold">{t('sound.enable')}</span>
-      <span className="text-[3vmin] text-white/70">{t('sound.hint')}</span>
+      <span aria-hidden="true" className="sound-disc flex size-[22vmin] items-center justify-center rounded-full bg-white/[0.06] ring-[0.4vmin] ring-white/15">
+        <svg viewBox="0 0 24 24" className="size-[11vmin] text-glow" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden="true">
+          <path d="M3 10v4h4l6 5V5L7 10H3zm13.5-2.5a6 6 0 0 1 0 9M19 5a9.5 9.5 0 0 1 0 14" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="font-display text-[6.4vmin] leading-tight font-extrabold tracking-tight">{t('sound.enable')}</span>
+      <span className="max-w-[80vmin] text-[2.8vmin] leading-snug text-white/65">{t('sound.hint')}</span>
     </button>
   );
 }
