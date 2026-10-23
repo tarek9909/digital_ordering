@@ -16,8 +16,15 @@ const escapeText = (s: string) =>
     .replace(/"/g, '&quot;');
 
 function safeHref(attrs: string): string | null {
-  const m = /\bhref\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i.exec(attrs);
-  const raw = (m?.[2] ?? m?.[3] ?? m?.[4] ?? '').trim();
+  // Walk the attributes in order, so text inside another attribute's value (title="href=…") is never taken for one.
+  const attr = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+  let raw = '';
+  for (let m = attr.exec(attrs); m; m = attr.exec(attrs)) {
+    if (m[1]!.toLowerCase() === 'href') {
+      raw = (m[2] ?? m[3] ?? m[4] ?? '').trim();
+      break; // the first href wins, as in browsers
+    }
+  }
   const decoded = raw.replace(/&amp;/g, '&');
   return /^(https:\/\/|mailto:)[^\s<>"'`]+$/i.test(decoded) ? decoded : null;
 }

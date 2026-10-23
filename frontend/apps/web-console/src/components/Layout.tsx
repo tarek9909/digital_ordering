@@ -33,6 +33,7 @@ const NAV: Array<{ group: string; items: NavItem[] }> = [
     items: [
       { to: '/plans', key: 'nav.plans', perm: 'settings' },
       { to: '/announcements', key: 'nav.announcements', perm: 'announcements' },
+      { to: '/website', key: 'nav.website', perm: 'settings' },
       { to: '/content', key: 'nav.content', perm: 'settings' },
       { to: '/platform-users', key: 'nav.platformUsers', perm: 'platform_users' },
       { to: '/settings', key: 'nav.settings', perm: 'settings' },

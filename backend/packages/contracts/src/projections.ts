@@ -60,6 +60,11 @@ export interface StaffTicket {
   readyRound: number;
   autoAlertsSent: number;
   manualAlertsSent: number;
+  /**
+   * Ready round the server flagged "not collected — call out" after the last automatic alert (TR-ALR-21, CSD07);
+   * the call-out applies while it equals `readyRound` and the ticket is unacknowledged. Null when never flagged.
+   */
+  overdueRound: number | null;
   source: 'staff' | 'api' | 'connector';
   createdAt: string;
   readyAt: string | null;
@@ -109,7 +114,7 @@ export interface StaffBoard {
   serverTime: string;
 }
 
-export interface IntegrationTicket extends Omit<StaffTicket, 'token' | 'checkCode' | 'lastChangedBy' | 'closedAt' | 'businessDate'> {
+export interface IntegrationTicket extends Omit<StaffTicket, 'token' | 'checkCode' | 'lastChangedBy' | 'closedAt' | 'businessDate' | 'overdueRound'> {
   ticketUrl: string;
   firstReadyAt: string | null;
   cancelledAt: string | null;

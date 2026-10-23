@@ -115,6 +115,9 @@ export interface LegalDocumentsTable {
   version: string;
   locale: string;
   content_key: string;
+  /** 'uploading' while the version is reserved and its content is being written (API02). */
+  status: Generated<'uploading' | 'ready'>;
+  created_at: Generated<Date>;
   published_at: TsNull;
 }
 
@@ -247,6 +250,8 @@ export interface UserSessionsTable {
   host: string;
   token_hash: string;
   mfa_verified_at: TsNull;
+  /** When the user last proved who they are; a handoff copies it from the www session (0010). */
+  authenticated_at: TsNull;
   ip: string;
   user_agent: string;
   created_at: Generated<Date>;
@@ -374,6 +379,8 @@ export interface TicketsTable {
   acknowledged_at: TsNull;
   auto_alerts_sent: Generated<number>;
   manual_alerts_sent: Generated<number>;
+  /** Ready round the overdue-flag job marked "call out" (0009, CSD07); current only while it equals ready_round. */
+  overdue_round: number | null;
   cancel_reason: CancelReason | null;
   cancel_note: string | null;
   created_at: Generated<Date>;
@@ -477,6 +484,8 @@ export interface TenantPaymentsTable {
   covers_from: Ts;
   covers_until: Ts;
   recorded_by: string | null;
+  /** The console request that recorded it; a repeated request is applied once (0007, BW02). */
+  request_id: string | null;
   recorded_at: Generated<Date>;
 }
 
@@ -621,6 +630,8 @@ export interface WebhookEndpointsTable {
   status: Generated<'active' | 'disabled'>;
   disabled_reason: 'manual' | 'failing' | null;
   failure_streak: Generated<number>;
+  /** Re-enabled at: older failures no longer count towards disabling the endpoint (0007, BW01). */
+  health_since: TsNull;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }
@@ -631,6 +642,8 @@ export interface WebhookDeliveriesTable {
   endpoint_id: string;
   event_id: string;
   event_type: string;
+  /** true for the fan-out delivery of an event (one per endpoint, uq_original); null for a redelivery (0007, BW09). */
+  is_original: Generated<boolean | null>;
   payload: Json<unknown>;
   attempt: Generated<number>;
   status: Generated<'pending' | 'succeeded' | 'failed' | 'abandoned'>;

@@ -36,6 +36,7 @@ import {
   listFlags,
   listLegalDocuments,
   listNotes,
+  listPlanOptions,
   listPlans,
   listSupportSessions,
   platformReport,
@@ -115,7 +116,10 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     permission: 'console.commercial',
     params: idP,
     body: changePlanBody,
-    handler: async (c) => changePlan(c.deps, pa(c), c.params.id, c.body.planCode),
+    handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // changes what the tenant pays and can use (L-6)
+      return changePlan(c.deps, pa(c), c.params.id, c.body.planCode);
+    },
   }),
   // Offline payment (cash, transfer, wallet): extends the paid-until date and lifts past due or a billing suspension.
   route({
@@ -126,7 +130,11 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     params: idP,
     body: recordPaymentBody,
     status: 201,
-    handler: async (c) => recordPayment(c.deps, pa(c), c.params.id, c.body),
+    handler: async (c) => {
+      // Extends paid access, so it needs a recent second factor like other privilege changes (L-6).
+      requireFreshMfa(pa(c), c.deps.now());
+      return recordPayment(c.deps, pa(c), c.params.id, c.body);
+    },
   }),
   route({
     method: 'post',
@@ -136,10 +144,13 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     params: idP,
     body: freeMonthsBody,
     handler: async (c) => {
-      await grantFreeMonths(c.deps, pa(c), c.params.id, c.body.months);
+      requireFreshMfa(pa(c), c.deps.now()); // free paid time (L-6)
+      await grantFreeMonths(c.deps, pa(c), c.params.id, c.body.months, c.body.requestId);
     },
   }),
   route({ method: 'get', path: '/plans', surfaces: ['console'], permission: 'console.settings', handler: async (c) => ({ items: await listPlans(c.deps) }) }),
+  // Codes and names only, for the tenant list's plan filter: every role that can list tenants (AS10).
+  route({ method: 'get', path: '/plan-options', surfaces: ['console'], permission: 'console.tenants.read', handler: async (c) => ({ items: await listPlanOptions(c.deps) }) }),
   route({ method: 'post', path: '/plans', surfaces: ['console'], permission: 'console.settings', body: planCreateBody, status: 201, handler: async (c) => createPlan(c.deps, pa(c), c.body) }),
   route({
     method: 'patch',
@@ -174,6 +185,7 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     params: z.object({ id: uuidSchema, key: z.string().min(1).max(60) }).strict(),
     body: flagOverrideBody,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // unlocks paid features (L-6)
       await setFlagOverride(c.deps, pa(c), c.params.id, c.params.key, c.body.enabled);
     },
   }),
@@ -184,6 +196,7 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     permission: 'console.settings',
     params: z.object({ id: uuidSchema, key: z.string().min(1).max(60) }).strict(),
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now());
       await setFlagOverride(c.deps, pa(c), c.params.id, c.params.key, null);
     },
   }),
@@ -236,6 +249,7 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     permission: 'console.settings',
     params: idP,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // every tenant user must accept it (L-6)
       await publishLegalDocument(c.deps, pa(c), c.params.id);
     },
   }),
@@ -255,6 +269,7 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     params: z.object({ key: z.string().max(60), locale: z.string().max(10) }).strict(),
     body: emailTemplateBody,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // text of every platform email, password resets included (L-6)
       await putEmailTemplate(c.deps, pa(c), c.params.key, c.params.locale, c.body);
     },
   }),

@@ -19,6 +19,7 @@ import {
   displayNumber,
   followerLevel,
   nextOccurrence,
+  nextScheduledOccurrence,
   ticketLevel,
   isOpen,
   newTicketCodes,
@@ -189,9 +190,21 @@ async function requireStaffAllowed(deps: Deps, tenantId: string, op: 'create' | 
   return status;
 }
 
-async function checkTrialLimit(deps: Deps, tenantId: string, status: TenantStatus, bd: string) {
-  if (status !== 'trial') return;
+/**
+ * Takes one of a trial's daily tickets (TR-ALG-14) and returns the function that gives it back. It is taken only
+ * after the request validated and given back unless the ticket commits, so failed requests never spend the quota
+ * (BW06). The counter is committed tickets plus creates in flight; INCR gives each concurrent create its own place,
+ * so concurrent creates cannot pass the limit together.
+ */
+async function reserveTrialTicket(deps: Deps, tenantId: string, status: TenantStatus, bd: string): Promise<() => Promise<void>> {
+  if (status !== 'trial') return async () => undefined;
   const k = keys.trialCount(tenantId, bd);
+  let released = false;
+  const release = async () => {
+    if (released) return;
+    released = true;
+    await deps.kv.incrBy(k, -1).catch((e: unknown) => deps.log.warn({ err: e, tenantId }, 'trial quota release failed'));
+  };
   let n = await deps.kv.incr(k, 48 * 3600);
   // Rebuild from MySQL when the counter is missing (TR-ALG-14): the tenant's tickets that day are added once, on
   // top of whatever concurrent requests counted meanwhile, instead of overwriting them (L-12).
@@ -199,8 +212,14 @@ async function checkTrialLimit(deps: Deps, tenantId: string, status: TenantStatu
     const r = await deps.db.forTenant(tenantId).selectFrom('tickets').select((eb) => eb.fn.countAll<number>().as('n')).where('business_date', '=', bd).executeTakeFirstOrThrow();
     if (Number(r.n) > 0) n = await deps.kv.incrBy(k, Number(r.n));
   }
-  const { limits } = await tenantPlan(deps, tenantId);
-  if (trialLimitExceeded(status, n, limits.trialTicketsPerDay)) throw new AppError('TRIAL_DAILY_LIMIT');
+  try {
+    const { limits } = await tenantPlan(deps, tenantId);
+    if (trialLimitExceeded(status, n, limits.trialTicketsPerDay)) throw new AppError('TRIAL_DAILY_LIMIT');
+  } catch (e) {
+    await release(); // a refused create keeps no place either
+    throw e;
+  }
+  return release;
 }
 
 /** TR-AUTH-05: the owner's email must be verified before the second ticket (the setup test ticket is allowed). */
@@ -253,7 +272,6 @@ export async function createTicket(
     }
   }
   if (actor.kind !== 'api_key') await checkEmailVerified(db, tenantId);
-  await checkTrialLimit(deps, tenantId, status, bd);
 
   let counter: { id: string; prefix: string | null } | null = null;
   if (body.counterId) {
@@ -264,83 +282,98 @@ export async function createTicket(
   const openCount = await db.selectFrom('tickets').select((eb) => eb.fn.countAll<number>().as('n')).where('venue_id', '=', venueId).where('open_number_key', 'is not', null).executeTakeFirstOrThrow();
   if (Number(openCount.n) >= MAX_OPEN_TICKETS_PER_VENUE) throw new AppError('PLAN_LIMIT', 'Too many open tickets in this venue');
 
-  const startStatus = body.startStatus ?? venue.settings.ticketFlow.startStatus;
-  let defaultWait = venue.settings.wait.defaultMinutes;
-  if (venue.settings.wait.mode === 'auto' && body.waitMinutes === undefined) {
-    defaultWait = (await calculatedWait(deps, tenantId, venueId, counter?.id ?? null, defaultWait)).minutes; // TR-ALG-09
-  }
-  const waitMinutes = venue.settings.wait.mode === 'off' ? null : clampWait(body.waitMinutes ?? defaultWait);
-  const name = await actorName(db, actor);
-  const evActor = eventActor(actor);
-
-  // The sequence row is created in its own auto-committed statement, so the transaction below only locks an
-  // existing row: concurrent INSERT IGNOREs inside the transaction deadlock on insert-intention locks.
-  const seqKey = sequenceKey(venue.settings.numbering.prefixesEnabled, counter?.id);
-  await db.insertInto('number_sequences').ignore().values({ tenant_id: tenantId, venue_id: venueId, sequence_key: seqKey, business_date: bd, last_number: 0 }).execute();
-
-  for (let attempt = 1; ; attempt++) {
-    try {
-      let outboxId = 0;
-      const rpb = await isEnabled(deps, tenantId, 'remove_powered_by');
-      const ticket = await db.transaction().execute(async (tx) => {
-        const seq = await tx
-          .selectFrom('number_sequences')
-          .select('last_number')
-          .where('venue_id', '=', venueId)
-          .where('sequence_key', '=', seqKey)
-          .where('business_date', '=', bd)
-          .forUpdate()
-          .executeTakeFirstOrThrow();
-        let openQ = tx.selectFrom('tickets').select('number').where('venue_id', '=', venueId).where('open_number_key', 'is not', null);
-        if (seqKey) openQ = openQ.where('counter_id', '=', counter!.id);
-        else if (venue.settings.numbering.prefixesEnabled) openQ = openQ.where('counter_id', 'is', null);
-        const open = new Set((await openQ.execute()).map((r) => r.number));
-        const n = pickNextNumber(seq.last_number, venue.settings.numbering, open);
-        if (n === null) throw new AppError('NUMBERS_EXHAUSTED');
-        await tx.updateTable('number_sequences').set({ last_number: n }).where('venue_id', '=', venueId).where('sequence_key', '=', seqKey).where('business_date', '=', bd).execute();
-
-        const id = uuidv7(now.getTime());
-        const codes = newTicketCodes();
-        const row = {
-          id,
-          tenant_id: tenantId,
-          venue_id: venueId,
-          counter_id: counter?.id ?? null,
-          business_date: bd,
-          number: n,
-          display_number: displayNumber(venue.settings.numbering.prefixesEnabled ? counter?.prefix : null, n),
-          token: newTicketToken(),
-          check_code: codes.checkCode,
-          claim_code: codes.claimCode,
-          status: startStatus,
-          source: opts.source ?? (actor.kind === 'api_key' ? ('api' as const) : ('staff' as const)),
-          note: body.note || null,
-          external_ref: body.externalRef || null,
-          wait_minutes: waitMinutes,
-          wait_base_at: waitMinutes === null ? null : now,
-          created_at: now,
-          received_at: startStatus === 'received' ? now : null,
-          preparing_at: startStatus === 'preparing' ? now : null,
-        };
-        await tx.insertInto('tickets').values(row).execute();
-        const t = await tx.selectFrom('tickets').selectAll().where('id', '=', id).executeTakeFirstOrThrow();
-        await writeEvent(tx, t, 'created', evActor, { to: startStatus, data: { actorName: name } });
-        outboxId = await fanOut({ tx, deps, removePoweredBy: rpb, ticket: t, venue, tenantStatus: status, change: 'created', actorLabel: name, topic: 'ticket.created', webhook: 'ticket.created' });
-        return t;
-      });
-      await flushOutbox(deps, [outboxId]);
-      return { ticket, existing: false };
-    } catch (e) {
-      const dup = (e as { code?: string }).code === 'ER_DUP_ENTRY';
-      if (dup && /uq_open_ext_ref/.test(String((e as Error).message)) && body.externalRef) {
-        const existing = await db.selectFrom('tickets').selectAll().where('venue_id', '=', venueId).where('open_external_ref', '=', body.externalRef).executeTakeFirst();
-        if (existing && opts.viaApi) return { ticket: existing, existing: true };
-        throw new AppError('EXTERNAL_REF_IN_USE', undefined, { data: existing ? { ticket: staffTicket(existing) } : undefined });
-      }
-      // uq_open_number duplicate or a deadlock: retry up to 3 times (TR-ALG-03).
-      if ((dup || (e as { code?: string }).code === 'ER_LOCK_DEADLOCK') && attempt < 3) continue;
-      throw e;
+  // The trial quota is taken only now that the request validated, and given back unless a ticket commits (BW06).
+  const release = await reserveTrialTicket(deps, tenantId, status, bd);
+  let committed = false;
+  try {
+    const startStatus = body.startStatus ?? venue.settings.ticketFlow.startStatus;
+    let defaultWait = venue.settings.wait.defaultMinutes;
+    if (venue.settings.wait.mode === 'auto' && body.waitMinutes === undefined) {
+      defaultWait = (await calculatedWait(deps, tenantId, venueId, counter?.id ?? null, defaultWait)).minutes; // TR-ALG-09
     }
+    const waitMinutes = venue.settings.wait.mode === 'off' ? null : clampWait(body.waitMinutes ?? defaultWait);
+    const name = await actorName(db, actor);
+    const evActor = eventActor(actor);
+
+    // The sequence row is created in its own auto-committed statement, so the transaction below only locks an
+    // existing row: concurrent INSERT IGNOREs inside the transaction deadlock on insert-intention locks.
+    const seqKey = sequenceKey(venue.settings.numbering.prefixesEnabled, counter?.id);
+    await db.insertInto('number_sequences').ignore().values({ tenant_id: tenantId, venue_id: venueId, sequence_key: seqKey, business_date: bd, last_number: 0 }).execute();
+
+    for (let attempt = 1; ; attempt++) {
+      try {
+        let outboxId = 0;
+        const rpb = await isEnabled(deps, tenantId, 'remove_powered_by');
+        const ticket = await db.transaction().execute(async (tx) => {
+          // A shared lock on the active venue row: archiving takes it exclusively, so no ticket is created in a
+          // venue while it is archived (BW04).
+          if (!(await tx.selectFrom('venues').select('id').where('id', '=', venueId).where('status', '=', 'active').forShare().executeTakeFirst())) throw new AppError('NOT_FOUND');
+          const seq = await tx
+            .selectFrom('number_sequences')
+            .select('last_number')
+            .where('venue_id', '=', venueId)
+            .where('sequence_key', '=', seqKey)
+            .where('business_date', '=', bd)
+            .forUpdate()
+            .executeTakeFirstOrThrow();
+          let openQ = tx.selectFrom('tickets').select('number').where('venue_id', '=', venueId).where('open_number_key', 'is not', null);
+          if (seqKey) openQ = openQ.where('counter_id', '=', counter!.id);
+          else if (venue.settings.numbering.prefixesEnabled) openQ = openQ.where('counter_id', 'is', null);
+          const open = new Set((await openQ.execute()).map((r) => r.number));
+          const n = pickNextNumber(seq.last_number, venue.settings.numbering, open);
+          if (n === null) throw new AppError('NUMBERS_EXHAUSTED');
+          await tx.updateTable('number_sequences').set({ last_number: n }).where('venue_id', '=', venueId).where('sequence_key', '=', seqKey).where('business_date', '=', bd).execute();
+
+          const id = uuidv7(now.getTime());
+          const codes = newTicketCodes();
+          const row = {
+            id,
+            tenant_id: tenantId,
+            venue_id: venueId,
+            counter_id: counter?.id ?? null,
+            business_date: bd,
+            number: n,
+            display_number: displayNumber(venue.settings.numbering.prefixesEnabled ? counter?.prefix : null, n),
+            token: newTicketToken(),
+            check_code: codes.checkCode,
+            claim_code: codes.claimCode,
+            status: startStatus,
+            source: opts.source ?? (actor.kind === 'api_key' ? ('api' as const) : ('staff' as const)),
+            note: body.note || null,
+            external_ref: body.externalRef || null,
+            wait_minutes: waitMinutes,
+            wait_base_at: waitMinutes === null ? null : now,
+            created_at: now,
+            received_at: startStatus === 'received' ? now : null,
+            preparing_at: startStatus === 'preparing' ? now : null,
+          };
+          await tx.insertInto('tickets').values(row).execute();
+          const t = await tx.selectFrom('tickets').selectAll().where('id', '=', id).executeTakeFirstOrThrow();
+          await writeEvent(tx, t, 'created', evActor, { to: startStatus, data: { actorName: name } });
+          outboxId = await fanOut({ tx, deps, removePoweredBy: rpb, ticket: t, venue, tenantStatus: status, change: 'created', actorLabel: name, topic: 'ticket.created', webhook: 'ticket.created' });
+          return t;
+        });
+        committed = true;
+        await flushOutbox(deps, [outboxId]);
+        return { ticket, existing: false };
+      } catch (e) {
+        const dup = (e as { code?: string }).code === 'ER_DUP_ENTRY';
+        if (dup && /uq_open_ext_ref/.test(String((e as Error).message)) && body.externalRef) {
+          const existing = await db.selectFrom('tickets').selectAll().where('venue_id', '=', venueId).where('open_external_ref', '=', body.externalRef).executeTakeFirst();
+          if (existing && opts.viaApi) {
+            await release(); // the existing ticket is returned; no new one was created
+            return { ticket: existing, existing: true };
+          }
+          throw new AppError('EXTERNAL_REF_IN_USE', undefined, { data: existing ? { ticket: staffTicket(existing) } : undefined });
+        }
+        // uq_open_number duplicate or a deadlock: retry up to 3 times (TR-ALG-03).
+        if ((dup || (e as { code?: string }).code === 'ER_LOCK_DEADLOCK') && attempt < 3) continue;
+        throw e;
+      }
+    }
+  } catch (e) {
+    if (!committed) await release();
+    throw e;
   }
 }
 
@@ -799,28 +832,43 @@ export async function autoCloseVenue(deps: Deps, tenantId: string, venueId: stri
     }
     if (batch.length < 500) break;
   }
-  const v = await db.selectFrom('venues').selectAll().where('id', '=', venueId).executeTakeFirstOrThrow();
-  // Pending times become current from their business date (BR-27, TR-ALG-16).
-  const today = businessDate(now, v.time_zone, { resetTime: v.reset_time, pendingResetTime: v.pending_reset_time, pendingTimeZone: v.pending_time_zone, pendingFromDate: v.pending_from_date });
-  const promote = v.pending_from_date !== null && today >= v.pending_from_date;
-  const autoCloseTime = promote && v.pending_auto_close_time ? v.pending_auto_close_time : v.auto_close_time;
-  const zone = promote && v.pending_time_zone ? v.pending_time_zone : v.time_zone;
-  await db
-    .updateTable('venues')
-    .set({
-      ...(promote && {
-        reset_time: v.pending_reset_time ?? v.reset_time,
-        auto_close_time: autoCloseTime,
-        pending_reset_time: null,
-        pending_auto_close_time: null,
-        time_zone: zone,
-        pending_time_zone: null,
-        pending_from_date: null,
-      }),
-      next_auto_close_at: nextOccurrence(now, zone, autoCloseTime),
-    })
-    .where('id', '=', venueId)
-    .execute();
+  // Under the venue row lock, so a settings change saved meanwhile is neither lost nor promoted early.
+  await db.transaction().execute(async (tx) => {
+    const v = await tx.selectFrom('venues').selectAll().where('id', '=', venueId).forUpdate().executeTakeFirstOrThrow();
+    // Pending times become current from their business date (BR-27, TR-ALG-16).
+    const today = businessDate(now, v.time_zone, { resetTime: v.reset_time, pendingResetTime: v.pending_reset_time, pendingTimeZone: v.pending_time_zone, pendingFromDate: v.pending_from_date });
+    const promote = v.pending_from_date !== null && today >= v.pending_from_date;
+    const autoCloseTime = promote && v.pending_auto_close_time ? v.pending_auto_close_time : v.auto_close_time;
+    const zone = promote && v.pending_time_zone ? v.pending_time_zone : v.time_zone;
+    // A change still waiting for its date is scheduled from its first effective occurrence (BW05).
+    const next = promote
+      ? nextOccurrence(now, zone, autoCloseTime)
+      : nextScheduledOccurrence(now, {
+          timeZone: v.time_zone,
+          resetTime: v.reset_time,
+          time: v.auto_close_time,
+          pendingTimeZone: v.pending_time_zone,
+          pendingResetTime: v.pending_reset_time,
+          pendingTime: v.pending_auto_close_time,
+          pendingFromDate: v.pending_from_date,
+        });
+    await tx
+      .updateTable('venues')
+      .set({
+        ...(promote && {
+          reset_time: v.pending_reset_time ?? v.reset_time,
+          auto_close_time: autoCloseTime,
+          pending_reset_time: null,
+          pending_auto_close_time: null,
+          time_zone: zone,
+          pending_time_zone: null,
+          pending_from_date: null,
+        }),
+        next_auto_close_at: next,
+      })
+      .where('id', '=', venueId)
+      .execute();
+  });
   return expired;
 }
 

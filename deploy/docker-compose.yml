@@ -222,6 +222,7 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
       # M-14: off by default. The VPS key should be upload-only; prune from a separate trusted machine instead.
       BACKUP_PRUNE_ON_VPS: ${BACKUP_PRUNE_ON_VPS:-false}
+      BACKUP_ALLOW_UNENCRYPTED: ${BACKUP_ALLOW_UNENCRYPTED:-no}
       # Read-only MinIO identity (GetObject/ListBucket on tanbeeh-assets), not root (L-30).
       MINIO_BACKUP_ACCESS_KEY: ${MINIO_BACKUP_ACCESS_KEY:?set MINIO_BACKUP_ACCESS_KEY in .env}
       MINIO_BACKUP_SECRET_KEY: ${MINIO_BACKUP_SECRET_KEY:?set MINIO_BACKUP_SECRET_KEY in .env}

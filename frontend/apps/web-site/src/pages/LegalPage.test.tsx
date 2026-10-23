@@ -59,3 +59,19 @@ it('falls back to the original link when there is no HTML', async () => {
   expect(screen.getByRole('link', { name: 'Open the original document' }).getAttribute('href')).toBe(doc.url);
   expect(fetchSpy).not.toHaveBeenCalled();
 });
+
+it('shows the exact version linked from the acceptance gate (AS04)', async () => {
+  const id = '01a15889-fa80-7002-8bf0-d3019652ee58';
+  get.mockResolvedValue({ ...doc, id, version: 'english-v1', html: '<p>Exact</p>' });
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={[`/legal/privacy?document=${id}`]}>
+        <Routes>
+          <Route path="/legal/:kind" element={<LegalPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText('Exact')).toBeTruthy();
+  expect(get).toHaveBeenCalledWith('/legal/privacy', { locale: 'en', document: id });
+});

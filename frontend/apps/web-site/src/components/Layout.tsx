@@ -2,7 +2,7 @@ import { useTranslation } from '@dop/i18n';
 import { BrandMark } from '@dop/ui';
 import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
-import { useSiteInfo } from '../landing/lib';
+import { useHidden, useSiteInfo } from '../landing/lib';
 import { LanguageToggle } from './LanguageToggle';
 
 // Ink carries weight (the active page); ember stays for the page's own main action, so the header trial link is
@@ -26,6 +26,7 @@ export function Layout() {
   useScrollToHash();
   const site = useSiteInfo();
   const contact = site.data?.contact;
+  const hidden = useHidden();
   const year = new Date().getFullYear();
   return (
     <div className="flex min-h-dvh flex-col bg-surface">
@@ -40,15 +41,19 @@ export function Layout() {
             {t('common:appName')}
           </Link>
           <nav aria-label={t('nav.main')} className="col-span-2 row-start-2 -mx-3 flex items-center gap-0.5 overflow-x-auto px-3 md:mx-0 md:px-0">
-            <Link to="/#how" className={anchorCls}>
-              {t('nav.how')}
-            </Link>
+            {!hidden('steps') && (
+              <Link to="/#how" className={anchorCls}>
+                {t('nav.how')}
+              </Link>
+            )}
             <NavLink to="/pricing" className={navCls}>
               {t('nav.pricing')}
             </NavLink>
-            <Link to="/#faq" className={anchorCls}>
-              {t('nav.faq')}
-            </Link>
+            {!hidden('faq') && (
+              <Link to="/#faq" className={anchorCls}>
+                {t('nav.faq')}
+              </Link>
+            )}
             <NavLink to="/sign-in" className={navCls}>
               {t('common:signIn')}
             </NavLink>
@@ -76,15 +81,19 @@ export function Layout() {
           <div className="grid gap-10 sm:grid-cols-3">
             <nav aria-label={t('landing.footer.product')} className="flex flex-col gap-2">
               <p className="mb-1 font-semibold text-white">{t('landing.footer.product')}</p>
-              <Link to="/#how" className="w-fit hover:text-white">
-                {t('nav.how')}
-              </Link>
+              {!hidden('steps') && (
+                <Link to="/#how" className="w-fit hover:text-white">
+                  {t('nav.how')}
+                </Link>
+              )}
               <Link to="/pricing" className="w-fit hover:text-white">
                 {t('nav.pricing')}
               </Link>
-              <Link to="/#faq" className="w-fit hover:text-white">
-                {t('nav.faq')}
-              </Link>
+              {!hidden('faq') && (
+                <Link to="/#faq" className="w-fit hover:text-white">
+                  {t('nav.faq')}
+                </Link>
+              )}
             </nav>
             <nav aria-label={t('footer.legal')} className="flex flex-col gap-2">
               <p className="mb-1 font-semibold text-white">{t('footer.legal')}</p>

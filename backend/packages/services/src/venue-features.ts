@@ -7,6 +7,7 @@ import type { Deps } from './deps.js';
 import { addOutbox, flushOutbox } from './outbox.js';
 import { isEnabled, requireFeature, requireWithinLimit } from './platform.js';
 import { loadVenueRow } from './projections.js';
+import { rollupVenueDay } from './reports.js';
 import { getTenantStatus } from './tenants.js';
 import { follow } from './tickets.js';
 
@@ -228,7 +229,7 @@ export async function rateTicket(deps: Deps, token: string, b: { clientId: strin
   if (!row) throw new AppError('NOT_FOUND');
   await requireFeature(deps, row.tenant_id, 'ratings');
   const db = deps.db.forTenant(row.tenant_id);
-  const t = await db.selectFrom('tickets').select(['id', 'status', 'venue_id']).where('token', '=', token).executeTakeFirstOrThrow();
+  const t = await db.selectFrom('tickets').select(['id', 'status', 'venue_id', 'business_date']).where('token', '=', token).executeTakeFirstOrThrow();
   if (t.status !== 'collected') throw new AppError('INVALID_TRANSITION', 'Ratings open after collection');
   const f = await db.selectFrom('ticket_followers').select('id').where('ticket_id', '=', t.id).where('client_id', '=', b.clientId).executeTakeFirst();
   if (!f) throw new AppError('FORBIDDEN');
@@ -241,6 +242,13 @@ export async function rateTicket(deps: Deps, token: string, b: { clientId: strin
   } catch (e) {
     if ((e as { code?: string }).code === 'ER_DUP_ENTRY') return { reviewLinkUrl: venue.settings.customer.reviewLinkUrl };
     throw e;
+  }
+  // A rating can arrive days after its ticket's business date, which the scheduled roll-up no longer revisits:
+  // rebuild that day now (BW07). If this fails, the hourly roll-up picks the rating up from its look-back window.
+  try {
+    await rollupVenueDay(deps, row.tenant_id, t.venue_id, t.business_date);
+  } catch (err) {
+    deps.log.warn({ err, ticketId: t.id }, 'rating roll-up deferred to the hourly roll-up');
   }
   // The review link is shown to every rating customer, not only high ratings (FR-RPT-09).
   return { reviewLinkUrl: venue.settings.customer.reviewLinkUrl };
@@ -256,6 +264,25 @@ export async function listRatings(deps: Deps, tenantId: string, venueId?: string
   if (venueId) q = q.where('ratings.venue_id', '=', venueId);
   const rows = await q.orderBy('ratings.created_at', 'desc').limit(limit).execute();
   return rows.map((r) => ({ id: r.id, stars: r.stars, comment: r.comment, commentDeleted: r.comment_deleted_at !== null, createdAt: r.created_at.toISOString(), displayNumber: r.display_number, businessDate: r.business_date, venueId: r.venue_id }));
+}
+
+/**
+ * Rating average and distribution (BRD §12.1 "Rating: average, distribution, recent comments"), over every retained
+ * rating of the venue (or tenant), not just the recent list. `distribution[i]` counts ratings of i + 1 stars.
+ */
+export async function ratingSummary(deps: Deps, tenantId: string, venueId?: string) {
+  let q = deps.db
+    .forTenant(tenantId)
+    .selectFrom('ratings')
+    .select(['stars', (eb) => eb.fn.countAll<number>().as('n')])
+    .where('deleted_at', 'is', null)
+    .groupBy('stars');
+  if (venueId) q = q.where('venue_id', '=', venueId);
+  const distribution = [0, 0, 0, 0, 0];
+  for (const r of await q.execute()) if (r.stars >= 1 && r.stars <= 5) distribution[r.stars - 1] = Number(r.n);
+  const count = distribution.reduce((a, n) => a + n, 0);
+  const sum = distribution.reduce((a, n, i) => a + n * (i + 1), 0);
+  return { count, average: count ? Math.round((sum / count) * 10) / 10 : null, distribution };
 }
 
 /** The tenant can delete comments (FR-RPT-08); the rating and its stars stay in lists and reports (A11). */

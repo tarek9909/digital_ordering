@@ -50,6 +50,19 @@ export async function resolvePublic(host: string, resolver: (h: string) => Promi
   return addrs[0]!;
 }
 
+/**
+ * What the tenant sees of a failed request. The resolver's and HTTP client's own messages stay in the server log: shown
+ * to the tenant they would tell "this name exists on the platform's private network" (blocked) apart from "no such
+ * name", a map of internal host names.
+ */
+export function deliveryErrorCategory(detail: string): string {
+  if (/private address|ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(detail)) return 'Destination not reachable (DNS lookup failed or address not allowed)';
+  if (/timeout|timed out|aborted/i.test(detail)) return 'Timed out';
+  if (/certificate|TLS|SSL|self[- ]signed/i.test(detail)) return 'TLS error';
+  if (/ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|socket/i.test(detail)) return 'Connection failed';
+  return 'Request failed';
+}
+
 /** `X-Pager-Signature: t={unix},v1={hmac}[,v1={hmac}]` (TR-WH-01). */
 export function signPayload(secrets: string[], body: string, t: number): string {
   return [`t=${t}`, ...secrets.map((s) => `v1=${createHmac('sha256', s).update(`${t}.${body}`).digest('hex')}`)].join(',');
@@ -90,18 +103,25 @@ export async function updateWebhook(deps: Deps, actor: Actor, tenantId: string, 
   const db = deps.db.forTenant(tenantId);
   let newSecret: string | undefined;
   await db.transaction().execute(async (tx) => {
-    const ep = await tx.selectFrom('webhook_endpoints').select(['id', 'secret_enc']).where('id', '=', id).executeTakeFirst();
+    const ep = await tx.selectFrom('webhook_endpoints').select(['id', 'secret_enc', 'status']).where('id', '=', id).forUpdate().executeTakeFirst();
     if (!ep) throw new AppError('NOT_FOUND');
     const patch: Record<string, unknown> = {};
     if (b.url) patch.url = b.url;
-    if (b.events) patch.events = json(b.events.filter((e) => (WEBHOOK_EVENTS as readonly string[]).includes(e)));
-    if (b.enabled !== undefined) Object.assign(patch, b.enabled ? { status: 'active', disabled_reason: null, failure_streak: 0 } : { status: 'disabled', disabled_reason: 'manual' });
+    if (b.events) {
+      const events = b.events.filter((e) => (WEBHOOK_EVENTS as readonly string[]).includes(e));
+      if (events.length === 0) throw new AppError('VALIDATION_FAILED', 'Choose at least one event', { errors: [{ path: 'events', message: 'empty' }] });
+      patch.events = json(events);
+    }
+    // Re-enabling resets the endpoint's health (TR-WH-03): earlier failures no longer count towards disabling it.
+    if (b.enabled !== undefined) Object.assign(patch, b.enabled ? { status: 'active', disabled_reason: null, failure_streak: 0, ...(ep.status !== 'active' && { health_since: deps.now() }) } : { status: 'disabled', disabled_reason: 'manual' });
     if (b.rotateSecret) {
       // Both secrets sign for 24 h (TR-WH-01); the old one moves to secret_enc after the overlap.
       newSecret = `whsec_${randomBytes(32).toString('base64url')}`;
       patch.secret_next_enc = await encrypt(deps.keys, newSecret);
       patch.secret_rotated_at = deps.now();
     }
+    // An empty change (`{}` or only `rotateSecret: false`) is a no-op for an existing endpoint (A10, API01).
+    if (Object.keys(patch).length === 0) return;
     await tx.updateTable('webhook_endpoints').set(patch).where('id', '=', id).execute();
     await writeAudit(tx, { actor, action: 'webhook.updated', tenantId, entityType: 'webhook', entityId: id, after: { ...b, rotateSecret: Boolean(b.rotateSecret) } });
   });
@@ -135,7 +155,14 @@ interface Envelope {
   data: Record<string, unknown>;
 }
 
-/** Creates one delivery per subscribed active endpoint; returns their IDs for the deliver jobs. */
+const isDuplicate = (e: unknown) => (e as { code?: string }).code === 'ER_DUP_ENTRY';
+
+/**
+ * Creates the original delivery of an event for each subscribed active endpoint and returns the IDs whose deliver
+ * jobs are due. Idempotent per (event, endpoint) (BW09): a retried fan-out finds the delivery it stored before
+ * (uq_original) instead of adding a second one, and returns it again only while it was never attempted, so a deliver
+ * job that was not queued the first time is queued now. Deliberate redeliveries (`redeliver`) are separate rows.
+ */
 export async function fanOutWebhook(deps: Deps, tenantId: string, venueId: string | null, type: WebhookEvent, data: Record<string, unknown>, eventId = uuidv7()): Promise<number[]> {
   const db = deps.db.forTenant(tenantId);
   const endpoints = await db.selectFrom('webhook_endpoints').select(['id', 'events', 'venue_id']).where('status', '=', 'active').execute();
@@ -143,8 +170,17 @@ export async function fanOutWebhook(deps: Deps, tenantId: string, venueId: strin
   const ids: number[] = [];
   const envelope: Envelope = { id: eventId, type, createdAt: deps.now().toISOString(), tenantId, venueId, data };
   for (const e of targets) {
-    const r = await db.insertInto('webhook_deliveries').values({ tenant_id: tenantId, endpoint_id: e.id, event_id: eventId, event_type: type, payload: json(envelope), next_attempt_at: deps.now(), created_at: deps.now() }).executeTakeFirstOrThrow();
-    ids.push(Number(r.insertId));
+    try {
+      const r = await db
+        .insertInto('webhook_deliveries')
+        .values({ tenant_id: tenantId, endpoint_id: e.id, event_id: eventId, event_type: type, is_original: true, payload: json(envelope), next_attempt_at: deps.now(), created_at: deps.now() })
+        .executeTakeFirstOrThrow();
+      ids.push(Number(r.insertId));
+    } catch (err) {
+      if (!isDuplicate(err)) throw err;
+      const existing = await db.selectFrom('webhook_deliveries').select(['id', 'status', 'attempt']).where('endpoint_id', '=', e.id).where('event_id', '=', eventId).where('is_original', '=', true).executeTakeFirst();
+      if (existing && existing.status === 'pending' && existing.attempt === 0) ids.push(existing.id);
+    }
   }
   return ids;
 }
@@ -182,33 +218,54 @@ export async function deliverWebhook(deps: Deps, tenantId: string, deliveryId: n
     const address = await resolvePublic(new URL(ep.url).hostname, resolver);
     code = (await post(ep.url, body, headers, { timeoutMs: 10_000, resolvedAddress: address })).status;
   } catch (e) {
-    error = String((e as Error).message).slice(0, 300);
-    if (/private address/.test(error)) deps.log.warn({ security: true, event: 'WEBHOOK_SSRF_BLOCKED', tenantId, endpointId: ep.id }, 'webhook SSRF check failed');
+    const detail = String((e as Error).message).slice(0, 300);
+    if (/private address/.test(detail)) deps.log.warn({ security: true, event: 'WEBHOOK_SSRF_BLOCKED', tenantId, endpointId: ep.id }, 'webhook SSRF check failed');
+    else deps.log.info({ tenantId, endpointId: ep.id, deliveryId, detail }, 'webhook delivery failed');
+    error = deliveryErrorCategory(detail);
   }
   const ms = Date.now() - started;
   const ok = code !== null && code >= 200 && code < 300;
-  if (ok) {
-    await db.updateTable('webhook_deliveries').set({ status: 'succeeded', attempt, response_code: code, response_ms: ms, error: null, next_attempt_at: null }).where('id', '=', deliveryId).execute();
-    await db.updateTable('webhook_endpoints').set({ failure_streak: 0 }).where('id', '=', ep.id).execute();
-    return { status: 'succeeded', nextAttemptAt: null };
-  }
   const offset = RETRY_SCHEDULE_MS[attempt - 1];
-  const next = offset === undefined ? null : new Date(d.created_at.getTime() + offset);
-  await db
-    .updateTable('webhook_deliveries')
-    .set({ status: next ? 'failed' : 'abandoned', attempt, response_code: code, response_ms: ms, error: error ?? `HTTP ${code}`, next_attempt_at: next })
-    .where('id', '=', deliveryId)
-    .execute();
-  await db.updateTable('webhook_endpoints').set({ failure_streak: ep.failure_streak + 1 }).where('id', '=', ep.id).execute();
-  // Disable when every delivery in the last 24 h failed and there were at least 10 (TR-WH-03).
-  const day = await db
-    .selectFrom('webhook_deliveries')
-    .select([(eb) => eb.fn.countAll<number>().as('n'), (eb) => eb.fn.sum<number>(eb.case().when('status', '=', 'succeeded').then(1).else(0).end()).as('ok')])
-    .where('endpoint_id', '=', ep.id)
-    .where('created_at', '>', new Date(deps.now().getTime() - 24 * 3600_000))
-    .executeTakeFirstOrThrow();
-  if (Number(day.n) >= 10 && Number(day.ok ?? 0) === 0) {
-    await db.updateTable('webhook_endpoints').set({ status: 'disabled', disabled_reason: 'failing' }).where('id', '=', ep.id).execute();
+  const next = ok || offset === undefined ? null : new Date(d.created_at.getTime() + offset);
+  // The outcome and the endpoint's health are recorded under a lock on the endpoint row (BW01): concurrent deliveries
+  // of one endpoint serialise here, so a success committed by one is always seen by another's disable decision, and
+  // the streak is never lost to a read-modify-write race. The request itself ran outside any transaction.
+  const disabled = await db.transaction().execute(async (tx) => {
+    const cur = await tx.selectFrom('webhook_endpoints').select(['status', 'health_since']).where('id', '=', ep.id).forUpdate().executeTakeFirst();
+    if (ok) {
+      await tx.updateTable('webhook_deliveries').set({ status: 'succeeded', attempt, response_code: code, response_ms: ms, error: null, next_attempt_at: null }).where('id', '=', deliveryId).execute();
+      await tx.updateTable('webhook_endpoints').set({ failure_streak: 0 }).where('id', '=', ep.id).execute();
+      return false;
+    }
+    await tx
+      .updateTable('webhook_deliveries')
+      .set({ status: next ? 'failed' : 'abandoned', attempt, response_code: code, response_ms: ms, error: error ?? `HTTP ${code}`, next_attempt_at: next })
+      .where('id', '=', deliveryId)
+      .execute();
+    await tx
+      .updateTable('webhook_endpoints')
+      .set((eb) => ({ failure_streak: eb('failure_streak', '+', 1) }))
+      .where('id', '=', ep.id)
+      .execute();
+    if (!cur || cur.status !== 'active') return false;
+    // Disable when at least 10 deliveries of the last 24 h were actually attempted and none succeeded (TR-WH-03).
+    // Deliveries not attempted yet (queued behind this one) are no evidence of failure and are not counted; nor are
+    // deliveries from before the endpoint was last re-enabled.
+    const dayAgo = new Date(deps.now().getTime() - 24 * 3600_000);
+    const since = cur.health_since && cur.health_since > dayAgo ? cur.health_since : dayAgo;
+    const day = await tx
+      .selectFrom('webhook_deliveries')
+      .select([(eb) => eb.fn.countAll<number>().as('n'), (eb) => eb.fn.sum<number>(eb.case().when('status', '=', 'succeeded').then(1).else(0).end()).as('ok')])
+      .where('endpoint_id', '=', ep.id)
+      .where('attempt', '>', 0)
+      .where('created_at', '>', since)
+      .executeTakeFirstOrThrow();
+    if (Number(day.n) < 10 || Number(day.ok ?? 0) > 0) return false;
+    const r = await tx.updateTable('webhook_endpoints').set({ status: 'disabled', disabled_reason: 'failing' }).where('id', '=', ep.id).where('status', '=', 'active').executeTakeFirst();
+    return Number(r.numUpdatedRows) > 0;
+  });
+  if (ok) return { status: 'succeeded', nextAttemptAt: null };
+  if (disabled) {
     const owner = await deps.db.platform().selectFrom('tenant_memberships').innerJoin('users', 'users.id', 'tenant_memberships.user_id').select(['users.email', 'users.locale']).where('tenant_memberships.tenant_id', '=', tenantId).where('tenant_memberships.role', '=', 'owner').where('tenant_memberships.status', '=', 'active').executeTakeFirst();
     if (owner) await sendEmail(deps, { template: 'webhook_disabled', to: owner.email, locale: owner.locale, tenantId, data: { url: ep.url }, key: `whdisabled:${ep.id}:${deps.now().toISOString().slice(0, 10)}` });
   }
@@ -238,7 +295,11 @@ export async function redeliver(deps: Deps, tenantId: string, deliveryId: number
   const db = deps.db.forTenant(tenantId);
   const d = await db.selectFrom('webhook_deliveries').select(['tenant_id', 'endpoint_id', 'event_id', 'event_type', 'payload']).where('id', '=', deliveryId).executeTakeFirst();
   if (!d) throw new AppError('NOT_FOUND');
-  const r = await db.insertInto('webhook_deliveries').values({ tenant_id: tenantId, endpoint_id: d.endpoint_id, event_id: d.event_id, event_type: d.event_type, payload: json(d.payload), next_attempt_at: deps.now(), created_at: deps.now() }).executeTakeFirstOrThrow();
+  // A deliberate redelivery is not an original (is_original NULL), so the per-event uniqueness never blocks it (BW09).
+  const r = await db
+    .insertInto('webhook_deliveries')
+    .values({ tenant_id: tenantId, endpoint_id: d.endpoint_id, event_id: d.event_id, event_type: d.event_type, is_original: null, payload: json(d.payload), next_attempt_at: deps.now(), created_at: deps.now() })
+    .executeTakeFirstOrThrow();
   const id = Number(r.insertId);
   await enqueueJobs(deps, [{ name: 'webhook.deliver', data: { tenantId, deliveryId: id }, opts: { jobId: jobIds.webhookDeliver(id) } }]);
   return { id };

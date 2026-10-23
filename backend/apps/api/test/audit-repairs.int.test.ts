@@ -438,22 +438,32 @@ describe('W01 POS connection lifecycle', () => {
     const url = new URL(start.body.url);
     expect(url.searchParams.get('redirect_uri')).toBe('https://api.dop.test/connectors/stubpos/callback');
     const state = url.searchParams.get('state')!;
-    const cb = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${state}`).set('Host', 'api.dop.test');
+    // The starting browser's binding cookie goes with the provider's redirect to the API host.
+    const binding = (a: { jar: Map<string, string> }) => [...a.jar].filter(([k]) => k.endsWith('posbind')).map(([k, v]) => `${k}=${v}`).join('; ');
+    expect(binding(x.admin)).not.toBe('');
+    const cb = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${state}`).set('Host', 'api.dop.test').set('Cookie', binding(x.admin));
     expect(cb.status).toBe(302);
     expect(cb.headers.location).toBe(`https://${x.slug}.dop.test/admin/integrations?pos=connected`);
-    const replay = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${state}`).set('Host', 'api.dop.test');
+    const replay = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${state}`).set('Host', 'api.dop.test').set('Cookie', binding(x.admin));
     expect(replay.status).toBe(401);
     const list = await x.admin.get('/api/admin/v1/pos/connections');
     expect(list.body.items).toEqual([expect.objectContaining({ provider: 'stubpos', locationId: 'loc-shared', venueId: x.venueId, status: 'connected' })]);
 
     const y = await tenant('pro');
     const s2 = new URL((await y.admin.post(`/api/admin/v1/venues/${y.venueId}/pos/stubpos/connect`)).body.url).searchParams.get('state')!;
-    const taken = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${s2}`).set('Host', 'api.dop.test');
+    const taken = await request(api.app).get(`/connectors/stubpos/callback?code=shared&state=${s2}`).set('Host', 'api.dop.test').set('Cookie', binding(y.admin));
     expect(taken.headers.location).toBe(`https://${y.slug}.dop.test/admin/integrations?pos=taken`);
 
     const trial = await tenant();
     const refused = await trial.admin.post(`/api/admin/v1/venues/${trial.venueId}/pos/stubpos/connect`);
     expect(refused.body.code).toBe('FEATURE_NOT_IN_PLAN');
+
+    // An authorise link sent to someone else (their browser lacks the starter's cookie) connects nothing.
+    // (y has no connection: its only attempt was refused as taken; no extra sign-in, the file shares one IP budget.)
+    const s3 = new URL((await y.admin.post(`/api/admin/v1/venues/${y.venueId}/pos/stubpos/connect`)).body.url).searchParams.get('state')!;
+    const victim = await request(api.app).get(`/connectors/stubpos/callback?code=victim&state=${s3}`).set('Host', 'api.dop.test');
+    expect(victim.status).toBe(401);
+    expect((await y.admin.get('/api/admin/v1/pos/connections')).body.items).toEqual([]);
 
     expect((await x.admin.delete(`/api/admin/v1/pos/connections/${list.body.items[0].id}`)).status).toBe(204);
     expect((await x.admin.get('/api/admin/v1/pos/connections')).body.items).toEqual([]);
@@ -516,7 +526,7 @@ describe('W05, W06 account email and preferences', () => {
     expect((await x.admin.get('/api/auth/v1/me')).body.user).toMatchObject({ email: x.email, pendingEmail: `new-${x.slug}@x.test` });
     const mails = jobs.take('email.send').map((j) => j.data as { template: string; to: string; data: { link?: string } });
     expect(mails.find((m) => m.template === 'email_changed')?.to).toBe(x.email);
-    const link = mails.find((m) => m.template === 'email_change' && m.to === `new-${x.slug}@x.test`)!.data.link!;
+    const link = (await svc.openEmailData(api.deps.keys, mails.find((m) => m.template === 'email_change' && m.to === `new-${x.slug}@x.test`)!.data)).link as string;
     const token = new URL(link).searchParams.get('token')!;
     expect((await client(api.app, 'www.dop.test').post('/api/auth/v1/email/change/confirm', { token })).status).toBe(200);
     expect((await client(api.app, 'www.dop.test').post('/api/auth/v1/email/change/confirm', { token })).status).toBe(410);

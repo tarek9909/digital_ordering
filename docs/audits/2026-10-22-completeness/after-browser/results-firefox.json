@@ -1,0 +1,510 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Projects\\digital order\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "-c",
+      "../docs/audits/2026-10-22-completeness/after-browser/playwright.config.ts",
+      "--project=firefox"
+    ],
+    "configFile": "C:\\Projects\\digital order\\docs\\audits\\2026-10-22-completeness\\after-browser\\playwright.config.ts",
+    "rootDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness/after-browser/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness",
+        "testIgnore": [],
+        "testMatch": [
+          "browser-journeys.spec.ts",
+          "browser-recovery.spec.ts",
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness/after-browser/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness",
+        "testIgnore": [
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "testMatch": [
+          "browser-journeys.spec.ts",
+          "browser-recovery.spec.ts",
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness/after-browser/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness",
+        "testIgnore": [],
+        "testMatch": [
+          "browser-journeys.spec.ts",
+          "browser-recovery.spec.ts",
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness/after-browser/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Projects/digital order/docs/audits/2026-10-22-completeness",
+        "testIgnore": [],
+        "testMatch": [
+          "browser-journeys.spec.ts",
+          "browser-recovery.spec.ts",
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Projects\\digital order\\docs\\audits\\2026-10-22-completeness\\after-browser\\test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "firefox",
+        "testDir": "C:\\Projects\\digital order\\docs\\audits\\2026-10-22-completeness",
+        "snapshotDir": "C:\\Projects\\digital order\\docs\\audits\\2026-10-22-completeness",
+        "testIgnore": [],
+        "testMatch": [
+          "browser-journeys.spec.ts",
+          "browser-recovery.spec.ts",
+          "after-browser/repaired-journeys.spec.ts"
+        ],
+        "timeout": 90000,
+        "use": {
+          "locale": "en-US",
+          "trace": "off",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:157.0) Gecko/20100101 Firefox/157.0",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "firefox"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "firefox"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "results-firefox.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "after-browser\\repaired-journeys.spec.ts",
+      "file": "after-browser/repaired-journeys.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "AS01 + CSD10: approved support → handoff → admin → live staff board, then access ends",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2526,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:23:46.800Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "567d1ff3adb5eaf9ac02-b5eb683a8f14661b323c",
+          "file": "after-browser/repaired-journeys.spec.ts",
+          "line": 58,
+          "column": 5
+        },
+        {
+          "title": "AS11: owner enrols and removes two-factor through the Account form, with the required proof",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1842,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:23:49.733Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "567d1ff3adb5eaf9ac02-d9fe3e9af4a335beedac",
+          "file": "after-browser/repaired-journeys.spec.ts",
+          "line": 102,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "browser-journeys.spec.ts",
+      "file": "browser-journeys.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "journey 1: ticket â†’ customer page â†’ Ready â†’ acknowledgement â†’ Collected",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4895,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:23:51.621Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5aeb2f5c95869498b0bc-548881a1cbe3187f818b",
+          "file": "browser-journeys.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "journey 3: Undo Ready within 10 s; the customer sees \"not ready yet\"",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2983,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:23:56.523Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5aeb2f5c95869498b0bc-473b93643d7925b3221d",
+          "file": "browser-journeys.spec.ts",
+          "line": 59,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "browser-recovery.spec.ts",
+      "file": "browser-recovery.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "A24 + W13: a staff reopen reaches the still-open page after collection; the closed page links to the venue",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3278,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:23:59.530Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0e6d3e60c9beaa832b4f-f47d6b46fafca1fb7bad",
+          "file": "browser-recovery.spec.ts",
+          "line": 23,
+          "column": 5
+        },
+        {
+          "title": "W14: the ticket manifest is linked after SPA navigation from /tickets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4150,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:24:02.819Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0e6d3e60c9beaa832b4f-93ffcebb1aeb787cdb5a",
+          "file": "browser-recovery.spec.ts",
+          "line": 56,
+          "column": 5
+        },
+        {
+          "title": "A28: a failing ticket API shows an error with retry instead of loading forever",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3914,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:24:06.974Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0e6d3e60c9beaa832b4f-1894c4e365c3fc21ce58",
+          "file": "browser-recovery.spec.ts",
+          "line": 87,
+          "column": 5
+        },
+        {
+          "title": "A29: icons are served as real PNG images",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 389,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:24:10.897Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0e6d3e60c9beaa832b4f-f786bf1ab0f3f812fb63",
+          "file": "browser-recovery.spec.ts",
+          "line": 103,
+          "column": 5
+        },
+        {
+          "title": "W12: the privacy page shows the published notice, or the built-in text when none is published",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 699,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-23T00:24:11.297Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0e6d3e60c9beaa832b4f-bae21b6cabc2a14bc77e",
+          "file": "browser-recovery.spec.ts",
+          "line": 117,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-23T00:23:46.405Z",
+    "duration": 25954.653000000002,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

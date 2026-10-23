@@ -52,6 +52,11 @@ export const authR11Routes = defineRoutes('/api/auth/v1', [
       const binding = (c.req.cookies as Record<string, string> | undefined)?.[cookieName(c.deps, OIDC_COOKIE)];
       c.clearCookie(OIDC_COOKIE);
       const r = await finishOidc(c.deps, google, current, redirectUri, { ip: c.ip, userAgent: c.userAgent, host: c.host }, binding);
+      if (r.kind === 'no_account') {
+        // No Tanbeeh account uses this Google address; nothing was created (AS02).
+        c.res.redirect(302, '/sign-in?google=no-account');
+        return;
+      }
       if (r.kind === 'link_required') {
         // An account with this email has a password: the sign-in page asks for it before linking (M-1).
         c.res.redirect(302, `/sign-in?link=google#link=${encodeURIComponent(r.linkToken)}`);
@@ -89,6 +94,8 @@ export const authR11Routes = defineRoutes('/api/auth/v1', [
     surfaces: ['tenant', 'www'],
     permission: 'public',
     body: deleteMeBody,
+    // On www the session is not an actor, so the address is the key; the password itself has a per-account budget.
+    rateLimit: { name: 'account-deletion', points: 10, durationSec: 3600, key: 'ip' },
     handler: async (c) => {
       const userId = c.actor.kind === 'user' ? c.actor.userId : (c.res.locals.wwwSession as { userId?: string } | undefined)?.userId;
       if (!userId) throw new AppError('UNAUTHENTICATED');

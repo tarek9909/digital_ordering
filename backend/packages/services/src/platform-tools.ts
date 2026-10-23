@@ -9,6 +9,8 @@ import type { Deps } from './deps.js';
 import { sendEmail } from './email.js';
 import { addOutbox, flushOutbox } from './outbox.js';
 import { getSetting } from './platform.js';
+import { currentLegalDocument } from './public.js';
+import { uaReachKey } from './reports.js';
 import { sanitizeLegalHtml } from './sanitize.js';
 import type { ObjectStorage } from './storage.js';
 
@@ -132,6 +134,16 @@ export async function listPlans(deps: Deps) {
   return plans.map((p) => ({ id: p.id, code: p.code, name: p.name, isPublic: Boolean(p.is_public), limits: p.limits, features: p.features, archived: p.archived_at !== null, prices: prices.filter((x) => x.plan_id === p.id).map((x) => ({ id: x.id, period: x.period, currency: x.currency, amountMinor: x.amount_minor, active: Boolean(x.active) })) }));
 }
 
+/**
+ * Plan codes and names for filters and labels (FR-SA-04, AS10): every console role that can list tenants may read
+ * them; prices, limits and features stay behind `console.settings`. Archived plans are included (tenants may still
+ * be on them) and flagged.
+ */
+export async function listPlanOptions(deps: Deps) {
+  const rows = await deps.db.platform().selectFrom('plans').select(['code', 'name', 'archived_at']).orderBy('sort_order').orderBy('code').execute();
+  return rows.map((p) => ({ code: p.code, name: p.name, archived: p.archived_at !== null }));
+}
+
 export async function createPlan(deps: Deps, actor: PlatformActor, p: { code: string; name: string; isPublic: boolean; limits: Record<string, number>; features: string[]; sortOrder: number }) {
   const id = uuidv7();
   try {
@@ -145,12 +157,13 @@ export async function createPlan(deps: Deps, actor: PlatformActor, p: { code: st
 }
 
 export async function updatePlan(deps: Deps, actor: PlatformActor, id: string, p: { name?: string; isPublic?: boolean; limits?: Record<string, number>; features?: string[]; sortOrder?: number }) {
-  const r = await deps.db
-    .platform()
-    .updateTable('plans')
-    .set({ ...(p.name && { name: p.name }), ...(p.isPublic !== undefined && { is_public: p.isPublic }), ...(p.limits && { limits: json(p.limits) }), ...(p.features && { features: json(p.features) }), ...(p.sortOrder !== undefined && { sort_order: p.sortOrder }) })
-    .where('id', '=', id)
-    .executeTakeFirst();
+  const patch = { ...(p.name && { name: p.name }), ...(p.isPublic !== undefined && { is_public: p.isPublic }), ...(p.limits && { limits: json(p.limits) }), ...(p.features && { features: json(p.features) }), ...(p.sortOrder !== undefined && { sort_order: p.sortOrder }) };
+  // An empty change is a no-op (A10, API01); the plan must still exist.
+  if (Object.keys(patch).length === 0) {
+    if (!(await deps.db.platform().selectFrom('plans').select('id').where('id', '=', id).executeTakeFirst())) throw new AppError('NOT_FOUND');
+    return;
+  }
+  const r = await deps.db.platform().updateTable('plans').set(patch).where('id', '=', id).executeTakeFirst();
   if (Number(r.numUpdatedRows) === 0) throw new AppError('NOT_FOUND');
   await writeAudit(deps.db.platform(), { actor, action: 'plan.updated', tenantId: null, entityType: 'plan', entityId: id, after: p, visibleToTenant: false });
   for (const k of await deps.kv.keys('t:')) if (k.endsWith(':flags')) await deps.kv.del(k);
@@ -212,45 +225,179 @@ export async function changePlan(deps: Deps, actor: PlatformActor, tenantId: str
   return { effective: 'now' as const };
 }
 
-// ---- legal documents (FR-SA-12, TR-PRV-09)
+/// ---- legal documents (FR-SA-12, TR-PRV-09)
+
+/** A reservation still 'uploading' after this long was abandoned (process crash) and may be reclaimed. */
+const LEGAL_RESERVATION_STALE_MIN = 10;
+
+const versionTaken = () => new AppError('VALIDATION_FAILED', 'That version exists', { errors: [{ path: 'version', message: 'taken' }] });
+
+/**
+ * Creates a draft legal version (API02). Published bytes are immutable: the version is first reserved as a unique
+ * 'uploading' row, so a duplicate kind/version/locale is rejected before anything is written; the content then goes
+ * to a new key containing the document id, which no other row uses; only after that write is the row 'ready'. A
+ * storage or database failure removes only this attempt's row and object. No existing object is ever overwritten.
+ */
 export async function createLegalDocument(deps: Deps, storage: ObjectStorage, actor: PlatformActor, d: { kind: 'terms' | 'privacy' | 'dpa' | 'customer_privacy'; version: string; locale: string; html: string }) {
+  const db = deps.db.platform();
   const id = uuidv7();
-  const key = `legal/${d.kind}/${d.version}/${d.locale}.html`;
+  const key = `legal/${d.kind}/${id}.html`;
   // Stored sanitised, so every app can show it as formatted text (W12).
-  await storage.put('assets', key, Buffer.from(sanitizeLegalHtml(d.html), 'utf8'), 'text/html; charset=utf-8');
+  const body = Buffer.from(sanitizeLegalHtml(d.html), 'utf8');
+  const reserve = () => db.insertInto('legal_documents').values({ id, kind: d.kind, version: d.version, locale: d.locale, content_key: key, status: 'uploading' }).execute();
   try {
-    await deps.db.platform().insertInto('legal_documents').values({ id, kind: d.kind, version: d.version, locale: d.locale, content_key: key }).execute();
+    await reserve();
   } catch (e) {
-    if ((e as { code?: string }).code === 'ER_DUP_ENTRY') throw new AppError('VALIDATION_FAILED', 'That version exists');
+    if ((e as { code?: string }).code !== 'ER_DUP_ENTRY') throw e;
+    // An abandoned reservation (crash between reserve and ready) must not block the version for ever.
+    if (!(await reclaimStaleLegalReservation(deps, storage, d))) throw versionTaken();
+    try {
+      await reserve();
+    } catch (e2) {
+      if ((e2 as { code?: string }).code === 'ER_DUP_ENTRY') throw versionTaken();
+      throw e2;
+    }
+  }
+  try {
+    await storage.put('assets', key, body, 'text/html; charset=utf-8');
+    const r = await db.updateTable('legal_documents').set({ status: 'ready' }).where('id', '=', id).where('status', '=', 'uploading').executeTakeFirst();
+    if (Number(r.numUpdatedRows) !== 1) throw new AppError('INTERNAL_ERROR', 'Legal version reservation was lost before it was ready');
+  } catch (e) {
+    await discardLegalReservation(deps, storage, id, key);
     throw e;
   }
-  await writeAudit(deps.db.platform(), { actor, action: 'legal.published', tenantId: null, entityType: 'legal_document', entityId: id, after: { kind: d.kind, version: d.version, locale: d.locale, draft: true }, visibleToTenant: false });
+  await writeAudit(db, { actor, action: 'legal.published', tenantId: null, entityType: 'legal_document', entityId: id, after: { kind: d.kind, version: d.version, locale: d.locale, draft: true }, visibleToTenant: false });
   return { id };
+}
+
+/**
+ * Removes this attempt's unready reservation and then its own object (the key contains this attempt's id, so no
+ * other version's content can be touched). A row that became 'ready' keeps its object. Best effort: a reservation
+ * left behind is reclaimed when stale.
+ */
+async function discardLegalReservation(deps: Deps, storage: ObjectStorage, id: string, key: string) {
+  const db = deps.db.platform();
+  try {
+    await db.deleteFrom('legal_documents').where('id', '=', id).where('status', '=', 'uploading').execute();
+    if (await db.selectFrom('legal_documents').select('id').where('id', '=', id).executeTakeFirst()) return;
+  } catch (err) {
+    deps.log.warn({ err, id }, 'legal reservation not removed; it is reclaimed when stale');
+    return;
+  }
+  try {
+    await storage.deletePrefix('assets', key);
+  } catch (err) {
+    deps.log.warn({ err, key }, 'unreferenced legal object not removed');
+  }
+}
+
+async function reclaimStaleLegalReservation(deps: Deps, storage: ObjectStorage, d: { kind: 'terms' | 'privacy' | 'dpa' | 'customer_privacy'; version: string; locale: string }) {
+  const db = deps.db.platform();
+  const stale = await db
+    .selectFrom('legal_documents')
+    .select(['id', 'content_key'])
+    .where('kind', '=', d.kind)
+    .where('version', '=', d.version)
+    .where('locale', '=', d.locale)
+    .where('status', '=', 'uploading')
+    .where('created_at', '<', sql<Date>`NOW(3) - INTERVAL ${LEGAL_RESERVATION_STALE_MIN} MINUTE`)
+    .executeTakeFirst();
+  if (!stale) return false;
+  const r = await db.deleteFrom('legal_documents').where('id', '=', stale.id).where('status', '=', 'uploading').executeTakeFirst();
+  if (Number(r.numDeletedRows) !== 1) return false;
+  try {
+    await storage.deletePrefix('assets', stale.content_key);
+  } catch (err) {
+    deps.log.warn({ err, key: stale.content_key }, 'abandoned legal object not removed');
+  }
+  return true;
 }
 
 export async function listLegalDocuments(deps: Deps) {
   const rows = await deps.db.platform().selectFrom('legal_documents').selectAll().orderBy('kind').orderBy('version', 'desc').execute();
-  return rows.map((r) => ({ id: r.id, kind: r.kind, version: r.version, locale: r.locale, publishedAt: r.published_at?.toISOString() ?? null }));
+  return rows.map((r) => ({ id: r.id, kind: r.kind, version: r.version, locale: r.locale, status: r.status, publishedAt: r.published_at?.toISOString() ?? null }));
 }
 
 export async function publishLegalDocument(deps: Deps, actor: PlatformActor, id: string) {
-  const r = await deps.db.platform().updateTable('legal_documents').set({ published_at: deps.now() }).where('id', '=', id).where('published_at', 'is', null).executeTakeFirst();
+  // Only a version whose content was written completely can be published (API02).
+  const r = await deps.db.platform().updateTable('legal_documents').set({ published_at: deps.now() }).where('id', '=', id).where('published_at', 'is', null).where('status', '=', 'ready').executeTakeFirst();
   if (Number(r.numUpdatedRows) === 0) throw new AppError('NOT_FOUND');
   await writeAudit(deps.db.platform(), { actor, action: 'legal.published', tenantId: null, entityType: 'legal_document', entityId: id, visibleToTenant: false });
 }
 
-/** New versions require re-acceptance at the next sign-in (TR-PRV-09): documents the owner has not accepted yet. */
-export async function pendingLegalAcceptance(deps: Deps, tenantId: string, userId: string) {
-  const db = deps.db.platform();
-  const latest = await db.selectFrom('legal_documents').select(['id', 'kind', 'version']).where('kind', 'in', ['terms', 'privacy', 'dpa']).where('published_at', 'is not', null).orderBy('published_at', 'desc').execute();
-  const seen = new Set<string>();
-  const current = latest.filter((d) => (seen.has(d.kind) ? false : (seen.add(d.kind), true)));
-  const accepted = new Set((await db.selectFrom('legal_acceptances').select('document_id').where('tenant_id', '=', tenantId).where('user_id', '=', userId).execute()).map((a) => a.document_id));
-  return current.filter((d) => !accepted.has(d.id));
+/** The documents a tenant user accepts (FR-ADM-16): terms, privacy policy and DPA, each one that is published. */
+export const ACCEPTANCE_KINDS = ['terms', 'privacy', 'dpa'] as const;
+
+/**
+ * Acceptance policy (FR-ADM-16, TR-PRV-09, AS04). For each kind, the document a user must accept is the one the
+ * public reader shows in the user's chosen language: the latest published version in that locale, else the latest
+ * published version in any locale (`currentLegalDocument`). The exact document id shown is what is recorded. A kind
+ * counts as accepted when the user accepted that document, or another locale of the same kind and version label
+ * (a translation of the same version); a newer version in the chosen locale is pending again.
+ */
+async function pendingLegalDocuments(deps: Deps, tenantId: string, userId: string, locale: string) {
+  const current = (await Promise.all(ACCEPTANCE_KINDS.map((k) => currentLegalDocument(deps, k, locale)))).filter((d) => d !== undefined);
+  if (current.length === 0) return [];
+  const accepted = await deps.db
+    .platform()
+    .selectFrom('legal_acceptances')
+    .innerJoin('legal_documents', 'legal_documents.id', 'legal_acceptances.document_id')
+    .select(['legal_documents.id', 'legal_documents.kind', 'legal_documents.version'])
+    .where('legal_acceptances.tenant_id', '=', tenantId)
+    .where('legal_acceptances.user_id', '=', userId)
+    .execute();
+  return current.filter((d) => !accepted.some((a) => a.id === d.id || (a.kind === d.kind && a.version === d.version)));
 }
 
-export async function acceptLegal(deps: Deps, tenantId: string, userId: string, documentIds: string[], ip: string) {
-  for (const id of documentIds) await deps.db.platform().insertInto('legal_acceptances').values({ id: uuidv7(), tenant_id: tenantId, user_id: userId, document_id: id, ip }).execute();
+async function viewerLocale(deps: Deps, userId: string, locale: string | undefined) {
+  if (locale) return locale;
+  const u = await deps.db.platform().selectFrom('users').select('locale').where('id', '=', userId).executeTakeFirst();
+  return u?.locale ?? 'ar';
+}
+
+/**
+ * New versions require re-acceptance at the next sign-in (TR-PRV-09): the documents this user has not accepted yet,
+ * in the chosen locale, each with its exact id, version, locale and sanitised content, so the gate shows exactly
+ * what is recorded. Fails (SERVICE_UNAVAILABLE) rather than hiding a pending document whose content cannot be read.
+ */
+export async function pendingLegalAcceptance(deps: Deps, tenantId: string, userId: string, opts: { locale?: string; storage?: ObjectStorage | null } = {}) {
+  const docs = await pendingLegalDocuments(deps, tenantId, userId, await viewerLocale(deps, userId, opts.locale));
+  return Promise.all(
+    docs.map(async (d) => {
+      let html: string | null = null;
+      if (opts.storage) {
+        const body = await opts.storage.get('assets', d.content_key).catch(() => null);
+        if (!body) throw new AppError('SERVICE_UNAVAILABLE', 'Legal document content is unavailable');
+        html = sanitizeLegalHtml(body.toString('utf8'));
+      }
+      return { id: d.id, kind: d.kind as (typeof ACCEPTANCE_KINDS)[number], version: d.version, locale: d.locale, publishedAt: d.published_at?.toISOString() ?? null, html };
+    }),
+  );
+}
+
+/**
+ * Records acceptance of exactly the pending documents shown for `locale` (AS04/AS05). The ids must be the whole
+ * pending set (terms, privacy and DPA as published); anything else (a stale list after a new publication, another
+ * locale's version, a document the gate did not show) is refused and nothing is recorded. Re-sending documents
+ * already accepted is a no-op.
+ */
+export async function acceptLegal(deps: Deps, tenantId: string, userId: string, documentIds: string[], ip: string, locale?: string) {
+  const db = deps.db.platform();
+  const ids = [...new Set(documentIds)];
+  const already = new Set(
+    ids.length === 0
+      ? []
+      : (await db.selectFrom('legal_acceptances').select('document_id').where('tenant_id', '=', tenantId).where('user_id', '=', userId).where('document_id', 'in', ids).execute()).map((a) => a.document_id),
+  );
+  const fresh = ids.filter((id) => !already.has(id));
+  const pending = new Set((await pendingLegalDocuments(deps, tenantId, userId, await viewerLocale(deps, userId, locale))).map((d) => d.id));
+  if (fresh.length !== pending.size || fresh.some((id) => !pending.has(id))) {
+    throw new AppError('VALIDATION_FAILED', 'The documents shown are no longer the current versions', { errors: [{ path: 'documentIds', message: 'stale' }] });
+  }
+  if (fresh.length === 0) return;
+  await db.transaction().execute(async (tx) => {
+    for (const id of fresh) await tx.insertInto('legal_acceptances').values({ id: uuidv7(), tenant_id: tenantId, user_id: userId, document_id: id, ip }).execute();
+  });
 }
 
 // ---- email template texts (TR-EML-03)
@@ -326,7 +473,11 @@ export async function platformDailyRollup(deps: Deps, date: string) {
     .executeTakeFirstOrThrow();
   const uaRows = await db.selectFrom('report_daily').select('ua_reach').where('business_date', '=', date).where('counter_key', '=', '').where('hour_local', '=', 24).execute();
   const reachByUa: Record<string, Record<string, number>> = {};
-  for (const r of uaRows) for (const [ua, levels] of Object.entries(r.ua_reach as unknown as Record<string, Record<string, number>>)) for (const [l, n] of Object.entries(levels)) ((reachByUa[ua] ??= {})[l] = (reachByUa[ua][l] ?? 0) + n);
+  for (const r of uaRows)
+    for (const [raw, levels] of Object.entries(r.ua_reach as unknown as Record<string, Record<string, number>>)) {
+      const ua = uaReachKey(raw); // rows rolled up before keys were normalised may hold any client string
+      for (const [l, n] of Object.entries(levels)) (reachByUa[ua] ??= {})[l] = (reachByUa[ua][l] ?? 0) + n;
+    }
   await sql`INSERT INTO platform_metrics_daily (metric_date, tenants_by_status, tenants_by_plan, signups, conversions, cancellations, mrr_minor, tickets, alerts_sent, push_failures, webhook_failures, reach_by_ua)
     VALUES (${date}, ${json(Object.fromEntries(byStatus.map((s) => [s.status, Number(s.n)])))}, ${json(Object.fromEntries(byPlan.map((p) => [p.code, Number(p.n)])))}, ${Number(signups.n)}, ${conversions}, ${cancellations}, ${json(mrr)}, ${Number(reports.tickets ?? 0)}, ${pushSent}, ${pushFailed}, ${Number(webhookFailures.n)}, ${json(reachByUa)})
     ON DUPLICATE KEY UPDATE tenants_by_status = VALUES(tenants_by_status), tenants_by_plan = VALUES(tenants_by_plan), signups = VALUES(signups), conversions = VALUES(conversions),
@@ -385,5 +536,14 @@ export async function platformReport(deps: Deps, from: string, to: string) {
     pushFailurePct: pushSent + pushFailures > 0 ? Math.round((pushFailures / (pushSent + pushFailures)) * 1000) / 10 : null,
     webhookFailures,
   };
-  return { days, activeAtStart, churnPct: activeAtStart ? Math.round((cancellations / activeAtStart) * 1000) / 10 : null, cohorts, deliveryHealth, trialDays: await getSetting(deps, 'trial.days') };
+  // Alert reach by phone type (BRD §12.2): alert level at Ready per operating system/browser family, over the range.
+  const reachByUa: Record<string, Record<string, number>> = {};
+  for (const d of days) {
+    const raw = typeof d.reach_by_ua === 'string' ? (JSON.parse(d.reach_by_ua) as unknown) : d.reach_by_ua;
+    for (const [key, levels] of Object.entries((raw ?? {}) as Record<string, Record<string, number>>)) {
+      const ua = uaReachKey(key);
+      for (const [level, n] of Object.entries(levels ?? {})) (reachByUa[ua] ??= {})[level] = (reachByUa[ua][level] ?? 0) + Number(n);
+    }
+  }
+  return { days, activeAtStart, churnPct: activeAtStart ? Math.round((cancellations / activeAtStart) * 1000) / 10 : null, cohorts, deliveryHealth, reachByUa, trialDays: await getSetting(deps, 'trial.days') };
 }

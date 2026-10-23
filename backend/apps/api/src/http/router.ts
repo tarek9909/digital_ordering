@@ -127,6 +127,11 @@ export function mount(router: Router, prefix: string, defs: AnyRoute[], deps: Ap
         if (access === 'none') throw new AppError('NOT_FOUND');
         if (access === 'limited' && !d.limitedAccessOk) throw new AppError(c.tenant.status === 'suspended' ? 'TENANT_SUSPENDED' : 'TENANT_INACTIVE');
       }
+      // §8.2: with staff access off (trial expired, cancelled) the board, search, QR codes and claims are closed too,
+      // not only ticket changes; signing a device out stays possible. Same rule as the realtime handshake.
+      if (prefix.startsWith('/api/staff/') && c.tenant && tenantAccess(c.tenant.status).staff === 'off' && d.method !== 'delete') {
+        throw new AppError('TENANT_INACTIVE');
+      }
       if (STATE_CHANGING.has(d.method) && !d.csrfExempt && !csrfCheck(c)) throw new AppError('CSRF_FAILED');
       if (d.rateLimit) {
         const key = d.rateLimit.key === 'ip' ? c.ip : d.rateLimit.key === 'actor' ? actorKey(c.actor) : `${c.ip}:${Object.values(req.params).join(':')}`;

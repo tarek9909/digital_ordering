@@ -1,4 +1,4 @@
-import { AppError, CANCEL_REASONS } from '@dop/contracts';
+import { AppError, CANCEL_REASONS, UA_FAMILIES } from '@dop/contracts';
 import { json, scope } from '@dop/db';
 import {
   addDays,
@@ -19,7 +19,17 @@ import { keys } from './kv.js';
 // (TR-RPT-02, TR-RPT-07). The pilot report covers FR-RPT-10 / TR-RPT-08. Wording: "push sent", "page open",
 // "acknowledged" — never "heard" (FR-ALR-11).
 
+/**
+ * Key of a reach-by-phone-type counter: a known UA family, 'none' (no follower), else 'other'. Stored follower values
+ * are client-supplied, so they are never used as object keys as they are (a `__proto__` key would write to
+ * Object.prototype).
+ */
+export const uaReachKey = (ua: string) => (ua === 'none' || (UA_FAMILIES as readonly string[]).includes(ua) ? ua : 'other');
+
 const secs = (a: Date | null, b: Date | null) => (a && b ? Math.max(0, (b.getTime() - a.getTime()) / 1000) : null);
+
+/** Open tickets listed on Today, oldest first (FR-RPT-01). */
+export const LONGEST_WAITING_LIMIT = 5;
 
 export async function todayReport(deps: Deps, tenantId: string, venueId: string) {
   const cacheKey = keys.todayCache(tenantId, venueId);
@@ -31,7 +41,7 @@ export async function todayReport(deps: Deps, tenantId: string, venueId: string)
   const bd = businessDate(deps.now(), v.time_zone, { resetTime: v.reset_time, pendingResetTime: v.pending_reset_time, pendingTimeZone: v.pending_time_zone, pendingFromDate: v.pending_from_date });
   const rows = await db
     .selectFrom('tickets')
-    .select(['status', 'created_at', 'preparing_at', 'first_ready_at', 'ready_at', 'collected_at', 'alert_level_at_ready', 'acknowledged_at'])
+    .select(['id', 'display_number', 'status', 'created_at', 'preparing_at', 'first_ready_at', 'ready_at', 'collected_at', 'alert_level_at_ready', 'acknowledged_at'])
     .where('venue_id', '=', venueId)
     .where('business_date', '=', bd)
     .execute();
@@ -42,6 +52,13 @@ export async function todayReport(deps: Deps, tenantId: string, venueId: string)
   for (const r of ready) reach[r.alert_level_at_ready ?? 'none']++;
   const prep = ready.map((r) => prepSeconds(r.created_at, r.preparing_at, r.first_ready_at)!).filter((x) => x !== null);
   const pickup = rows.filter((r) => r.collected_at).map((r) => secs(r.ready_at, r.collected_at)!);
+  // Longest-waiting open tickets (FR-RPT-01): oldest first, waiting since creation.
+  const now = deps.now();
+  const longestWaiting = rows
+    .filter((r) => r.status === 'received' || r.status === 'preparing' || r.status === 'ready')
+    .sort((a, b) => a.created_at.getTime() - b.created_at.getTime())
+    .slice(0, LONGEST_WAITING_LIMIT)
+    .map((r) => ({ id: r.id, displayNumber: r.display_number, status: r.status, createdAt: r.created_at.toISOString(), waitingSeconds: Math.max(0, Math.round((now.getTime() - r.created_at.getTime()) / 1000)) }));
   const out = {
     businessDate: bd,
     tickets: rows.length,
@@ -52,6 +69,7 @@ export async function todayReport(deps: Deps, tenantId: string, venueId: string)
     acknowledgedPct: ready.length ? Math.round((ready.filter((r) => r.acknowledged_at).length / ready.length) * 100) : null,
     prepSecondsP50: percentile(prep, 50),
     pickupSecondsP50: percentile(pickup, 50),
+    longestWaiting,
     prepLabel: 'from ticket creation', // TR-RPT-05
   };
   await deps.kv.set(cacheKey, JSON.stringify(out), 15);
@@ -146,7 +164,7 @@ export async function rollupVenueDay(deps: Deps, tenantId: string, venueId: stri
         if (t.first_ready_at) {
           const level = t.alert_level_at_ready ?? 'none';
           b.reach[level]++;
-          const ua = uaBy.get(t.id) ?? 'none';
+          const ua = uaReachKey(uaBy.get(t.id) ?? 'none');
           b.uaReach[ua] ??= {};
           b.uaReach[ua]![level] = (b.uaReach[ua]![level] ?? 0) + 1;
           if (t.acknowledged_at) b.acknowledged++;
@@ -258,11 +276,31 @@ export async function pilotReport(deps: Deps, tenantId: string, venueId: string 
   };
 }
 
-/** Venues and business dates to roll up: today and yesterday in each venue's zone (corrections within +1 day). */
+/** How far back the hourly roll-up looks for new ratings of older tickets (BW07); covers a worker outage of a day. */
+export const LATE_RATING_LOOKBACK_MS = 26 * 3600_000;
+
+/**
+ * Venues and business dates to roll up: today and yesterday in each venue's zone (corrections within +1 day), and
+ * the business date of every ticket rated within the look-back window, so a rating accepted for an older ticket
+ * reaches that day's report (BW07). Targets are distinct; the roll-up itself is idempotent.
+ */
 export async function rollupTargets(deps: Deps) {
-  const venues = await deps.db.platform().selectFrom('venues').select(['id', 'tenant_id', 'time_zone', 'reset_time', 'pending_reset_time', 'pending_time_zone', 'pending_from_date']).where('status', '=', 'active').execute();
-  return venues.flatMap((v) => {
+  const pdb = deps.db.platform();
+  const venues = await pdb.selectFrom('venues').select(['id', 'tenant_id', 'time_zone', 'reset_time', 'pending_reset_time', 'pending_time_zone', 'pending_from_date']).where('status', '=', 'active').execute();
+  const out = new Map<string, { tenantId: string; venueId: string; businessDate: string }>();
+  const add = (tenantId: string, venueId: string, businessDate: string) => out.set(`${venueId}|${businessDate}`, { tenantId, venueId, businessDate });
+  for (const v of venues) {
     const today = businessDate(deps.now(), v.time_zone, { resetTime: v.reset_time, pendingResetTime: v.pending_reset_time, pendingTimeZone: v.pending_time_zone, pendingFromDate: v.pending_from_date });
-    return [today, addDays(today, -1)].map((bd) => ({ tenantId: v.tenant_id, venueId: v.id, businessDate: bd }));
-  });
+    for (const bd of [today, addDays(today, -1)]) add(v.tenant_id, v.id, bd);
+  }
+  const active = new Set(venues.map((v) => v.id));
+  const rated = await pdb
+    .selectFrom('ratings')
+    .innerJoin('tickets', (j) => j.onRef('tickets.tenant_id', '=', 'ratings.tenant_id').onRef('tickets.id', '=', 'ratings.ticket_id'))
+    .select(['ratings.tenant_id', 'ratings.venue_id', 'tickets.business_date'])
+    .distinct()
+    .where('ratings.created_at', '>=', new Date(deps.now().getTime() - LATE_RATING_LOOKBACK_MS))
+    .execute();
+  for (const r of rated) if (active.has(r.venue_id)) add(r.tenant_id, r.venue_id, r.business_date);
+  return [...out.values()];
 }

@@ -1,8 +1,9 @@
 import type { Actor } from '@dop/auth';
 import { tokenHash } from '@dop/auth';
-import { AppError } from '@dop/contracts';
-import { newSecretToken, newSupportCode, uuidv7 } from '@dop/domain';
+import { AppError, type TenantStatus } from '@dop/contracts';
+import { newSecretToken, newSupportCode, tenantAccess, uuidv7 } from '@dop/domain';
 import { writeAudit } from './audit.js';
+import { revalidateUserSockets } from './auth.js';
 import { urls, type Deps } from './deps.js';
 import { sendEmail } from './email.js';
 import { addOutbox, flushOutbox } from './outbox.js';
@@ -140,6 +141,7 @@ export async function endSupport(deps: Deps, actor: Actor, sessionId: string, by
   });
   for (const k of await deps.kv.keys(`sup:${sessionId}:`)) await deps.kv.del(k);
   await announce(deps, tid, false, null, null);
+  await revalidateUserSockets(deps, { supportSessionId: sessionId }); // live staff boards of this session close (CSD10)
 }
 
 /** `support.expire` every minute (§8.3): requested > 24 h and active past expires_at. */
@@ -151,6 +153,7 @@ export async function expireSupport(deps: Deps) {
   for (const s of ended) {
     await db.updateTable('support_sessions').set({ status: 'expired', ended_at: now, ended_by: 'system' }).where('id', '=', s.id).execute();
     await announce(deps, s.tenant_id, false, null, null);
+    await revalidateUserSockets(deps, { supportSessionId: s.id });
   }
   return ended.length;
 }
@@ -230,6 +233,7 @@ export async function endSupportForPlatformUser(deps: Deps, platformUserId: stri
     await db.updateTable('support_sessions').set({ status: 'ended', ended_at: deps.now(), ended_by: 'system' }).where('id', '=', s.id).where('status', '=', 'active').execute();
     for (const k of await deps.kv.keys(`sup:${s.id}:`)) await deps.kv.del(k);
     await announce(deps, s.tenant_id, false, null, null);
+    await revalidateUserSockets(deps, { supportSessionId: s.id });
   }
   // Requests not yet approved can no longer be approved into access either.
   await db.updateTable('support_sessions').set({ status: 'cancelled' }).where('platform_user_id', '=', platformUserId).where('status', '=', 'requested').execute();
@@ -257,6 +261,23 @@ export async function resolveSupport(deps: Deps, token: string, tenantId: string
   if (!s || s.tenant_id !== tenantId || !s.expires_at || s.expires_at <= deps.now()) return null;
   if (s.status !== 'active' || !SUPPORT_ROLES.has(s.role)) return null;
   return { kind: 'support', platformUserId: s.platform_user_id, tenantId, supportSessionId: sessionId, agentName: s.name };
+}
+
+/**
+ * Board access for a platform agent in an approved support session (FR-STF-17, CSD10), under the same rule as the
+ * HTTP staff API: the support cookie on its tenant's host, an active session whose agent may still act (H-6), the
+ * tenant's staff access and a venue of that tenant. Used by the realtime handshake and its re-checks.
+ */
+export async function resolveBoardSupport(deps: Deps, token: string, host: string, venueId: string): Promise<{ supportSessionId: string; tenantId: string; venueId: string } | null> {
+  const domain = deps.config.domain;
+  const slug = host.endsWith(`.${domain}`) ? host.slice(0, -(domain.length + 1)) : '';
+  if (!slug) return null;
+  const tenant = await deps.db.platform().selectFrom('tenants').select(['id', 'status']).where('slug', '=', slug).executeTakeFirst();
+  if (!tenant || tenantAccess(tenant.status as TenantStatus).staff === 'off') return null;
+  const s = await resolveSupport(deps, token, tenant.id);
+  if (!s) return null;
+  const v = await deps.db.forTenant(tenant.id).selectFrom('venues').select('id').where('id', '=', venueId).executeTakeFirst();
+  return v ? { supportSessionId: s.supportSessionId, tenantId: tenant.id, venueId: v.id } : null;
 }
 
 export async function listSupportSessions(deps: Deps, tenantId: string) {

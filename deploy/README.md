@@ -23,7 +23,7 @@ Internet ─▶ Caddy (TLS for every host, serves the 6 apps, routes /api and /r
 
 ## 2. DNS
 
-Point `DOMAIN` and `*.DOMAIN` at the server with A records, plus AAAA if the server has IPv6. Caddy gets a certificate for each host the first time it is visited, and only after the API confirms the host is a platform host or an existing tenant (`/internal/tls-allowed`).
+Point `DOMAIN` and `*.DOMAIN` at the server with A records. Add AAAA records only once the client address survives IPv6: the compose network is IPv4-only, so Docker relays IPv6 connections from its gateway (`172.30.0.1`), and every IPv6 visitor then shares one address for sign-in limits, realtime handshake limits and the console IP allow-list. Either give the `internal` network IPv6 (`enable_ipv6: true` with a ULA subnet, Docker 27+ with ip6tables, a fixed IPv6 address for Caddy added to `TRUST_PROXY`) or leave AAAA out. The console refuses an allow-list that covers the gateway. Caddy gets a certificate for each host the first time it is visited, and only after the API confirms the host is a platform host or an existing tenant (`/internal/tls-allowed`).
 
 > Let's Encrypt allows 50 new certificates per week per registered domain. That is enough for the pilot and steady growth. If you will onboard many tenants at once, switch to a wildcard certificate: build Caddy with your DNS provider's plugin and use `tls { dns <provider> … }`.
 

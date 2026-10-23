@@ -106,7 +106,11 @@ export interface CardFlags {
   acknowledged: boolean;
 }
 
-/** `overdueRound` is the round of the last `ticket.overdue` event for this ticket, if any. */
+/**
+ * `overdueRound` is the round of the last live `ticket.overdue` event for this ticket, if any. The snapshot's own
+ * `t.overdueRound` (the server's persisted flag) is authoritative, so a fresh or reloaded board shows the call-out
+ * too; the live event only makes an open board show it before the next projection arrives (CSD07).
+ */
 export function cardFlags(t: StaffTicket, nowMs: number, overdueRound?: number): CardFlags {
   const ageMinutes = Math.max(0, Math.floor((nowMs - time(t.createdAt)) / 60_000));
   const late =
@@ -114,7 +118,8 @@ export function cardFlags(t: StaffTicket, nowMs: number, overdueRound?: number):
     t.waitBaseAt !== null &&
     t.waitMinutes !== null &&
     nowMs > time(t.waitBaseAt) + t.waitMinutes * 60_000;
-  const callOut = t.status === 'ready' && overdueRound !== undefined && overdueRound === t.readyRound && !t.acknowledgedAt;
+  const flagged = (t.overdueRound !== null && t.overdueRound !== undefined && t.overdueRound === t.readyRound) || overdueRound === t.readyRound;
+  const callOut = t.status === 'ready' && flagged && !t.acknowledgedAt;
   return { ageMinutes, late, callOut, acknowledged: t.status === 'ready' && t.acknowledgedAt !== null };
 }
 

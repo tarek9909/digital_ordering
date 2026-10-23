@@ -8,6 +8,7 @@ import {
   myTicketsBody,
   pushSubscriptionBody,
   tokenParam,
+  UA_FAMILIES,
   venueCodeParam,
 } from '@dop/contracts';
 import { pushServiceOf } from '@dop/domain';
@@ -46,7 +47,7 @@ export const publicRoutes = defineRoutes('/api/public/v1', [
     permission: 'public',
     handler: async (c) => ({ vapidPublicKey: c.deps.config.vapidPublicKey, domain: c.deps.config.domain }),
   }),
-  // Contact (email link, WhatsApp button) and the packages section wording on the sign-up site; set by super admins in the console.
+  // Contact (email link, WhatsApp button), packages wording and landing page content on the sign-up site; set by super admins in the console.
   route({
     method: 'get',
     path: '/site',
@@ -54,9 +55,10 @@ export const publicRoutes = defineRoutes('/api/public/v1', [
     permission: 'public',
     rateLimit: readLimit,
     handler: async (c) => {
-      const [contact, pricing] = await Promise.all([getSetting(c.deps, 'site.contact'), getSetting(c.deps, 'site.pricing')]);
+      const [contact, pricing, landing] = await Promise.all([getSetting(c.deps, 'site.contact'), getSetting(c.deps, 'site.pricing'), getSetting(c.deps, 'site.landing')]);
       return {
         pricing,
+        landing,
         contact: {
           email: contact.email || null,
           whatsapp: contact.whatsapp || null,
@@ -202,7 +204,8 @@ export const publicRoutes = defineRoutes('/api/public/v1', [
     surfaces: ['customer'],
     permission: 'public',
     params: venueP,
-    body: claimBody.extend({ uaFamily: z.string().max(40).optional() }),
+    // The same families as following by QR: the value is stored and later used as a report key.
+    body: claimBody.extend({ uaFamily: z.enum(UA_FAMILIES).optional() }),
     // TR-SEC-07: 10 per 10 minutes per IP, and 100 per venue.
     rateLimit: { name: 'claims', points: 10, durationSec: 600, key: 'ip' },
     handler: async (c) => {
@@ -229,7 +232,9 @@ export const publicRoutes = defineRoutes('/api/public/v1', [
     surfaces: ['customer', 'www', 'tenant'],
     permission: 'public',
     params: z.object({ kind: z.enum(['terms', 'privacy', 'dpa', 'customer_privacy']) }).strict(),
-    query: z.object({ locale: z.string().min(2).max(10).default('ar') }).strict(),
-    handler: async (c) => legalDocument(c.deps, c.params.kind, c.query.locale, c.deps.storage),
+    rateLimit: readLimit, // each read fetches and sanitises up to 500 KB
+    // `document` asks for one exact published version, e.g. the one the acceptance gate shows (AS04).
+    query: z.object({ locale: z.string().min(2).max(10).default('ar'), document: uuidSchema.optional() }).strict(),
+    handler: async (c) => legalDocument(c.deps, c.params.kind, c.query.locale, c.deps.storage, c.query.document),
   }),
 ]);

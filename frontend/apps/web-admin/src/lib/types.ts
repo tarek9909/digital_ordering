@@ -20,6 +20,9 @@ export interface Me {
   csrfToken: string;
   /** Set by the client for a platform support agent inside an approved support session (no user account). */
   support?: boolean;
+  /** Support sessions only: the agent's name and the approved session (AS01). */
+  agentName?: string;
+  supportSessionId?: string;
 }
 
 export interface SignInResponse {
@@ -96,7 +99,17 @@ export interface TodayReport {
   acknowledgedPct: number | null;
   prepSecondsP50: number | null;
   pickupSecondsP50: number | null;
+  /** Open tickets waiting longest, oldest first (FR-RPT-01). Older API responses may omit it. */
+  longestWaiting?: WaitingTicket[];
   prepLabel: string;
+}
+
+export interface WaitingTicket {
+  id: string;
+  displayNumber: string;
+  status: string;
+  createdAt: string;
+  waitingSeconds: number;
 }
 
 export interface PilotSummary {
@@ -292,6 +305,8 @@ export interface TrendSummary {
   prepSecondsP50: number | null;
   pickupSecondsP50: number | null;
   totalSecondsP50: number | null;
+  /** Cancellations by reason (BRD §12.1). */
+  cancelReasons?: Record<string, number>;
   ratingAvg: number | null;
   ratingsCount: number;
 }
@@ -310,10 +325,21 @@ export interface HeatmapReport {
   grid: number[][];
 }
 
+/** A document the user must accept, exactly as recorded on acceptance (AS04): id, version, locale and content. */
 export interface LegalPending {
   id: string;
   kind: 'terms' | 'privacy' | 'dpa';
   version: string;
+  locale: string;
+  publishedAt: string | null;
+  html: string | null;
+}
+
+/** Average and distribution over every retained rating (`distribution[i]` = ratings of i + 1 stars). */
+export interface RatingSummary {
+  count: number;
+  average: number | null;
+  distribution: number[];
 }
 
 // ---- R2

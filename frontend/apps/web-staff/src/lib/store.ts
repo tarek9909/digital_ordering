@@ -10,6 +10,8 @@ interface StaffState {
   needsReload: boolean;
   signedOut: boolean;
   revoked: boolean;
+  /** The realtime server keeps refusing this board while HTTP still works: needs attention (CSD06). */
+  liveRefused: boolean;
   /** Ticket id → ready round of the last `ticket.overdue` event (TR-FE-17). */
   overdue: Record<string, number>;
   /** Last ticket a phone followed (closes the new-ticket QR, FR-QR-01). */
@@ -30,6 +32,7 @@ interface StaffState {
   markStale(): void;
   markFresh(serverTime: string): void;
   setSignedOut(v: boolean): void;
+  setLiveRefused(v: boolean): void;
   setRevoked(): void;
   markOverdue(id: string, round: number): void;
   markFollowed(id: string): void;
@@ -46,6 +49,7 @@ export const useStaff = create<StaffState>((set) => ({
   needsReload: false,
   signedOut: false,
   revoked: false,
+  liveRefused: false,
   overdue: {},
   lastFollowed: null,
   live: '',
@@ -58,6 +62,7 @@ export const useStaff = create<StaffState>((set) => ({
   markStale: () => set({ needsReload: true }),
   markFresh: (serverTime) => set({ needsReload: false, clockOffset: new Date(serverTime).getTime() - Date.now() }),
   setSignedOut: (v) => set({ signedOut: v }),
+  setLiveRefused: (liveRefused) => set((s) => (s.liveRefused === liveRefused ? s : { liveRefused })),
   setRevoked: () => set({ revoked: true, signedOut: true }),
   markOverdue: (id, round) => set((s) => ({ overdue: { ...s.overdue, [id]: round } })),
   markFollowed: (id) => set({ lastFollowed: { id, at: Date.now() } }),

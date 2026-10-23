@@ -1,9 +1,10 @@
 import type { Actor } from '@dop/auth';
-import { AppError, BUILTIN_CHIMES, PLATFORM_SETTING_DEFAULTS, siteContactSchema, sitePricingSchema, chimeAudioKey, type AuditPurpose, type PlatformSettingKey } from '@dop/contracts';
+import { AppError, BUILTIN_CHIMES, PLATFORM_SETTING_DEFAULTS, siteContactSchema, sitePricingSchema, siteLandingSchema, chimeAudioKey, type AuditPurpose, type PlatformSettingKey } from '@dop/contracts';
 import { parseIpRules, type IpRules } from '@dop/config';
 import { json } from '@dop/db';
 import { uuidv7 } from '@dop/domain';
 import { writeAudit } from './audit.js';
+import { issuePlatformInvitation } from './auth.js';
 import { listPayments } from './billing.js';
 import type { Deps } from './deps.js';
 import { sendEmail } from './email.js';
@@ -13,6 +14,7 @@ import { pilotReport } from './reports.js';
 import type { ObjectStorage } from './storage.js';
 import { endSupportForPlatformUser } from './support.js';
 import { changeTenantStatus } from './tenants.js';
+import type { ZodType } from 'zod';
 
 // Super admin console services (FR-SA-01 – FR-SA-14 MVP part, FR-SUP-01, FR-SUP-07). Cross-tenant reads use
 // the platform client from console routes only (TR-TEN-06); every write is audited.
@@ -220,8 +222,14 @@ export async function listPlatformUsers(deps: Deps) {
 export async function updatePlatformUser(deps: Deps, actor: PlatformActor, id: string, b: { role?: 'super_admin' | 'support' | 'finance'; status?: 'active' | 'disabled' }) {
   if (id === actor.platformUserId && (b.status === 'disabled' || (b.role && b.role !== 'super_admin'))) throw new AppError('FORBIDDEN', 'You cannot demote or disable yourself');
   const db = deps.db.platform();
+  const patch = { ...(b.role !== undefined && { role: b.role }), ...(b.status !== undefined && { status: b.status }) };
+  // An empty change is a no-op (A10, API01); the platform user must still exist.
+  if (Object.keys(patch).length === 0) {
+    if (!(await db.selectFrom('platform_users').select('id').where('id', '=', id).executeTakeFirst())) throw new AppError('NOT_FOUND');
+    return;
+  }
   await db.transaction().execute(async (tx) => {
-    const r = await tx.updateTable('platform_users').set(b).where('id', '=', id).executeTakeFirst();
+    const r = await tx.updateTable('platform_users').set(patch).where('id', '=', id).executeTakeFirst();
     if (Number(r.numUpdatedRows) === 0) throw new AppError('NOT_FOUND');
     if (b.status === 'disabled') await tx.updateTable('platform_sessions').set({ revoked_at: deps.now() }).where('platform_user_id', '=', id).where('revoked_at', 'is', null).execute();
     await writeAudit(tx, { actor, action: b.status === 'disabled' ? 'platform_user.removed' : 'platform_user.role_changed', tenantId: null, entityType: 'platform_user', entityId: id, after: b, visibleToTenant: false });
@@ -236,7 +244,9 @@ export async function resetPlatformMfa(deps: Deps, actor: PlatformActor, id: str
   await db.transaction().execute(async (tx) => {
     user = await tx.selectFrom('platform_users').select(['email', 'name']).where('id', '=', id).executeTakeFirst();
     if (!user) throw new AppError('NOT_FOUND');
-    await tx.updateTable('platform_users').set({ totp_secret_enc: null, mfa_enrolled_at: null }).where('id', '=', id).execute();
+    // The password goes too: whoever presented it first after the reset would otherwise enrol their own
+    // authenticator. The agent sets a new password from the emailed single-use link (mailbox proof), then enrols.
+    await tx.updateTable('platform_users').set({ totp_secret_enc: null, mfa_enrolled_at: null, password_hash: null, status: 'invited' }).where('id', '=', id).execute();
     await tx.updateTable('platform_sessions').set({ revoked_at: deps.now() }).where('platform_user_id', '=', id).where('revoked_at', 'is', null).execute();
     await writeAudit(tx, { actor, action: 'platform_user.mfa_reset', tenantId: null, entityType: 'platform_user', entityId: id, visibleToTenant: false });
   });
@@ -244,6 +254,7 @@ export async function resetPlatformMfa(deps: Deps, actor: PlatformActor, id: str
   await endSupportForPlatformUser(deps, id);
   deps.log.warn({ security: true, event: 'MFA_RESET', by: actor.platformUserId, target: id }, 'platform MFA reset');
   await sendEmail(deps, { template: 'platform_mfa_reset', to: user!.email, locale: 'en', data: { name: user!.name } });
+  await issuePlatformInvitation(deps, id, user!.email, user!.name);
 }
 
 // ---- console IP allow-list (TR-SEC-12, M-18)
@@ -251,6 +262,9 @@ export async function resetPlatformMfa(deps: Deps, actor: PlatformActor, id: str
  * Validates and normalises the allow-list: IPv4/IPv6 addresses and CIDR ranges only. A list that would shut out
  * the administrator saving it is refused, so a typo cannot lock the console. Empty means no restriction.
  */
+/** Docker gateway and Caddy of the compose network (deploy/docker-compose.yml, 172.30.0.0/24) and loopback. */
+const INTERNAL_ADDRESSES = ['172.30.0.1', '172.30.0.10', '127.0.0.1', '::1'];
+
 function validConsoleAllowList(value: unknown[], ip: string | undefined): string[] {
   if (value.length > 100 || !value.every((v) => typeof v === 'string' && v.length <= 64)) throw new AppError('VALIDATION_FAILED', 'Up to 100 addresses or ranges');
   let rules;
@@ -260,6 +274,11 @@ function validConsoleAllowList(value: unknown[], ip: string | undefined): string
     throw new AppError('VALIDATION_FAILED', (e as Error).message);
   }
   if (rules.rules.includes('loopback')) throw new AppError('VALIDATION_FAILED', 'List addresses or ranges, not keywords');
+  // Connections Docker relays (IPv6 clients when the compose network is IPv4-only, see deploy/README) arrive from the
+  // network's gateway: an entry covering it, or loopback, would admit every such client, not one network.
+  if (INTERNAL_ADDRESSES.some((a) => rules.has(a))) {
+    throw new AppError('VALIDATION_FAILED', 'The list covers the server’s internal network or loopback, which would admit every relayed connection (for example all IPv6 clients); list your public addresses');
+  }
   if (rules.rules.length > 0 && (!ip || !rules.has(ip))) throw new AppError('VALIDATION_FAILED', `This list does not include your current address (${ip ?? 'unknown'}); saving it would lock you out`);
   return rules.rules;
 }
@@ -290,17 +309,24 @@ export async function listSettings(deps: Deps) {
   });
 }
 
+/** Website settings edited through their own console forms, checked in full rather than by shape. */
+const SITE_SETTINGS: Record<string, { schema: ZodType; message: string }> = {
+  'site.contact': { schema: siteContactSchema, message: 'Check the email and WhatsApp number' },
+  'site.pricing': { schema: sitePricingSchema, message: 'Check the packages section' },
+  'site.landing': { schema: siteLandingSchema, message: 'Check the landing page content' },
+};
+
 export async function putSetting(deps: Deps, actor: PlatformActor, key: string, value: unknown, context: { ip?: string } = {}) {
   if (!(key in PLATFORM_SETTING_DEFAULTS)) throw new AppError('NOT_FOUND', 'Unknown setting');
   const def = PLATFORM_SETTING_DEFAULTS[key as PlatformSettingKey];
   // Same JSON shape as the default: numbers stay numbers, objects stay objects.
   if (typeof def !== typeof value || Array.isArray(def) !== Array.isArray(value)) throw new AppError('VALIDATION_FAILED', `Setting ${key} expects ${Array.isArray(def) ? 'an array' : typeof def}`);
   if (key === 'console.ipAllowList') value = validConsoleAllowList(value as unknown[], context.ip);
-  const schema = key === 'site.contact' ? siteContactSchema : key === 'site.pricing' ? sitePricingSchema : null;
-  if (schema) {
-    const r = schema.safeParse(value);
+  const site = SITE_SETTINGS[key];
+  if (site) {
+    const r = site.schema.safeParse(value);
     if (!r.success)
-      throw new AppError('VALIDATION_FAILED', key === 'site.contact' ? 'Check the email and WhatsApp number' : 'Check the packages section', {
+      throw new AppError('VALIDATION_FAILED', site.message, {
         errors: r.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
       });
     value = r.data;
@@ -315,12 +341,13 @@ export async function putSetting(deps: Deps, actor: PlatformActor, key: string, 
 export const listLanguages = (deps: Deps) => deps.db.platform().selectFrom('languages').selectAll().orderBy('code').execute();
 
 export async function updateLanguage(deps: Deps, actor: PlatformActor, code: string, b: { customerEnabled?: boolean; ttsLang?: string | null }) {
-  const r = await deps.db
-    .platform()
-    .updateTable('languages')
-    .set({ ...(b.customerEnabled !== undefined && { customer_enabled: b.customerEnabled }), ...(b.ttsLang !== undefined && { tts_lang: b.ttsLang }) })
-    .where('code', '=', code)
-    .executeTakeFirst();
+  const patch = { ...(b.customerEnabled !== undefined && { customer_enabled: b.customerEnabled }), ...(b.ttsLang !== undefined && { tts_lang: b.ttsLang }) };
+  // An empty change is a no-op (A10, API01); the language must still exist.
+  if (Object.keys(patch).length === 0) {
+    if (!(await deps.db.platform().selectFrom('languages').select('code').where('code', '=', code).executeTakeFirst())) throw new AppError('NOT_FOUND');
+    return;
+  }
+  const r = await deps.db.platform().updateTable('languages').set(patch).where('code', '=', code).executeTakeFirst();
   if (Number(r.numUpdatedRows) === 0) throw new AppError('NOT_FOUND');
   await writeAudit(deps.db.platform(), { actor, action: 'setting.changed', tenantId: null, entityType: 'language', entityId: code, after: b, visibleToTenant: false });
 }

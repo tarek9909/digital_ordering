@@ -22,7 +22,7 @@ import {
 } from '@dop/services';
 import { z } from 'zod';
 import { defineRoutes, route, type Ctx } from '../http/router.js';
-import { registeredConnectors } from './connectors.js';
+import { posBindingCookie, posBindingOpts, registeredConnectors } from './connectors.js';
 
 // Tenant admin API, R2 additions (TRD §12.7): venues (multi-site), API keys, webhooks, POS connections, named
 // staff, CSV export.
@@ -151,7 +151,11 @@ export const adminR2Routes = defineRoutes('/api/admin/v1', [
     permission: 'integrations.manage',
     params: z.object({ id: uuidSchema, provider: z.string().regex(/^[a-z0-9-]{2,40}$/) }).strict(),
     tenantResource: true,
-    handler: async (c) => startPosConnect(c.deps, registeredConnectors(), owner(c), owner(c).tenantId, c.params.id, c.params.provider),
+    handler: async (c) => {
+      const { url, binding } = await startPosConnect(c.deps, registeredConnectors(), owner(c), owner(c).tenantId, c.params.id, c.params.provider);
+      c.res.cookie(posBindingCookie(c.deps), binding, posBindingOpts(c.deps, 10 * 60_000));
+      return { url };
+    },
   }),
   route({
     method: 'delete',

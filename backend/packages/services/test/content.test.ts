@@ -17,6 +17,13 @@ describe('legal HTML sanitiser (W12)', () => {
     expect(sanitizeLegalHtml('1 < 2 & "q"')).toBe('1 &lt; 2 &amp; &quot;q&quot;');
   });
 
+  it('takes the link target from the href attribute itself, never from text inside another attribute', () => {
+    expect(sanitizeLegalHtml('<a title="href=https://a.example" href="javascript:alert(1)">x</a>')).toBe('<a>x</a>');
+    expect(sanitizeLegalHtml('<a title="href=https://evil.example" href="https://good.example/x">x</a>')).toBe('<a href="https://good.example/x" rel="noopener noreferrer" target="_blank">x</a>');
+    expect(sanitizeLegalHtml('<a data-href="https://no.example">n</a>')).toBe('<a>n</a>');
+    expect(sanitizeLegalHtml("<a HREF='mailto:a@b.example'>m</a>")).toBe('<a href="mailto:a@b.example" rel="noopener noreferrer" target="_blank">m</a>');
+  });
+
   it('closes what it opened and ignores stray closing tags', () => {
     expect(sanitizeLegalHtml('<p><strong>x</p></em>')).toBe('<p><strong>x</strong></p>');
   });

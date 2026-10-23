@@ -5,6 +5,7 @@ import { useId, useState } from 'react';
 import { api } from '../../lib/api';
 import type { FeatureFlag } from '../../lib/types';
 import { ErrorNote, Table, Td } from '../common';
+import { MfaCancelled, useFreshMfa } from '../FreshMfa';
 
 // Feature flags per tenant (FR-SA-11, TR-ALG-15). The plan's effect is resolved on the server, so the console shows
 // the platform default and the tenant override: Inherit (no override) / On / Off.
@@ -17,11 +18,12 @@ export function FlagsTab({ tenantId }: { tenantId: string }) {
   const qc = useQueryClient();
   const [announce, setAnnounce] = useState('');
   const key = ['feature-flags', tenantId];
+  const run = useFreshMfa(); // overrides unlock paid features: the server asks for a recent code
   const q = useQuery({ queryKey: key, queryFn: () => api.get<{ items: FeatureFlag[] }>('/feature-flags', { tenantId }) });
   const set = useMutation({
     mutationFn: ({ flag, choice }: { flag: string; choice: Choice }) => {
       const path = `/tenants/${tenantId}/feature-flags/${encodeURIComponent(flag)}`;
-      return choice === 'inherit' ? api.delete(path) : api.put(path, { enabled: choice === 'on' });
+      return run(() => (choice === 'inherit' ? api.delete(path) : api.put(path, { enabled: choice === 'on' })));
     },
     onSuccess: (_r, v) => {
       setAnnounce(t('flags.saved', { key: v.flag }));
@@ -34,7 +36,7 @@ export function FlagsTab({ tenantId }: { tenantId: string }) {
     <div className="flex flex-col gap-3">
       <LiveRegion text={announce} />
       <p className="text-sm text-muted">{t('flags.intro')}</p>
-      <ErrorNote error={q.error ?? set.error} />
+      <ErrorNote error={q.error ?? (set.error instanceof MfaCancelled ? null : set.error)} />
       <Table caption={t('flags.title')} head={[t('flags.key'), t('flags.description'), t('flags.default'), t('flags.override')]}>
         {q.data?.items.length === 0 && (
           <tr>

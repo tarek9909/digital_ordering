@@ -273,7 +273,7 @@ export const authRoutes = defineRoutes('/api/auth/v1', [
     body: handoffBody,
     handler: async (c) => {
       const s = wwwSession(c);
-      return createHandoff(c.deps, s.userId, c.body.tenantSlug, c.userAgent, s.mfaVerifiedAt);
+      return createHandoff(c.deps, s.userId, c.body.tenantSlug, c.userAgent, s.mfaVerifiedAt, s.sessionId);
     },
   }),
   route({

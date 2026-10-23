@@ -1,4 +1,4 @@
-import { AppError, dateRange, slugChangeBody, uuidSchema } from '@dop/contracts';
+import { AppError, dateRange, legalAcceptBody, legalPendingQuery, slugChangeBody, uuidSchema } from '@dop/contracts';
 import {
   announcementsFor,
   approveSupport,
@@ -96,16 +96,25 @@ export const adminR11Routes = defineRoutes('/api/admin/v1', [
   route({ method: 'get', path: '/reports/heatmap', surfaces: ['tenant'], permission: 'reports.view', query: rangeQuery, handler: async (c) => heatmapReport(c.deps, tenantId(c), c.query) }),
 
   // New legal versions need re-acceptance (TR-PRV-09).
-  route({ method: 'get', path: '/legal/pending', surfaces: ['tenant'], permission: 'account.self', limitedAccessOk: true, handler: async (c) => ({ items: await pendingLegalAcceptance(c.deps, user(c).tenantId, user(c).userId) }) }),
+  // The pending documents carry their exact id, version, locale and content: the gate shows what it records (AS04).
+  route({
+    method: 'get',
+    path: '/legal/pending',
+    surfaces: ['tenant'],
+    permission: 'account.self',
+    limitedAccessOk: true,
+    query: legalPendingQuery,
+    handler: async (c) => ({ items: await pendingLegalAcceptance(c.deps, user(c).tenantId, user(c).userId, { locale: c.query.locale, storage: c.deps.storage }) }),
+  }),
   route({
     method: 'post',
     path: '/legal/accept',
     surfaces: ['tenant'],
     permission: 'account.self',
     limitedAccessOk: true,
-    body: z.object({ documentIds: z.array(uuidSchema).min(1).max(5) }).strict(),
+    body: legalAcceptBody,
     handler: async (c) => {
-      await acceptLegal(c.deps, user(c).tenantId, user(c).userId, c.body.documentIds, c.ip);
+      await acceptLegal(c.deps, user(c).tenantId, user(c).userId, c.body.documentIds, c.ip, c.body.locale);
     },
   }),
 ]);

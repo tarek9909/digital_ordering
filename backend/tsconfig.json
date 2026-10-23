@@ -14,7 +14,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node"],
+    "noEmit": true
   },
   "include": ["packages/*/src", "packages/*/test", "apps/*/src", "apps/*/test", "tools/**/*.ts"]
 }

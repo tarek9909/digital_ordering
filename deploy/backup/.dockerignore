@@ -1,0 +1,2 @@
+# The image copies only the scripts; the live rclone config (remote credentials, crypt password) is mounted at run time.
+rclone.conf

@@ -31,6 +31,7 @@ import {
   deleteOwnAccount,
   inviteMember,
   acceptInvitation,
+  openEmailData,
 } from '../src/index.js';
 import { makeTestDeps, type TestDeps } from '../src/testing.js';
 
@@ -140,7 +141,7 @@ describe('account deletion (FR-ADM-20, TR-PRV-11)', () => {
     const x = await tenant();
     await expect(deleteOwnAccount(deps, x.userId, 'a-long-unique-passphrase')).rejects.toMatchObject({ code: 'FORBIDDEN' });
     await inviteMember(deps, x.owner, x.tenantId, 'mgr@x.test', 'manager');
-    const link = (deps.jobs.added.filter((j) => j.name === 'email.send').at(-1)!.data as { data: { link: string } }).data.link;
+    const link = (await openEmailData(deps.keys, (deps.jobs.added.filter((j) => j.name === 'email.send').at(-1)!.data as { data: Record<string, unknown> }).data)).link as string;
     const token = new URL(link).searchParams.get('token')!;
     const accepted = await acceptInvitation(deps, token, { name: 'Mgr', password: 'another-long-passphrase' }, { ip: '1', userAgent: 'x', host: 'h' });
     expect(accepted.kind).toBe('session');

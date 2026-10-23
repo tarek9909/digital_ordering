@@ -25,7 +25,9 @@ const existing = await pdb.selectFrom('platform_users').select('id').where('emai
 const hash = await hashSecret(password);
 if (existing) {
   await pdb.updateTable('platform_users').set({ password_hash: hash, status: 'active', role: 'super_admin' }).where('id', '=', existing.id).execute();
-  console.log(`updated ${email} (super_admin)`);
+  // A reset may follow a compromise: sessions opened with the old password end too.
+  await pdb.updateTable('platform_sessions').set({ revoked_at: new Date() }).where('platform_user_id', '=', existing.id).where('revoked_at', 'is', null).execute();
+  console.log(`updated ${email} (super_admin); its console sessions were signed out`);
 } else {
   await pdb.insertInto('platform_users').values({ id: uuidv7(), email, name, role: 'super_admin', status: 'active', password_hash: hash }).execute();
   console.log(`created ${email} (super_admin); sign in at https://admin.<domain> and set up your authenticator app`);

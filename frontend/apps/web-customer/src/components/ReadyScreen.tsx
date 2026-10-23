@@ -18,8 +18,10 @@ export function ReadyScreen({
   onTapToHear: () => void;
   onComing: () => void;
 }) {
-  const { t } = useTranslation();
-  const collection = ticket.venue.messages[ticket.venue.locales[0] ?? 'ar']?.collection;
+  const { t, i18n } = useTranslation();
+  // The customer's selected language first, then the venue default (CSD09, TR-L10N-02).
+  const messages = ticket.venue.messages;
+  const collection = messages[i18n.language]?.collection || messages[ticket.venue.locales[0] ?? 'ar']?.collection;
   if (needsTap && !ticket.acknowledged) {
     return (
       <button

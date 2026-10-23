@@ -24,6 +24,10 @@ export async function createVenue(deps: Deps, actor: Actor, tenantId: string, na
     const n = Number((await tx.selectFrom('venues').select((eb) => eb.fn.countAll<number>().as('n')).where('tenant_id', '=', tenantId).where('status', '=', 'active').executeTakeFirstOrThrow()).n);
     await requireWithinLimit(deps, tenantId, 'maxVenues', n);
     if (n >= 1) await requireFeature(deps, tenantId, 'multi_venue');
+    // Active branches have distinct names (BW04). Under the same lock, a client retrying after a timeout cannot add
+    // a second identical branch: the retry is refused and the list shows the branch the first request created.
+    const clash = await tx.selectFrom('venues').select('id').where('tenant_id', '=', tenantId).where('status', '=', 'active').where('name', '=', name).executeTakeFirst();
+    if (clash) throw new AppError('VALIDATION_FAILED', 'A venue with this name already exists', { errors: [{ path: 'name', message: 'taken' }], data: { venueId: clash.id } });
     const r = await createVenueRow(tx, deps, tenantId, {
       name,
       timeZone: first?.time_zone ?? defaults.timeZone,
@@ -38,15 +42,23 @@ export async function createVenue(deps: Deps, actor: Actor, tenantId: string, na
   return { id: venueId };
 }
 
-/** Venues are archived, never deleted (TR-DB-13); open tickets must be closed first. */
+/**
+ * Venues are archived, never deleted (TR-DB-13); open tickets must be closed first. One local transaction (BW04): the
+ * tenant row lock serialises it with venue creation and other archives (two parallel archives cannot leave a tenant
+ * without a venue), and the exclusive venue row lock waits for ticket creations holding its shared lock, so the
+ * open-ticket check sees them. Archiving an already archived venue is a no-op, so a client retry succeeds.
+ */
 export async function archiveVenue(deps: Deps, actor: Actor, tenantId: string, venueId: string) {
   const db = deps.db.forTenant(tenantId);
-  if (!(await db.selectFrom('venues').select('id').where('id', '=', venueId).where('status', '=', 'active').executeTakeFirst())) throw new AppError('NOT_FOUND');
-  const active = Number((await db.selectFrom('venues').select((eb) => eb.fn.countAll<number>().as('n')).where('status', '=', 'active').executeTakeFirstOrThrow()).n);
-  if (active <= 1) throw new AppError('FORBIDDEN', 'A tenant keeps at least one venue');
-  const open = await db.selectFrom('tickets').select('id').where('venue_id', '=', venueId).where('status', 'in', ['received', 'preparing', 'ready']).limit(1).executeTakeFirst();
-  if (open) throw new AppError('INVALID_TRANSITION', 'Close the open tickets of this venue first');
   await db.transaction().execute(async (tx) => {
+    await tx.selectFrom('tenants').select('id').where('id', '=', tenantId).forUpdate().executeTakeFirst();
+    const venue = await tx.selectFrom('venues').select(['id', 'status']).where('id', '=', venueId).forUpdate().executeTakeFirst();
+    if (!venue) throw new AppError('NOT_FOUND');
+    if (venue.status === 'archived') return; // already archived (retry after a timeout)
+    const active = Number((await tx.selectFrom('venues').select((eb) => eb.fn.countAll<number>().as('n')).where('status', '=', 'active').executeTakeFirstOrThrow()).n);
+    if (active <= 1) throw new AppError('FORBIDDEN', 'A tenant keeps at least one venue');
+    const open = await tx.selectFrom('tickets').select('id').where('venue_id', '=', venueId).where('status', 'in', ['received', 'preparing', 'ready']).limit(1).executeTakeFirst();
+    if (open) throw new AppError('INVALID_TRANSITION', 'Close the open tickets of this venue first');
     const r = await tx.updateTable('venues').set({ status: 'archived' }).where('id', '=', venueId).where('status', '=', 'active').executeTakeFirst();
     if (Number(r.numUpdatedRows) === 0) throw new AppError('NOT_FOUND');
     await tx.updateTable('staff_devices').set({ revoked_at: deps.now(), revoked_reason: 'removed' }).where('venue_id', '=', venueId).where('revoked_at', 'is', null).execute();

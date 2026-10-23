@@ -102,6 +102,7 @@ export function staffTicket(t: Ticket, lastChangedBy: string | null = null): Sta
     readyRound: t.ready_round,
     autoAlertsSent: t.auto_alerts_sent,
     manualAlertsSent: t.manual_alerts_sent,
+    overdueRound: t.overdue_round ?? null,
     source: t.source,
     createdAt: t.created_at.toISOString(),
     readyAt: iso(t.ready_at),

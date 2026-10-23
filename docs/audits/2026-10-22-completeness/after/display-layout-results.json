@@ -1,0 +1,1062 @@
+[
+  {
+    "name": "1920x1080-ready-only",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "showPreparing": false,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 15,
+    "readyRendered": 15,
+    "indicator": "Page 1 of 2+9 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 345.1875,
+      "bottom": 927.25,
+      "height": 582.0625,
+      "scrollHeight": 582
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+15 more",
+        "numbers": [
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1920x1080-with-preparing",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "showPreparing": true,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 9,
+    "readyRendered": 9,
+    "indicator": "Page 1 of 3+15 more",
+    "pages": 3,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 8,
+    "preparingTotal": 14,
+    "preparingIndicator": "+6 more",
+    "promoRect": null,
+    "grid": {
+      "top": 345.1875,
+      "bottom": 927.25,
+      "height": 582.0625,
+      "scrollHeight": 582
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+15 more",
+        "numbers": [
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115",
+          "116",
+          "117"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+18 more",
+        "numbers": [
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1920x1080-with-preparing-promo",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "showPreparing": true,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 9,
+    "readyRendered": 9,
+    "indicator": "Page 1 of 3+15 more",
+    "pages": 3,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 6,
+    "preparingTotal": 6,
+    "preparingIndicator": null,
+    "promoRect": {
+      "x": 78.578125,
+      "y": 850.234375,
+      "width": 668.421875,
+      "height": 151.1875,
+      "top": 850.234375,
+      "right": 747,
+      "bottom": 1001.421875,
+      "left": 78.578125
+    },
+    "grid": {
+      "top": 345.1875,
+      "bottom": 927.25,
+      "height": 582.0625,
+      "scrollHeight": 582
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+15 more",
+        "numbers": [
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115",
+          "116",
+          "117"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+18 more",
+        "numbers": [
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1920x1080-ready-only-promo-few",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 4,
+    "readyFullyVisible": 4,
+    "readyRendered": 4,
+    "indicator": null,
+    "pages": 1,
+    "seenAcrossRotation": 4,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": {
+      "x": 43.1875,
+      "y": 896.421875,
+      "width": 1833.625,
+      "height": 151.1875,
+      "top": 896.421875,
+      "right": 1876.8125,
+      "bottom": 1047.609375,
+      "left": 43.1875
+    },
+    "grid": {
+      "top": 345.1875,
+      "bottom": 820.84375,
+      "height": 475.65625,
+      "scrollHeight": 476
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1920x1080-ready-only-promo-many",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 15,
+    "readyRendered": 15,
+    "indicator": "Page 1 of 2+9 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 345.1875,
+      "bottom": 927.25,
+      "height": 582.0625,
+      "scrollHeight": 582
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+15 more",
+        "numbers": [
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-ready-only",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": false,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 15,
+    "readyRendered": 15,
+    "indicator": "Page 1 of 2+9 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 230.125,
+      "bottom": 618.484375,
+      "height": 388.359375,
+      "scrollHeight": 388
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+15 more",
+        "numbers": [
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-with-preparing",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": true,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 9,
+    "readyRendered": 9,
+    "indicator": "Page 1 of 3+15 more",
+    "pages": 3,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 6,
+    "preparingTotal": 14,
+    "preparingIndicator": "+8 more",
+    "promoRect": null,
+    "grid": {
+      "top": 230.125,
+      "bottom": 618.484375,
+      "height": 388.359375,
+      "scrollHeight": 388
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+15 more",
+        "numbers": [
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115",
+          "116",
+          "117"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+18 more",
+        "numbers": [
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-with-preparing-promo",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": true,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 9,
+    "readyRendered": 9,
+    "indicator": "Page 1 of 3+15 more",
+    "pages": 3,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 6,
+    "preparingTotal": 6,
+    "preparingIndicator": null,
+    "promoRect": {
+      "x": 52.390625,
+      "y": 566.8125,
+      "width": 445.609375,
+      "height": 100.796875,
+      "top": 566.8125,
+      "right": 498,
+      "bottom": 667.609375,
+      "left": 52.390625
+    },
+    "grid": {
+      "top": 230.125,
+      "bottom": 618.484375,
+      "height": 388.359375,
+      "scrollHeight": 388
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+15 more",
+        "numbers": [
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115",
+          "116",
+          "117"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+18 more",
+        "numbers": [
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-ready-only-promo-few",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 4,
+    "readyFullyVisible": 4,
+    "readyRendered": 4,
+    "indicator": null,
+    "pages": 1,
+    "seenAcrossRotation": 4,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": {
+      "x": 28.796875,
+      "y": 597.609375,
+      "width": 1222.40625,
+      "height": 100.796875,
+      "top": 597.609375,
+      "right": 1251.203125,
+      "bottom": 698.40625,
+      "left": 28.796875
+    },
+    "grid": {
+      "top": 230.125,
+      "bottom": 547.21875,
+      "height": 317.09375,
+      "scrollHeight": 317
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-ready-only-promo-many",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 15,
+    "readyRendered": 15,
+    "indicator": "Page 1 of 2+9 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 230.125,
+      "bottom": 618.484375,
+      "height": 388.359375,
+      "scrollHeight": 388
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+15 more",
+        "numbers": [
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1080x1920-ready-only",
+    "viewport": {
+      "width": 1080,
+      "height": 1920
+    },
+    "showPreparing": false,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 14,
+    "readyRendered": 14,
+    "indicator": "Page 1 of 2+10 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 345.1875,
+      "bottom": 1767.25,
+      "height": 1422.0625,
+      "scrollHeight": 1422
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+14 more",
+        "numbers": [
+          "114",
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1080x1920-with-preparing",
+    "viewport": {
+      "width": 1080,
+      "height": 1920
+    },
+    "showPreparing": true,
+    "promo": false,
+    "readyTotal": 24,
+    "readyFullyVisible": 8,
+    "readyRendered": 8,
+    "indicator": "Page 1 of 4+16 more",
+    "pages": 4,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 6,
+    "preparingTotal": 14,
+    "preparingIndicator": "+8 more",
+    "promoRect": null,
+    "grid": {
+      "top": 1037.09375,
+      "bottom": 1767.25,
+      "height": 730.15625,
+      "scrollHeight": 730
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+16 more",
+        "numbers": [
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+16 more",
+        "numbers": [
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1080x1920-with-preparing-promo",
+    "viewport": {
+      "width": 1080,
+      "height": 1920
+    },
+    "showPreparing": true,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 8,
+    "readyRendered": 8,
+    "indicator": "Page 1 of 4+16 more",
+    "pages": 4,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 2,
+    "preparingTotal": 6,
+    "preparingIndicator": "+4 more",
+    "promoRect": {
+      "x": 78.578125,
+      "y": 589.640625,
+      "width": 922.84375,
+      "height": 268.796875,
+      "top": 589.640625,
+      "right": 1001.421875,
+      "bottom": 858.4375,
+      "left": 78.578125
+    },
+    "grid": {
+      "top": 1037.09375,
+      "bottom": 1767.25,
+      "height": 730.15625,
+      "scrollHeight": 730
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 3+16 more",
+        "numbers": [
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113",
+          "114",
+          "115"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 3+16 more",
+        "numbers": [
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1080x1920-ready-only-promo-few",
+    "viewport": {
+      "width": 1080,
+      "height": 1920
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 4,
+    "readyFullyVisible": 4,
+    "readyRendered": 4,
+    "indicator": null,
+    "pages": 1,
+    "seenAcrossRotation": 4,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": {
+      "x": 43.1875,
+      "y": 1618.8125,
+      "width": 993.625,
+      "height": 268.796875,
+      "top": 1618.8125,
+      "right": 1036.8125,
+      "bottom": 1887.609375,
+      "left": 43.1875
+    },
+    "grid": {
+      "top": 345.1875,
+      "bottom": 1543.234375,
+      "height": 1198.046875,
+      "scrollHeight": 1198
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1080x1920-ready-only-promo-many",
+    "viewport": {
+      "width": 1080,
+      "height": 1920
+    },
+    "showPreparing": false,
+    "promo": true,
+    "readyTotal": 24,
+    "readyFullyVisible": 14,
+    "readyRendered": 14,
+    "indicator": "Page 1 of 2+10 more",
+    "pages": 2,
+    "seenAcrossRotation": 24,
+    "preparingRendered": 0,
+    "preparingTotal": 0,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 345.1875,
+      "bottom": 1767.25,
+      "height": 1422.0625,
+      "scrollHeight": 1422
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "100",
+          "101",
+          "102",
+          "103",
+          "104",
+          "105",
+          "106",
+          "107",
+          "108",
+          "109",
+          "110",
+          "111",
+          "112",
+          "113"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 2+14 more",
+        "numbers": [
+          "114",
+          "115",
+          "116",
+          "117",
+          "118",
+          "119",
+          "120",
+          "121",
+          "122",
+          "123"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  },
+  {
+    "name": "1280x720-with-preparing-prefixed",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "showPreparing": true,
+    "promo": false,
+    "readyTotal": 30,
+    "readyFullyVisible": 6,
+    "readyRendered": 6,
+    "indicator": "Page 1 of 6+24 more",
+    "pages": 6,
+    "seenAcrossRotation": 30,
+    "preparingRendered": 3,
+    "preparingTotal": 3,
+    "preparingIndicator": null,
+    "promoRect": null,
+    "grid": {
+      "top": 230.125,
+      "bottom": 618.484375,
+      "height": 388.359375,
+      "scrollHeight": 388
+    },
+    "perPage": [
+      {
+        "page": 1,
+        "numbers": [
+          "B100",
+          "B101",
+          "B102",
+          "B103",
+          "B104",
+          "B105"
+        ]
+      },
+      {
+        "page": 2,
+        "indicator": "Page 2 of 5+24 more",
+        "numbers": [
+          "B106",
+          "B107",
+          "B108",
+          "B109",
+          "B110",
+          "B111"
+        ]
+      },
+      {
+        "page": 3,
+        "indicator": "Page 3 of 5+24 more",
+        "numbers": [
+          "B112",
+          "B113",
+          "B114",
+          "B115",
+          "B116",
+          "B117"
+        ]
+      },
+      {
+        "page": 4,
+        "indicator": "Page 4 of 5+24 more",
+        "numbers": [
+          "B118",
+          "B119",
+          "B120",
+          "B121",
+          "B122",
+          "B123"
+        ]
+      },
+      {
+        "page": 5,
+        "indicator": "Page 5 of 5+24 more",
+        "numbers": [
+          "B124",
+          "B125",
+          "B126",
+          "B127",
+          "B128",
+          "B129"
+        ]
+      }
+    ],
+    "ok": true,
+    "errors": []
+  }
+]

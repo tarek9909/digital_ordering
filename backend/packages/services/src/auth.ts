@@ -168,7 +168,8 @@ export async function signInUserMfa(deps: Deps, mfaToken: string, code: string, 
 }
 
 /** `mfa`: true when the second factor was just verified, or the time it was verified (carried by a handoff). */
-export async function createUserSession(deps: Deps, userId: string, tenantId: string | null, client: ClientInfo, mfa: boolean | Date): Promise<SignInResult> {
+/** `authenticatedAt`: when the user proved who they are; now for a sign-in, the original sign-in for a handoff. */
+export async function createUserSession(deps: Deps, userId: string, tenantId: string | null, client: ClientInfo, mfa: boolean | Date, authenticatedAt?: Date): Promise<SignInResult> {
   const token = newSecretToken();
   const id = uuidv7();
   const now = deps.now();
@@ -183,6 +184,7 @@ export async function createUserSession(deps: Deps, userId: string, tenantId: st
       host: client.host,
       token_hash: hash(deps, token),
       mfa_verified_at: mfaAt,
+      authenticated_at: authenticatedAt ?? now,
       ip: client.ip,
       user_agent: client.userAgent.slice(0, 300),
       expires_at: new Date(now.getTime() + SESSION_TTL.userAbsoluteMs),
@@ -257,7 +259,7 @@ export async function revokeOtherSessions(deps: Deps, userId: string, keepSessio
  * revocation, membership, role or second-factor changes. Instances also re-check every minute, so a lost
  * message only delays the cut-off.
  */
-export async function revalidateUserSockets(deps: Deps, ref: { userId?: string; sessionId?: string }) {
+export async function revalidateUserSockets(deps: Deps, ref: { userId?: string; sessionId?: string; supportSessionId?: string }) {
   const event: BusEvent = { outboxId: 0, topic: 'user.revalidate', tenantId: null, payload: ref };
   await deps.kv.publish(EVENTS_CHANNEL, JSON.stringify(event)).catch((err: unknown) => deps.log.warn({ err }, 'socket revalidation publish failed'));
 }
@@ -402,11 +404,24 @@ export async function forgotPassword(deps: Deps, email: string) {
   await sendEmail(deps, { template: 'password_reset', to: email, locale: u.locale, data: { name: u.name, link: urls(deps.config).www(`/reset-password?token=${token}`) } });
 }
 
+/**
+ * Password reset (FR-ADM-18, AS03). The new password is checked before the link is touched, so a rejected choice
+ * can be corrected with the same link; on success the link is consumed and the password changed in one transaction
+ * (single use under concurrency, L-2), then every session is signed out.
+ */
 export async function resetPassword(deps: Deps, token: string, password: string) {
-  const row = await useEmailToken(deps, token, 'reset_password');
-  const problem = checkPassword(password);
+  const db = deps.db.platform();
+  const expired = () => new AppError('INVITATION_EXPIRED', 'This link has expired');
+  const row = await db.selectFrom('email_tokens').innerJoin('users', 'users.id', 'email_tokens.user_id').select(['email_tokens.id', 'email_tokens.user_id', 'email_tokens.used_at', 'email_tokens.expires_at', 'users.email']).where('email_tokens.token_hash', '=', hash(deps, token)).where('email_tokens.purpose', '=', 'reset_password').executeTakeFirst();
+  if (!row || row.used_at || row.expires_at <= deps.now()) throw expired();
+  const problem = checkPassword(password, [row.email]);
   if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'password', message: problem }] });
-  await deps.db.platform().updateTable('users').set({ password_hash: await hashSecret(password) }).where('id', '=', row.user_id).execute();
+  const passwordHash = await hashSecret(password);
+  await db.transaction().execute(async (tx) => {
+    const r = await tx.updateTable('email_tokens').set({ used_at: deps.now() }).where('id', '=', row.id).where('used_at', 'is', null).where('expires_at', '>', deps.now()).executeTakeFirst();
+    if (Number(r.numUpdatedRows) !== 1) throw expired();
+    await tx.updateTable('users').set({ password_hash: passwordHash }).where('id', '=', row.user_id).execute();
+  });
   await revokeOtherSessions(deps, row.user_id);
 }
 
@@ -420,9 +435,20 @@ export async function changePassword(deps: Deps, userId: string, sessionId: stri
   await revokeOtherSessions(deps, userId, sessionId);
 }
 
+/** Wrong password re-entries per account in 15 minutes (slug change, deletion, ownership transfer, email change). */
+const PASSWORD_RECHECK_FAILURES = 10;
+
+/**
+ * Password re-entry by a signed-in user. Each try takes a place in a per-account budget before the hash is checked,
+ * and only a correct password gives it back, so a stolen session cannot guess the password (nor tie up the server
+ * with hashing) faster than 10 tries per 15 minutes, even with parallel requests.
+ */
 export async function verifyUserPassword(deps: Deps, userId: string, password: string): Promise<void> {
+  const key = `pwcheck:${userId}`;
+  if ((await deps.kv.incr(key, 15 * 60)) > PASSWORD_RECHECK_FAILURES) throw LOCKED();
   const u = await deps.db.platform().selectFrom('users').select('password_hash').where('id', '=', userId).executeTakeFirstOrThrow();
   if (!u.password_hash || !(await verifySecret(u.password_hash, password))) throw new AppError('UNAUTHENTICATED', 'Password is incorrect');
+  await deps.kv.incrBy(key, -1);
 }
 
 // ---- TOTP for tenant users (optional in MVP, TR-AUTH-11)
@@ -440,8 +466,9 @@ async function reauthenticate(deps: Deps, userId: string, sessionId: string, pro
     }
   } else {
     // Google-only account: no password to re-check, so the sign-in itself must be recent.
-    const s = await db.selectFrom('user_sessions').select('created_at').where('id', '=', sessionId).executeTakeFirstOrThrow();
-    if (deps.now().getTime() - s.created_at.getTime() > REAUTH_FRESH_MS) throw new AppError('FORBIDDEN', 'Sign in again to change two-factor settings');
+    // The time of the sign-in itself: a session opened by a handoff carries the www sign-in's time, not its own.
+    const s = await db.selectFrom('user_sessions').select(['created_at', 'authenticated_at']).where('id', '=', sessionId).executeTakeFirstOrThrow();
+    if (deps.now().getTime() - (s.authenticated_at ?? s.created_at).getTime() > REAUTH_FRESH_MS) throw new AppError('FORBIDDEN', 'Sign in again to change two-factor settings');
   }
   // Replacing a factor needs the factor being replaced; a code from the new one never authorises that.
   if (u.totp_secret_enc) await checkSecondFactor(deps, `u:${userId}`, await decrypt(deps.keys, u.totp_secret_enc), proof.currentCode ?? '', ip);
@@ -518,8 +545,11 @@ export async function removeTotp(deps: Deps, userId: string, sessionId: string, 
  * `mfaVerifiedAt` is the www session's verified second factor; the tenant session keeps it, so a user who
  * completed TOTP on www is not asked again on the tenant host (A04, TR-AUTH-06, TR-AUTH-11).
  */
-export async function createHandoff(deps: Deps, userId: string, tenantSlug: string, userAgent: string, mfaVerifiedAt: Date | null = null) {
+export async function createHandoff(deps: Deps, userId: string, tenantSlug: string, userAgent: string, mfaVerifiedAt: Date | null = null, fromSessionId?: string) {
   const db = deps.db.platform();
+  // The www sign-in's time travels with the handoff, so the new tenant session is never "freshly signed in" (H-5).
+  const from = fromSessionId ? await db.selectFrom('user_sessions').select(['created_at', 'authenticated_at']).where('id', '=', fromSessionId).executeTakeFirst() : undefined;
+  const authAt = from ? (from.authenticated_at ?? from.created_at) : null;
   const t = await db
     .selectFrom('tenants')
     .innerJoin('tenant_memberships', 'tenant_memberships.tenant_id', 'tenants.id')
@@ -532,20 +562,21 @@ export async function createHandoff(deps: Deps, userId: string, tenantSlug: stri
   if (!t) throw new AppError('NOT_FOUND');
   const code = newSecretToken();
   const host = `${tenantSlug}.${deps.config.domain}`;
-  await deps.kv.set(keys.handoff(hash(deps, code)), JSON.stringify({ userId, tenantId: t.id, host, ua: userAgent, mfaAt: mfaVerifiedAt?.toISOString() ?? null }), SESSION_TTL.handoffMs / 1000);
+  await deps.kv.set(keys.handoff(hash(deps, code)), JSON.stringify({ userId, tenantId: t.id, host, ua: userAgent, mfaAt: mfaVerifiedAt?.toISOString() ?? null, authAt: authAt?.toISOString() ?? null }), SESSION_TTL.handoffMs / 1000);
   return { code, url: `${urls(deps.config).admin(tenantSlug, `/handoff?code=${code}`)}` };
 }
 
 export async function exchangeHandoff(deps: Deps, code: string, client: ClientInfo, tenantId: string): Promise<SignInResult> {
   const raw = await deps.kv.take(keys.handoff(hash(deps, code))); // single use, atomically (L-2)
   if (!raw) throw new AppError('UNAUTHENTICATED', 'Link expired');
-  const p = JSON.parse(raw) as { userId: string; tenantId: string; host: string; ua: string; mfaAt?: string | null };
+  const p = JSON.parse(raw) as { userId: string; tenantId: string; host: string; ua: string; mfaAt?: string | null; authAt?: string | null };
   if (p.host !== client.host || p.tenantId !== tenantId || p.ua !== client.userAgent) throw new AppError('UNAUTHENTICATED', 'Link expired');
   // Assurance is carried only while the account still has its authenticator (removing it revokes sessions).
   const user = await deps.db.platform().selectFrom('users').select(['totp_secret_enc', 'disabled_at']).where('id', '=', p.userId).executeTakeFirst();
   if (!user || user.disabled_at) throw new AppError('UNAUTHENTICATED', 'Link expired');
   const mfaAt = p.mfaAt && user.totp_secret_enc ? new Date(p.mfaAt) : false;
-  return createUserSession(deps, p.userId, tenantId, client, mfaAt);
+  // Without a recorded sign-in time the session counts as signed in long ago, never as fresh.
+  return createUserSession(deps, p.userId, tenantId, client, mfaAt, p.authAt ? new Date(p.authAt) : new Date(0));
 }
 
 // ---- invitations
@@ -771,10 +802,15 @@ export async function invitePlatformUser(deps: Deps, actor: Actor & { kind: 'pla
     await tx.insertInto('platform_users').values({ id, email, name, role }).execute();
     await writeAudit(tx, { actor, action: 'platform_user.invited', tenantId: null, entityType: 'platform_user', entityId: id, after: { email, role }, visibleToTenant: false });
   });
+  await issuePlatformInvitation(deps, id, email, name);
+  return { id };
+}
+
+/** Single-use set-password link for an `invited` platform user: a new invitation or after an MFA reset. */
+export async function issuePlatformInvitation(deps: Deps, id: string, email: string, name: string) {
   const token = newSecretToken();
   await deps.kv.set(`pinvite:${hash(deps, token)}`, id, SESSION_TTL.invitationMs / 1000);
   await sendEmail(deps, { template: 'platform_user_invitation', to: email, locale: 'en', data: { name, link: urls(deps.config).console(`/accept?token=${token}`) } });
-  return { id };
 }
 
 export async function acceptPlatformInvitation(deps: Deps, token: string, password: string) {

@@ -21,6 +21,7 @@ import {
   newStaffKey,
   newVenueCode,
   nextOccurrence,
+  nextScheduledOccurrence,
   normaliseTime,
   plainDomain,
   uuidv7,
@@ -157,14 +158,28 @@ export async function updateVenue(
     if (b.resetTime || b.autoCloseTime || b.timeZone) {
       const now = deps.now();
       const today = businessDate(now, before.time_zone, { resetTime: before.reset_time, pendingResetTime: before.pending_reset_time, pendingTimeZone: before.pending_time_zone, pendingFromDate: before.pending_from_date });
-      patch.pending_from_date = addDays(today, 1);
-      patch.pending_reset_time = normaliseTime(b.resetTime ?? before.pending_reset_time ?? before.reset_time);
-      patch.pending_auto_close_time = normaliseTime(b.autoCloseTime ?? before.pending_auto_close_time ?? before.auto_close_time);
+      const fromDate = addDays(today, 1);
+      const pendingReset = normaliseTime(b.resetTime ?? before.pending_reset_time ?? before.reset_time);
+      const pendingAutoClose = normaliseTime(b.autoCloseTime ?? before.pending_auto_close_time ?? before.auto_close_time);
       // The zone also waits for the next business date (A13): today's tickets, schedule and reports keep the
-      // zone they started with. The current day still closes at its current auto-close time.
+      // zone they started with.
       const zone = b.timeZone ?? before.pending_time_zone;
-      patch.pending_time_zone = zone && zone !== before.time_zone ? zone : null;
-      patch.next_auto_close_at = nextOccurrence(now, before.time_zone, before.auto_close_time);
+      const pendingZone = zone && zone !== before.time_zone ? zone : null;
+      patch.pending_from_date = fromDate;
+      patch.pending_reset_time = pendingReset;
+      patch.pending_auto_close_time = pendingAutoClose;
+      patch.pending_time_zone = pendingZone;
+      // The current day still closes at its current auto-close time; the first effective day closes at the new
+      // time, reset and zone, even when that comes before the current day's next close would have (BW05).
+      patch.next_auto_close_at = nextScheduledOccurrence(now, {
+        timeZone: before.time_zone,
+        resetTime: before.reset_time,
+        time: before.auto_close_time,
+        pendingTimeZone: pendingZone,
+        pendingResetTime: pendingReset,
+        pendingTime: pendingAutoClose,
+        pendingFromDate: fromDate,
+      });
     }
     if (Object.keys(patch).length === 0) return; // nothing to change (A10)
     await tx.updateTable('venues').set(patch).where('id', '=', venueId).execute();

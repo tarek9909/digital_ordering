@@ -28,6 +28,104 @@ export function readyView(ready: readonly DisplayTicket[], max = MAX_READY): { s
   return { shown: sorted.slice(0, max), more: Math.max(0, sorted.length - max) };
 }
 
+// ---- Ready capacity and paging (CSD03, FR-DSP-02/03/07). Every tile on screen must fit; when the Ready list is
+// longer than the grid holds, it is shown in pages that rotate on a fixed interval with a "page x of y · +n more"
+// indicator. Pages keep the board's newest-first order, and each page starts at the ticket after the last one
+// shown, by ready time rather than by index: a ticket arriving mid-rotation sorts before the cursor (it waits for the
+// next rotation) and a collected ticket never shifts the others, so every ticket that is Ready when a rotation
+// starts — the oldest included — is on screen within that rotation, however busy the venue is. The ticket that just
+// became ready (highlighted and announced) is pinned first on every page while it is highlighted.
+
+/** Ready tile font size and minimum width, in vmin (BoardView). vmin equals vh in landscape. */
+export const TILE_FONT_VMIN = 13;
+export const TILE_MIN_VMIN = 28;
+
+/**
+ * Minimum tile width (vmin) so the longest display number fits inside its tile at `fontVmin` (CSD03). Digits are
+ * 0.70em wide in the display font (tabular), letters (counter prefixes) up to about 1.1em; 3-digit numbers keep the
+ * standard 28vmin tile.
+ */
+export function tileMinVmin(numbers: Iterable<string>, fontVmin = TILE_FONT_VMIN): number {
+  let widest = 0;
+  for (const n of numbers) {
+    let em = 0;
+    for (const ch of n) em += /[0-9]/.test(ch) ? 0.7 : 1.15;
+    widest = Math.max(widest, em);
+  }
+  const needed = widest * fontVmin;
+  return needed <= TILE_MIN_VMIN ? TILE_MIN_VMIN : Math.ceil(needed + 1.5);
+}
+
+/** Seconds each page stays on screen. */
+export const READY_PAGE_MS = 8_000;
+
+/** Measured Ready grid (px) as laid out by the browser. */
+export interface GridMetrics {
+  /** Inner height available to the tiles. */
+  height: number;
+  /** Resolved grid columns. */
+  columns: number;
+  rowGap: number;
+  /** Layout height of one tile (without transforms). */
+  tileHeight: number;
+}
+
+/** Tiles that fit completely in the grid; 0 when the grid has not been measured (e.g. no layout yet). */
+export function gridCapacity(m: GridMetrics): number {
+  if (!(m.height > 0) || !(m.tileHeight > 0) || !(m.columns >= 1)) return 0;
+  // Half a pixel of tolerance for sub-pixel rounding of vh-based sizes.
+  const rows = Math.floor((m.height + m.rowGap + 0.5) / (m.tileHeight + m.rowGap));
+  return Math.max(1, rows) * Math.floor(m.columns);
+}
+
+/** Position of a ticket in the Ready order (ready time, then id). */
+export interface ReadyKey {
+  at: number;
+  id: string;
+}
+const keyOf = (t: DisplayTicket): ReadyKey => ({ at: readyTime(t), id: t.id });
+const cmpKey = (a: ReadyKey, b: ReadyKey) => a.at - b.at || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+/** Newest first; ties by id so the order is total and stable. */
+const newestFirst = (ready: readonly DisplayTicket[]) => [...ready].sort((a, b) => cmpKey(keyOf(b), keyOf(a)));
+
+export interface ReadyPage {
+  /** Tiles to render, in order. */
+  shown: DisplayTicket[];
+  /** 1-based page and page count; `pages` is 1 when everything fits. */
+  page: number;
+  pages: number;
+  /** Ready tickets not on screen right now. */
+  hidden: number;
+  /** Where the next page starts; null means back to the first page. */
+  next: ReadyKey | null;
+}
+
+/**
+ * The Ready tiles for the current page. `capacity` is from `gridCapacity` (0 = unknown: fall back to the
+ * newest `MAX_READY`), `start` is the page start from the previous rotation (null = first page) and `pinnedId`
+ * the highlighted ticket, kept first on every page.
+ */
+export function readyPage(ready: readonly DisplayTicket[], capacity: number, start: ReadyKey | null, pinnedId: string | null = null): ReadyPage {
+  if (capacity <= 0) {
+    const v = readyView(ready);
+    return { shown: v.shown, page: 1, pages: 1, hidden: v.more, next: null };
+  }
+  const order = newestFirst(ready);
+  if (order.length <= capacity) return { shown: order, page: 1, pages: 1, hidden: 0, next: null };
+  const pinned = pinnedId ? order.find((t) => t.id === pinnedId) : undefined;
+  const rest = pinned ? order.filter((t) => t !== pinned) : order;
+  const slots = Math.max(1, capacity - (pinned ? 1 : 0));
+  // First ticket not newer than the cursor: the page continues where the previous one stopped.
+  let from = start ? rest.findIndex((t) => cmpKey(keyOf(t), start) <= 0) : 0;
+  if (from < 0) from = 0;
+  const window = rest.slice(from, from + slots);
+  const shown = (pinned ? [pinned, ...window] : window).slice(0, capacity);
+  const pages = Math.ceil(rest.length / slots);
+  const page = Math.min(pages, Math.floor(from / slots) + 1);
+  const after = rest[from + slots];
+  return { shown, page, pages, hidden: ready.length - shown.length, next: after ? keyOf(after) : null };
+}
+
 /** The newest ready ticket, if it became ready less than `windowMs` ago. */
 export function newestRecent(ready: readonly DisplayTicket[], nowMs: number, windowMs = 10_000): DisplayTicket | null {
   const newest = readyView(ready, 1).shown[0];

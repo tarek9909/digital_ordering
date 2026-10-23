@@ -1,0 +1,10 @@
+# Build context of backend/Dockerfile: no local secrets, dependencies or builds (the image runs npm ci and builds).
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+dist
+coverage
+*.tsbuildinfo
+load

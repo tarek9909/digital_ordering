@@ -66,9 +66,10 @@ async function enroll(c: ReturnType<typeof client>) {
   return e.body.secret as string;
 }
 
-function lastLink(a: Api, template: string) {
+async function lastLink(a: Api, template: string) {
   const job = a.deps.jobs.added.filter((j) => j.name === 'email.send' && (j.data as { template: string }).template === template).at(-1);
-  return new URL((job!.data as { data: { link: string } }).data.link);
+  // Queued links are sealed with the data key; the worker opens them when it renders the email.
+  return new URL((await svc.openEmailData(a.deps.keys, (job!.data as { data: Record<string, unknown> }).data)).link as string);
 }
 
 async function platformUser(role: 'super_admin' | 'support' | 'finance' = 'super_admin') {
@@ -102,7 +103,7 @@ describe('H-4 invitation acceptance follows the account’s sign-in policy', () 
     const b = await tenant();
     const secret = await enroll(b.admin);
     await svc.inviteMember(api.deps, a.owner, a.tenantId, b.email, 'manager');
-    const token = lastLink(api, 'invitation_manager').searchParams.get('token')!;
+    const token = (await lastLink(api, 'invitation_manager')).searchParams.get('token')!;
     const browser = client(api.app, a.host);
     const r = await browser.post(`/api/auth/v1/invitations/${token}/accept`, { password: PASSWORD });
     expect(r.status).toBe(200);
@@ -124,10 +125,10 @@ describe('H-4 invitation acceptance follows the account’s sign-in policy', () 
     const b = await tenant();
     await t.clients.platform().updateTable('users').set({ disabled_at: new Date() }).where('id', '=', b.userId).execute();
     await svc.inviteMember(api.deps, a.owner, a.tenantId, b.email, 'manager');
-    const token = lastLink(api, 'invitation_manager').searchParams.get('token')!;
+    const token = (await lastLink(api, 'invitation_manager')).searchParams.get('token')!;
     expect((await client(api.app, a.host).post(`/api/auth/v1/invitations/${token}/accept`, { password: PASSWORD })).status).toBe(401);
     await svc.inviteMember(api.deps, a.owner, a.tenantId, `new-${a.slug}@x.test`, 'manager');
-    const fresh = lastLink(api, 'invitation_manager').searchParams.get('token')!;
+    const fresh = (await lastLink(api, 'invitation_manager')).searchParams.get('token')!;
     const browser = client(api.app, a.host);
     expect((await browser.post(`/api/auth/v1/invitations/${fresh}/accept`, { name: 'New', password: PASSWORD })).body.ok).toBe(true);
     expect((await browser.get('/api/auth/v1/me')).body.currentRole).toBe('manager');
@@ -300,7 +301,7 @@ describe('M-9, L-10 billing-affecting changes are the owner’s', () => {
   it('a manager cannot create venues, edit billing details or delete ratings', async () => {
     const x = await tenant();
     await svc.inviteMember(api.deps, x.owner, x.tenantId, `mgr-${x.slug}@x.test`, 'manager');
-    const token = lastLink(api, 'invitation_manager').searchParams.get('token')!;
+    const token = (await lastLink(api, 'invitation_manager')).searchParams.get('token')!;
     const mgr = client(api.app, x.host);
     expect((await mgr.post(`/api/auth/v1/invitations/${token}/accept`, { name: 'Mgr', password: PASSWORD })).body.ok).toBe(true);
     mgr.setCsrf((await mgr.get('/api/auth/v1/me')).body.csrfToken);
@@ -341,6 +342,8 @@ describe('M-17, M-1 Google sign-in', () => {
   const begin = async (b: ReturnType<typeof client>) => new URL((await b.get('/api/auth/v1/oauth/google/start')).headers.location as string).searchParams.get('state')!;
 
   it('finishes only in the browser that started it, once', async () => {
+    // An existing password-less account (Google sign-in no longer creates accounts, AS02).
+    await t.clients.platform().insertInto('users').values({ id: uuidv7(), email: `g-${n}@x.test`, name: 'Google User', email_verified_at: new Date() }).execute();
     stub(`g-${n}@x.test`, `sub-bind-${n}`);
     const victim = client(api.app, 'www.dop.test');
     const attacker = client(api.app, 'www.dop.test');
@@ -374,7 +377,7 @@ describe('M-17, M-1 Google sign-in', () => {
     // The victim does not know the attacker's password, so cannot link; the reset link (their mailbox) takes over.
     expect((await victim.post('/api/auth/v1/oauth/google/link', { linkToken: decodeURIComponent(link), password: PASSWORD })).status).toBe(401);
     await svc.forgotPassword(api.deps, email);
-    await svc.resetPassword(api.deps, lastLink(api, 'password_reset').searchParams.get('token')!, PASSWORD);
+    await svc.resetPassword(api.deps, (await lastLink(api, 'password_reset')).searchParams.get('token')!, PASSWORD);
     const linked = await victim.post('/api/auth/v1/oauth/google/link', { linkToken: decodeURIComponent(link), password: PASSWORD });
     expect(linked.body.ok).toBe(true);
     // The attacker's password no longer works anywhere.
@@ -428,6 +431,19 @@ describe('L-6 privilege grants need a recent second factor', () => {
     expect((await c.post('/api/console/v1/platform-users', { email: `new-${admin.id.slice(-6)}@x.test`, name: 'New', role: 'support' })).status).toBe(201);
   });
 
+  it('refuses to record a payment or grant free months on a stale MFA check', async () => {
+    const a = makeApi(t.clients); // own rate limiter
+    const admin = await platformUser('super_admin');
+    const x = await tenant(a);
+    const c = await signIn(a, 'admin.dop.test', admin.email, () => currentTotp(admin.secret));
+    await t.clients.platform().updateTable('platform_sessions').set({ mfa_verified_at: new Date(Date.now() - 20 * 60_000) }).where('platform_user_id', '=', admin.id).execute();
+    const pay = await c.post(`/api/console/v1/tenants/${x.tenantId}/payments`, { amountMinor: 10000, currency: 'SAR', months: 1, method: 'cash' });
+    expect(pay.status).toBe(401);
+    expect(pay.body.code).toBe('MFA_REQUIRED');
+    expect((await c.post(`/api/console/v1/tenants/${x.tenantId}/free-months`, { months: 1 })).body.code).toBe('MFA_REQUIRED');
+    expect(await t.clients.platform().selectFrom('tenant_payments').select('id').where('tenant_id', '=', x.tenantId).execute()).toEqual([]);
+  });
+
   it('revokes the console session that uses up the fresh-MFA code budget (M-2)', async () => {
     const a = makeApi(t.clients);
     const admin = await platformUser('super_admin');
@@ -462,7 +478,7 @@ describe('M-3 request logs carry no URL secrets', () => {
     const x = await tenant();
     const { ticket } = await svc.createTicket(api.deps, { kind: 'staff_device', deviceId: 'd', tenantId: x.tenantId, venueId: x.venueId, deviceName: 'iPad' }, x.venueId, {});
     await svc.inviteMember(api.deps, x.owner, x.tenantId, `log-${x.slug}@x.test`, 'manager');
-    const invite = lastLink(api, 'invitation_manager').searchParams.get('token')!;
+    const invite = (await lastLink(api, 'invitation_manager')).searchParams.get('token')!;
     const marker = 'SECRET0CODE0MARKER0123456789';
     const request = (await import('supertest')).default;
     expect((await request(app).get(`/m/${ticket.token}.webmanifest`).set('Host', 't.dop.test')).status).toBe(200);

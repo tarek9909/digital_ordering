@@ -102,7 +102,9 @@ const posStateKey = (deps: Deps, state: string) => `posstate:${createHmac('sha25
 
 /**
  * Connect (W01, FR-INT-09): the owner starts on the admin page; the single-use state (10 minutes) binds the
- * provider's answer to this tenant, venue and user.
+ * provider's answer to this tenant, venue and user, and `binding` (a cookie the route sets in the owner's browser)
+ * binds it to that browser: an authorise link passed to someone else cannot attach their POS location to this
+ * tenant, because their browser lacks the cookie (same rule as Google sign-in, M-17).
  */
 export async function startPosConnect(deps: Deps, connectors: Map<string, PosConnector>, actor: Actor & { kind: 'user' }, tenantId: string, venueId: string, provider: string) {
   // Ownership first, so another tenant's venue is a 404 whatever this tenant's plan (TR-TEN-08).
@@ -111,17 +113,18 @@ export async function startPosConnect(deps: Deps, connectors: Map<string, PosCon
   if (!connector) throw new AppError('NOT_FOUND', 'This POS is not available');
   await requireFeature(deps, tenantId, 'pos_connectors');
   const state = newSecretToken();
-  await deps.kv.set(posStateKey(deps, state), JSON.stringify({ tenantId, venueId, provider, userId: actor.userId }), 600);
-  return { url: connector.connectUrl(state, posRedirectUri(deps.config, provider)) };
+  const binding = newSecretToken();
+  await deps.kv.set(posStateKey(deps, state), JSON.stringify({ tenantId, venueId, provider, userId: actor.userId, binding: posStateKey(deps, binding) }), 600);
+  return { url: connector.connectUrl(state, posRedirectUri(deps.config, provider)), binding };
 }
 
 /** Provider callback on the API host: exchanges the code and stores the connection. Returns where to send the owner. */
-export async function finishPosConnect(deps: Deps, connectors: Map<string, PosConnector>, provider: string, q: { code?: string; state?: string; error?: string }): Promise<{ redirect: string }> {
-  const key = posStateKey(deps, q.state ?? '');
-  const raw = q.state ? await deps.kv.get(key) : null;
-  await deps.kv.del(key); // single use
+export async function finishPosConnect(deps: Deps, connectors: Map<string, PosConnector>, provider: string, q: { code?: string; state?: string; error?: string }, binding?: string): Promise<{ redirect: string }> {
+  const raw = q.state ? await deps.kv.take(posStateKey(deps, q.state)) : null; // single use, atomically (L-2)
   if (!raw) throw new AppError('UNAUTHENTICATED', 'This connection link expired; start again from the admin page');
-  const s = JSON.parse(raw) as { tenantId: string; venueId: string; provider: string; userId: string };
+  const s = JSON.parse(raw) as { tenantId: string; venueId: string; provider: string; userId: string; binding?: string };
+  // Only the browser that started the connection may finish it.
+  if (!s.binding || !binding || !safeEqual(s.binding, posStateKey(deps, binding))) throw new AppError('UNAUTHENTICATED', 'This connection link expired; start again from the admin page');
   const t = await deps.db.platform().selectFrom('tenants').select(['slug']).where('id', '=', s.tenantId).executeTakeFirst();
   if (!t || s.provider !== provider) throw new AppError('UNAUTHENTICATED', 'This connection link expired; start again from the admin page');
   const back = (result: string) => ({ redirect: urls(deps.config).admin(t.slug, `/integrations?pos=${result}`) });

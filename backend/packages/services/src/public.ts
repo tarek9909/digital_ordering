@@ -73,15 +73,31 @@ export async function ticketUrlFor(deps: Deps, token: string) {
   return urls(deps.config).ticket(token);
 }
 
-/** The latest published version in the locale (else any locale), with its sanitised HTML inline (W12). */
-export async function legalDocument(deps: Deps, kind: 'terms' | 'privacy' | 'dpa' | 'customer_privacy', locale: string, storage?: ObjectStorage | null) {
-  const db = deps.db.platform();
-  const doc =
-    (await db.selectFrom('legal_documents').selectAll().where('kind', '=', kind).where('locale', '=', locale).where('published_at', 'is not', null).orderBy('published_at', 'desc').executeTakeFirst()) ??
-    (await db.selectFrom('legal_documents').selectAll().where('kind', '=', kind).where('published_at', 'is not', null).orderBy('published_at', 'desc').executeTakeFirst());
+type LegalKind = 'terms' | 'privacy' | 'dpa' | 'customer_privacy';
+
+/**
+ * The current published version of a kind for a reader's locale (TR-PRV-09, AS04): the latest published version in
+ * that locale, else the latest published version in any locale. The legal pages and the acceptance gate use this
+ * one rule, so the version shown is the version recorded as accepted.
+ */
+export async function currentLegalDocument(deps: Deps, kind: LegalKind, locale: string) {
+  const base = () =>
+    deps.db.platform().selectFrom('legal_documents').selectAll().where('kind', '=', kind).where('status', '=', 'ready').where('published_at', 'is not', null).orderBy('published_at', 'desc').orderBy('id', 'desc');
+  return (await base().where('locale', '=', locale).executeTakeFirst()) ?? (await base().executeTakeFirst());
+}
+
+/**
+ * The current version for the locale, or with `documentId` that exact published version (the gate links to the
+ * version it asks the user to accept), with its sanitised HTML inline (W12).
+ */
+export async function legalDocument(deps: Deps, kind: LegalKind, locale: string, storage?: ObjectStorage | null, documentId?: string) {
+  const doc = documentId
+    ? await deps.db.platform().selectFrom('legal_documents').selectAll().where('id', '=', documentId).where('kind', '=', kind).where('status', '=', 'ready').where('published_at', 'is not', null).executeTakeFirst()
+    : await currentLegalDocument(deps, kind, locale);
   if (!doc) throw new AppError('NOT_FOUND');
   const body = storage ? await storage.get('assets', doc.content_key).catch(() => null) : null;
   return {
+    id: doc.id,
     kind: doc.kind,
     version: doc.version,
     locale: doc.locale,

@@ -9,13 +9,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WhatsAppButton } from './Closing';
+import { PricingSection, WhatsAppButton } from './Closing';
 import { Hero } from './Hero';
 import { BrandPreview } from './Product';
 import { Steps } from './Story';
 
 // Landing page behaviour: the live demo, "Make it yours" handing the name to the contact page, the steps, and the contact
-// set by super admins in the console.
+// and packages section set by super admins in the console.
 
 const get = vi.hoisted(() => vi.fn());
 vi.mock('../lib/api', () => ({ publicApi: { get } }));
@@ -97,5 +97,51 @@ describe('WhatsApp button', () => {
     renderAt(<WhatsAppButton />);
     await waitFor(() => expect(get).toHaveBeenCalled());
     expect(screen.queryByRole('link')).toBeNull();
+  });
+});
+
+describe('packages section', () => {
+  const plan = (code: string, name: string, usd: number) => ({
+    code,
+    name,
+    limits: { maxVenues: 1 },
+    features: [],
+    prices: [
+      { period: 'month', currency: 'USD', amountMinor: usd },
+      { period: 'year', currency: 'USD', amountMinor: usd * 10 },
+    ],
+  });
+  const pricing = {
+    title: { ar: 'باقاتنا', en: 'Our packages' },
+    included: { ar: ['تنبيهات'], en: ['Unlimited alerts'] },
+    note: { ar: '', en: '' },
+    periods: ['month', 'year'],
+    plans: { pro: { name: { ar: '', en: 'Pro Kitchen' }, tagline: { ar: '', en: 'For busy counters' }, featured: true } },
+  };
+  const routes = (site: unknown) =>
+    get.mockImplementation(async (path: string) => (path === '/site' ? site : { items: [plan('standard', 'Standard', 1900), plan('pro', 'Pro', 2900)], trialDays: 14 }));
+
+  it('shows the wording, periods and highlighted plan set in the console', async () => {
+    routes({ contact: { email: null, whatsapp: null, whatsappUrl: null }, pricing });
+    renderAt(<PricingSection />);
+    expect(await screen.findByRole('heading', { name: 'Our packages' })).toBeTruthy();
+    expect(screen.getByText('Unlimited alerts')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Pro Kitchen' })).toBeTruthy();
+    expect(screen.getByText('For busy counters')).toBeTruthy();
+    expect(screen.getByText('Most popular')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Standard' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Every 3 months' })).toBeNull();
+    expect(screen.queryByText(/chain/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Yearly' }));
+    expect(screen.getByText(/\$290/)).toBeTruthy();
+  });
+
+  it('keeps the built-in wording when the API has no packages setting', async () => {
+    routes({ contact: { email: null, whatsapp: null, whatsappUrl: null } });
+    renderAt(<PricingSection />);
+    expect(await screen.findByRole('heading', { name: 'Standard' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Every 3 months' })).toBeTruthy();
+    expect(screen.getByText(/chain/)).toBeTruthy();
+    expect(screen.queryByText('Most popular')).toBeNull();
   });
 });

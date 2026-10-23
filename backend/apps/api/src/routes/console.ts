@@ -127,6 +127,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     permission: 'console.tenants.lifecycle',
     params: idP,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // reverses a suspension, which itself needs a recent check (L-6)
       await reactivateTenant(c.deps, c.params.id, pa(c), c.requestId);
     },
   }),
@@ -138,6 +139,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     params: idP,
     body: extendTrialBody,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // free access time, like free months (L-6)
       await extendTrial(c.deps, pa(c), c.params.id, c.body.days);
     },
   }),
@@ -149,6 +151,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     params: idP,
     body: complimentaryBody,
     handler: async (c) => {
+      requireFreshMfa(pa(c), c.deps.now()); // unlimited free access (L-6)
       await setComplimentary(c.deps, pa(c), c.params.id, c.body.enabled);
     },
   }),

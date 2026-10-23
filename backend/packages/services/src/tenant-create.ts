@@ -76,21 +76,9 @@ async function createTenantCore(
       const r = await createVenueRow(tx, deps, tenantId, { name: b.name, timeZone: tz, locales, resetTime: defaults.resetTime, autoCloseTime: defaults.autoCloseTime, settings });
       venueId = r.venueId;
       initialPin = r.initialPin;
-      // Legal acceptance of the published documents (TR-PRV-09).
-      if (owner) {
-        const docs = await tx
-          .selectFrom('legal_documents')
-          .select(['id', 'kind', 'version', 'locale'])
-          .where('kind', 'in', ['terms', 'privacy', 'dpa'])
-          .where('published_at', 'is not', null)
-          .orderBy('published_at', 'desc')
-          .execute();
-        const latest = new Map<string, string>();
-        for (const d of docs) if (!latest.has(d.kind)) latest.set(d.kind, d.id);
-        for (const id of latest.values()) {
-          await tx.insertInto('legal_acceptances').values({ id: uuidv7(), tenant_id: tenantId, user_id: owner.userId, document_id: id, ip: extra?.ip ?? '0.0.0.0' }).execute();
-        }
-      }
+      // No legal acceptance is recorded here (AS05): the owner never saw a document at this point. Every owner
+      // (console-invited or created directly) accepts the terms, privacy policy and DPA in the admin legal gate,
+      // which records the exact versions it displayed (FR-ADM-16, TR-PRV-09).
       await writeAudit(tx, { actor, action: 'tenant.created', tenantId, entityType: 'tenant', entityId: tenantId, after: { name: b.name, slug: b.slug }, ip: extra?.ip, requestId: extra?.requestId });
     });
   } catch (e) {

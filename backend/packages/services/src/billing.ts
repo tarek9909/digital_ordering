@@ -46,13 +46,27 @@ export async function recordPayment(
   deps: Deps,
   actor: PlatformActor,
   tenantId: string,
-  p: { amountMinor: number; currency: string; months: number; method: PaymentMethod; reference?: string; note?: string },
+  p: { amountMinor: number; currency: string; months: number; method: PaymentMethod; reference?: string; note?: string; requestId?: string },
 ) {
-  const id = uuidv7();
-  const period = await deps.db
+  const newId = uuidv7();
+  const reference = p.reference || null;
+  const recorded = await deps.db
     .platform()
     .transaction()
     .execute(async (tx) => {
+      // The tenant row lock serialises payments of one tenant, so the checks below see every earlier payment (BW02).
+      const locked = await tx.selectFrom('tenants').select('id').where('id', '=', tenantId).forUpdate().executeTakeFirst();
+      if (!locked) throw new AppError('NOT_FOUND');
+      // A repeated request (double submit, client retry after a timeout) returns the payment it already recorded.
+      if (p.requestId) {
+        const same = await tx.selectFrom('tenant_payments').select(['id', 'covers_until']).where('tenant_id', '=', tenantId).where('request_id', '=', p.requestId).executeTakeFirst();
+        if (same) return { id: same.id, until: same.covers_until, replay: true };
+      }
+      // One receipt or transfer number pays once.
+      if (reference && (await tx.selectFrom('tenant_payments').select('id').where('tenant_id', '=', tenantId).where('reference', '=', reference).executeTakeFirst())) {
+        throw new AppError('VALIDATION_FAILED', 'A payment with this reference is already recorded', { errors: [{ path: 'reference', message: 'taken' }] });
+      }
+      const id = newId;
       const r = await extendPaidPeriod(tx, deps.now(), tenantId, p.months);
       await tx
         .insertInto('tenant_payments')
@@ -63,11 +77,12 @@ export async function recordPayment(
           currency: p.currency,
           months: p.months,
           method: p.method,
-          reference: p.reference || null,
+          reference,
           note: p.note || null,
           covers_from: r.from,
           covers_until: r.until,
           recorded_by: actor.platformUserId,
+          request_id: p.requestId ?? null,
         })
         .execute();
       await writeAudit(tx, {
@@ -79,15 +94,28 @@ export async function recordPayment(
         after: { amountMinor: p.amountMinor, currency: p.currency, months: p.months, method: p.method, paidUntil: r.until.toISOString() },
         purpose: 'billing',
       });
-      return r;
+      return { id, until: r.until, replay: false };
     });
+  // After the commit; should this step not run, the grace check's reconciliation applies it (BW02).
   await markPaid(deps, tenantId);
-  return { id, paidUntil: period.until.toISOString() };
+  return { id: recorded.id, paidUntil: recorded.until.toISOString(), ...(recorded.replay && { replayed: true }) };
 }
 
 /** Free months (FR-SA-07, TR-BIL-09): a running trial gets a longer trial; any other tenant a longer paid period. */
-export async function grantFreeMonths(deps: Deps, actor: PlatformActor, tenantId: string, months: number) {
+export async function grantFreeMonths(deps: Deps, actor: PlatformActor, tenantId: string, months: number, requestId?: string) {
   const now = deps.now();
+  // A repeated submit of the same form (double click, retry after a lost response) grants once (BW02).
+  const claim = requestId ? `freemonths:${tenantId}:${requestId}` : null;
+  if (claim && !(await deps.kv.setNx(claim, '1', 86_400))) return;
+  try {
+    await grantFreeMonthsOnce(deps, actor, tenantId, months, now);
+  } catch (e) {
+    if (claim) await deps.kv.del(claim); // nothing was granted: the same form may try again
+    throw e;
+  }
+}
+
+async function grantFreeMonthsOnce(deps: Deps, actor: PlatformActor, tenantId: string, months: number, now: Date) {
   const lift = await deps.db
     .platform()
     .transaction()
@@ -178,31 +206,73 @@ export async function publicCatalogue(deps: Pick<Deps, 'db'>) {
 export async function graceCheck(deps: Deps) {
   const db = deps.db.platform();
   const now = deps.now();
-  const lapsed = await db
+  const paid = (t: { paid_until: Date | null }) => t.paid_until !== null && t.paid_until > now;
+  // A payment whose status step did not run after its commit (a crash between the two) is applied here, before any
+  // lapse is considered (BW02): a past-due or billing-suspended tenant paid beyond now, or a trial with a recorded
+  // payment covering now. A cancellation is left to the console.
+  const unlifted = await db
+    .selectFrom('tenants')
+    .select(['id'])
+    .where('paid_until', '>', now)
+    .where((eb) =>
+      eb.or([
+        eb('status', '=', 'past_due'),
+        eb.and([eb('status', '=', 'suspended'), eb('suspended_by', '=', 'billing')]),
+        eb.and([
+          eb('status', 'in', ['trial', 'trial_expired']),
+          eb.exists(eb.selectFrom('tenant_payments').select('tenant_payments.id').whereRef('tenant_payments.tenant_id', '=', 'tenants.id').where('tenant_payments.covers_until', '>', now)),
+        ]),
+      ]),
+    )
+    .execute();
+  for (const t of unlifted) await markPaid(deps, t.id);
+  // Each step below re-checks its condition on the locked row (onlyIf), so a payment, free months or console change
+  // committed after the candidate list was read is never overwritten by this sweep (BW02).
+  let lapsed = 0;
+  const lapsedRows = await db
     .selectFrom('tenants')
     .select(['id'])
     .where('status', '=', 'active')
     .where('complimentary', '=', false)
     .where((eb) => eb.or([eb('paid_until', 'is', null), eb('paid_until', '<', now)]))
     .execute();
-  if (lapsed.length) {
+  if (lapsedRows.length) {
     const [retry, grace] = await Promise.all([getSetting(deps, 'billing.retryDays'), getSetting(deps, 'billing.graceDays')]);
-    for (const t of lapsed) {
-      await changeTenantStatus(deps, t.id, { to: 'past_due', actor: { kind: 'system' }, reason: 'Paid period ended', extra: { past_due_since: now, grace_ends_at: graceEndsAt(now, retry, grace) } });
+    for (const t of lapsedRows) {
+      const r = await changeTenantStatus(deps, t.id, {
+        to: 'past_due',
+        actor: { kind: 'system' },
+        reason: 'Paid period ended',
+        extra: { past_due_since: now, grace_ends_at: graceEndsAt(now, retry, grace) },
+        onlyIf: (cur) => cur.status === 'active' && !cur.complimentary && !paid(cur),
+      });
+      if (r.status === 'past_due') lapsed++;
     }
   }
+  let suspended = 0;
   const pastDue = await db.selectFrom('tenants').select(['id']).where('status', '=', 'past_due').where('grace_ends_at', '<', now).execute();
-  for (const t of pastDue) await changeTenantStatus(deps, t.id, { to: 'suspended', suspendedBy: 'billing', actor: { kind: 'system' }, reason: 'Payment overdue' });
+  for (const t of pastDue) {
+    const r = await changeTenantStatus(deps, t.id, {
+      to: 'suspended',
+      suspendedBy: 'billing',
+      actor: { kind: 'system' },
+      reason: 'Payment overdue',
+      onlyIf: (cur) => cur.status === 'past_due' && cur.grace_ends_at !== null && cur.grace_ends_at < now && !paid(cur),
+    });
+    if (r.status === 'suspended') suspended++;
+  }
   const days = await getSetting(deps, 'billing.suspendedToCancelDays');
-  const longSuspended = await db
-    .selectFrom('tenants')
-    .select(['id'])
-    .where('status', '=', 'suspended')
-    .where('suspended_by', '=', 'billing')
-    .where('suspended_at', '<', new Date(now.getTime() - days * 86_400_000))
-    .execute();
+  const cutoff = new Date(now.getTime() - days * 86_400_000);
+  let cancelled = 0;
+  const longSuspended = await db.selectFrom('tenants').select(['id']).where('status', '=', 'suspended').where('suspended_by', '=', 'billing').where('suspended_at', '<', cutoff).execute();
   for (const t of longSuspended) {
-    await changeTenantStatus(deps, t.id, { to: 'cancelled', actor: { kind: 'system' }, reason: 'Unpaid for 30 days' });
+    const r = await changeTenantStatus(deps, t.id, {
+      to: 'cancelled',
+      actor: { kind: 'system' },
+      reason: 'Unpaid for 30 days',
+      onlyIf: (cur) => cur.status === 'suspended' && cur.suspended_by === 'billing' && cur.suspended_at !== null && cur.suspended_at < cutoff && !paid(cur),
+    });
+    if (r.status === 'cancelled') cancelled++;
   }
   // Payment reminders on day 3 and day 6 of past due (§19).
   for (const day of [3, 6]) {
@@ -215,7 +285,7 @@ export async function graceCheck(deps: Deps) {
       .execute();
     for (const t of due) await remind(deps, t.id, t.name, 'payment_reminder', `remind:${t.id}:${day}`);
   }
-  return { lapsed: lapsed.length, suspended: pastDue.length, cancelled: longSuspended.length };
+  return { lapsed, suspended, cancelled, reconciled: unlifted.length };
 }
 
 async function remind(deps: Deps, tenantId: string, tenantName: string, template: 'payment_reminder' | 'trial_ending', key: string) {
@@ -236,7 +306,15 @@ export async function trialCheck(deps: Deps) {
   const db = deps.db.platform();
   const now = deps.now();
   const ended = await db.selectFrom('tenants').select(['id']).where('status', '=', 'trial').where('trial_ends_at', '<', now).execute();
-  for (const t of ended) await changeTenantStatus(deps, t.id, { to: 'trial_expired', actor: { kind: 'system' }, reason: 'Trial ended' });
+  // Re-checked on the locked row: free months or a payment recorded meanwhile keep the tenant out of expiry (BW02).
+  for (const t of ended) {
+    await changeTenantStatus(deps, t.id, {
+      to: 'trial_expired',
+      actor: { kind: 'system' },
+      reason: 'Trial ended',
+      onlyIf: (cur) => cur.status === 'trial' && cur.trial_ends_at !== null && cur.trial_ends_at < now && !(cur.paid_until !== null && cur.paid_until > now),
+    });
+  }
   const soon = await db
     .selectFrom('tenants')
     .select(['id', 'name'])

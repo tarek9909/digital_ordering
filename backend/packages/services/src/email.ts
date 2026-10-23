@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { decrypt, encrypt, type KeyProvider } from '@dop/auth';
 import type { Db, Tx } from '@dop/db';
 import type { Deps } from './deps.js';
 import { enqueueJobs, jobIds } from './outbox.js';
@@ -39,8 +40,24 @@ export const EMAIL_TEMPLATES = [
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
+/**
+ * A `link` carries a credential (password reset, invitation, email confirmation). The job is stored in the outbox
+ * table, in Redis and so in backups, so the link is kept there only encrypted with the data key (`sealedLink`); the
+ * worker opens it when it renders the message.
+ */
+async function sealEmailData(keys: KeyProvider, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const { link, ...rest } = data;
+  return typeof link === 'string' ? { ...rest, sealedLink: (await encrypt(keys, link)).toString('base64') } : data;
+}
+
+/** The email data as the template expects it, with a sealed link opened again. */
+export async function openEmailData(keys: KeyProvider, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const { sealedLink, ...rest } = data;
+  return typeof sealedLink === 'string' ? { ...rest, link: await decrypt(keys, Buffer.from(sealedLink, 'base64')) } : data;
+}
+
 export async function sendEmail(
-  deps: Pick<Deps, 'jobs' | 'kv' | 'db' | 'log'>,
+  deps: Pick<Deps, 'jobs' | 'kv' | 'db' | 'log' | 'keys'>,
   e: { template: EmailTemplate; to: string; locale: string; tenantId?: string | null; data: Record<string, unknown>; key?: string },
   tx?: Tx | Db,
 ): Promise<number> {
@@ -49,7 +66,7 @@ export async function sendEmail(
   // Durable: a queue outage never fails the request that triggered the email (A01).
   return enqueueJobs(
     deps,
-    [{ name: 'email.send', data: { template: e.template, to: e.to, locale: e.locale, tenantId: e.tenantId ?? null, data: e.data, messageKey }, opts: { jobId: jobIds.email(messageKey) } }],
+    [{ name: 'email.send', data: { template: e.template, to: e.to, locale: e.locale, tenantId: e.tenantId ?? null, data: await sealEmailData(deps.keys, e.data), messageKey }, opts: { jobId: jobIds.email(messageKey) } }],
     tx,
   );
 }

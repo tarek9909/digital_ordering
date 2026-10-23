@@ -21,6 +21,12 @@ export interface StatusChange {
   /** Extra columns written with the change (e.g. past_due_since). */
   extra?: Partial<Record<'past_due_since' | 'grace_ends_at' | 'purge_after' | 'trial_ends_at', Date | null>>;
   email?: EmailTemplate | null;
+  /**
+   * Precondition checked on the locked row (BW02): when it is false the change is skipped and the current row is
+   * returned. Sweeps and post-payment updates pass the condition they decided on, so a decision made before a
+   * concurrent payment, free months or other change never overwrites the newer state.
+   */
+  onlyIf?: (t: Tenant) => boolean;
 }
 
 const STATUS_EMAIL: Partial<Record<TenantStatus, EmailTemplate>> = {
@@ -52,6 +58,7 @@ export async function changeTenantStatus(deps: Deps, tenantId: string, c: Status
   const closedDays = await getSetting(deps, 'retention.closedTenantDays');
   const updated = await deps.db.platform().transaction().execute(async (tx) => {
     const t = await lockTenant(tx, tenantId);
+    if (c.onlyIf && !c.onlyIf(t)) return t;
     if (t.status === c.to && c.to !== 'suspended') return t;
     if (!canTenantTransition(t.status, c.to)) {
       throw new AppError('INVALID_TRANSITION', `Tenant cannot move from ${t.status} to ${c.to}`);
@@ -137,9 +144,23 @@ export async function reactivateTenant(deps: Deps, tenantId: string, actor: Acto
   return changeTenantStatus(deps, tenantId, { to, actor, requestId });
 }
 
+/**
+ * Applies a payment's status effect (lifting a trial, past due or billing suspension). The target is computed from the
+ * row and re-checked under its lock, so a sweep that moved the tenant meanwhile is honoured (BW02): the target is
+ * recomputed from the newer status instead of being applied to a status it was not computed for.
+ */
 export async function markPaid(deps: Deps, tenantId: string): Promise<Tenant | null> {
-  const t = await deps.db.platform().selectFrom('tenants').selectAll().where('id', '=', tenantId).executeTakeFirstOrThrow();
-  const to = statusAfterPayment({ status: t.status, suspendedBy: t.suspended_by, statusBeforeSuspension: t.status_before_suspension });
-  if (!to || to === t.status) return null;
-  return changeTenantStatus(deps, tenantId, { to, actor: { kind: 'system' }, email: t.status === 'suspended' || t.status === 'cancelled' ? 'subscription_reactivated' : null });
+  for (let i = 0; i < 3; i++) {
+    const t = await deps.db.platform().selectFrom('tenants').selectAll().where('id', '=', tenantId).executeTakeFirstOrThrow();
+    const to = statusAfterPayment({ status: t.status, suspendedBy: t.suspended_by, statusBeforeSuspension: t.status_before_suspension });
+    if (!to || to === t.status) return null;
+    const r = await changeTenantStatus(deps, tenantId, {
+      to,
+      actor: { kind: 'system' },
+      email: t.status === 'suspended' || t.status === 'cancelled' ? 'subscription_reactivated' : null,
+      onlyIf: (cur) => cur.status === t.status && cur.suspended_by === t.suspended_by,
+    });
+    if (r.status === to) return r;
+  }
+  return null;
 }

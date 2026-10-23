@@ -69,10 +69,11 @@ export async function releaseOldSlugs(deps: Deps) {
 
 /** A user who is not the only owner of any tenant can delete their account (TR-PRV-11). */
 export async function deleteOwnAccount(deps: Deps, userId: string, password: string) {
-  await verifyUserPassword(deps, userId, password);
   const db = deps.db.platform();
+  // Ownership is checked first, so the answer never depends on whether the password was right (no password oracle).
   const owned = await db.selectFrom('tenant_memberships').innerJoin('tenants', 'tenants.id', 'tenant_memberships.tenant_id').select(['tenants.name']).where('tenant_memberships.user_id', '=', userId).where('tenant_memberships.role', '=', 'owner').where('tenant_memberships.status', '=', 'active').where('tenants.status', '!=', 'deleted').execute();
   if (owned.length) throw new AppError('FORBIDDEN', `Transfer ownership of ${owned.map((o) => o.name).join(', ')} first`);
+  await verifyUserPassword(deps, userId, password);
   const u = await db.selectFrom('users').select(['email', 'name']).where('id', '=', userId).executeTakeFirstOrThrow();
   await db.transaction().execute(async (tx) => {
     await tx.deleteFrom('tenant_memberships').where('user_id', '=', userId).execute();
@@ -129,11 +130,12 @@ export async function startOidc(deps: Deps, provider: OidcProvider, redirectUri:
   return provider.authorizationUrl({ state, nonce, codeVerifier, redirectUri });
 }
 
-export type OidcResult = (SignInResult | { kind: 'link_required'; linkToken: string }) & { returnHost: string };
+export type OidcResult = (SignInResult | { kind: 'link_required'; linkToken: string } | { kind: 'no_account' }) & { returnHost: string };
 
 /**
- * Finishes Google sign-in. A Google identity already linked signs in. Otherwise a verified Google email creates a
- * new account, or — when an account with that email exists — links to it only if it has no password. An account
+ * Finishes Google sign-in. A Google identity already linked signs in. Otherwise a verified Google email links to an
+ * existing account with that email only if it has no password. There is no self-signup (restaurants are onboarded
+ * by the platform team), so an unknown email creates nothing and gets `no_account` (AS02). An account
  * with a password must prove it is the caller's (`linkGoogleIdentity`), so someone who registered the address
  * first can never keep access to the real owner's account (M-1).
  */
@@ -156,9 +158,9 @@ export async function finishOidc(deps: Deps, provider: OidcProvider, currentUrl:
       await deps.kv.set(`oidclink:${tokenHash(deps.config.pepper, linkToken)}`, JSON.stringify({ userId: existing.id, subject: claims.sub }), 600);
       return { kind: 'link_required', linkToken, returnHost: saved.returnHost };
     }
-    userId = existing?.id ?? uuidv7();
-    if (!existing) await db.insertInto('users').values({ id: userId, email, name: claims.name, email_verified_at: deps.now() }).execute();
-    else await db.updateTable('users').set({ email_verified_at: deps.now() }).where('id', '=', userId).where('email_verified_at', 'is', null).execute();
+    if (!existing) return { kind: 'no_account', returnHost: saved.returnHost };
+    userId = existing.id;
+    await db.updateTable('users').set({ email_verified_at: deps.now() }).where('id', '=', userId).where('email_verified_at', 'is', null).execute();
     await db.insertInto('user_identities').values({ id: uuidv7(), user_id: userId, provider: 'google', subject: claims.sub }).execute();
   }
   return { ...(await googleSession(deps, userId, client)), returnHost: saved.returnHost };

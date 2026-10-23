@@ -46,22 +46,28 @@ function offsetMs(instant: Date, tz: string): number {
 }
 
 /**
- * Converts a venue-local wall time to a UTC instant. A time inside a daylight-saving gap
- * resolves to the later valid instant; an ambiguous time (overlap) resolves to the later one too (TR-ALG-01).
+ * Converts a venue-local wall time to a UTC instant. A time inside a daylight-saving gap is shifted forward by the
+ * gap length; an ambiguous time (autumn overlap) resolves to the later of its two instants (TR-ALG-01).
  */
 export function zonedToUtc(date: string, time: string, tz: string): Date {
   const t = time.length === 5 ? `${time}:00` : time;
   const naive = Date.parse(`${date}T${t}Z`);
-  // Try both candidate offsets around the instant and pick the one that round-trips.
-  const o1 = offsetMs(new Date(naive), tz);
-  const o2 = offsetMs(new Date(naive - o1), tz);
-  const candidates = [naive - o1, naive - o2].sort((a, b) => b - a);
+  // Offsets in force a day either side of the wall time cover both sides of any transition near it (BW08); offsets
+  // sampled only around the naive instant can both lie on the same side of an autumn overlap.
+  const offsets = new Set<number>();
+  for (const probe of [naive - 86_400_000, naive, naive + 86_400_000]) {
+    const o = offsetMs(new Date(probe), tz);
+    offsets.add(o);
+    offsets.add(offsetMs(new Date(naive - o), tz));
+  }
+  const candidates = [...offsets].map((o) => naive - o).sort((a, b) => b - a);
   for (const c of candidates) {
     const z = toZoned(new Date(c), tz);
-    if (z.date === date && z.time === t) return new Date(c);
+    if (z.date === date && z.time === t) return new Date(c); // the latest instant showing this wall time
   }
-  // Gap: no wall time matches; shift forward by the gap length (Temporal "compatible" disambiguation).
-  return new Date(Math.max(naive - o1, naive - o2));
+  // Gap: no wall time matches; the offset before the transition shifts it forward by the gap length (Temporal
+  // "compatible" disambiguation).
+  return new Date(candidates[0]!);
 }
 
 export function addDays(date: string, days: number): string {
@@ -106,12 +112,61 @@ export function effectiveTimeZone(nowUtc: Date, tz: string, t: ResetTimes): stri
   return t.pendingTimeZone && pendingApplies(nowUtc, tz, t) ? t.pendingTimeZone : tz;
 }
 
-/** Next UTC instant strictly after `after` at which the venue-local clock shows `time`. */
+/** Next UTC instant strictly after `after` at which the venue-local clock shows `time` (an overlap's later instant). */
 export function nextOccurrence(after: Date, tz: string, time: string): Date {
   const local = toZoned(after, tz);
-  let candidate = zonedToUtc(local.date, time, tz);
-  if (candidate.getTime() <= after.getTime()) candidate = zonedToUtc(addDays(local.date, 1), time, tz);
-  return candidate;
+  // From the previous local date on: inside an autumn overlap the clock can already show a later wall time than the
+  // repeated occurrence that is still to come (BW08).
+  for (let k = -1; k <= 2; k++) {
+    const candidate = zonedToUtc(addDays(local.date, k), time, tz);
+    if (candidate.getTime() > after.getTime()) return candidate;
+  }
+  return zonedToUtc(addDays(local.date, 3), time, tz);
+}
+
+/** A daily wall time (such as the auto-close time) with a change that applies from a business date (BR-27). */
+export interface PendingDailySchedule {
+  timeZone: string;
+  resetTime: string;
+  /** The daily wall time in force now. */
+  time: string;
+  pendingTimeZone?: string | null;
+  pendingResetTime?: string | null;
+  pendingTime?: string | null;
+  pendingFromDate?: string | null;
+}
+
+/**
+ * Next instant strictly after `after` of a daily time whose time, reset or zone change applies from
+ * `pendingFromDate` (BW05, TR-ALG-10/16, EX-18). An occurrence belongs to the new schedule when its business date,
+ * under the new zone and reset time, is on or after that date, otherwise to the current schedule. The earliest
+ * occurrence that is valid for its own schedule wins, so the first effective day of a change is never skipped, on
+ * either side of the reset time.
+ */
+export function nextScheduledOccurrence(after: Date, s: PendingDailySchedule): Date {
+  const from = s.pendingFromDate;
+  if (!from || (!s.pendingTime && !s.pendingResetTime && !s.pendingTimeZone)) return nextOccurrence(after, s.timeZone, s.time);
+  const zone = s.pendingTimeZone ?? s.timeZone;
+  const reset = normaliseTime(s.pendingResetTime ?? s.resetTime);
+  const time = s.pendingTime ?? s.time;
+  const underNewSchedule = (i: Date) => {
+    const l = toZoned(i, zone);
+    return (l.time < reset ? addDays(l.date, -1) : l.date) >= from;
+  };
+  let best: Date | null = null;
+  // The current schedule's next occurrence, unless the new schedule has taken over by then.
+  const cur = nextOccurrence(after, s.timeZone, s.time);
+  if (!underNewSchedule(cur)) best = cur;
+  // The new schedule's first occurrence on or after its effective business date.
+  const base = toZoned(after, zone).date;
+  const start = base < from ? addDays(from, -1) : addDays(base, -1);
+  for (let k = 0; k <= 4; k++) {
+    const i = zonedToUtc(addDays(start, k), time, zone);
+    if (i.getTime() <= after.getTime() || !underNewSchedule(i)) continue;
+    if (!best || i.getTime() < best.getTime()) best = i;
+    break;
+  }
+  return best ?? nextOccurrence(after, zone, time);
 }
 
 export const minutesBetween = (a: Date, b: Date) => (b.getTime() - a.getTime()) / 60_000;

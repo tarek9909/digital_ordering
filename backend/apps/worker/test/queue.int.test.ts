@@ -118,9 +118,11 @@ describe.skipIf(major < 5)('real queue (BullMQ on Redis ≥ 5)', () => {
     return { ticketId: ticket.id, token };
   }
 
-  it('signs up, emails, publishes ticket events and sends the first alert through the queue', async () => {
+  it('onboards, emails, publishes ticket events and sends the first alert through the queue', async () => {
     const a = await onboard('queue-one');
-    await waitFor('verification email', async () => mails.find((m) => m.to === 'queue-one@x.test'));
+    // Public self-signup (and its verification email) is gone; an owner's invitation is the email sent here.
+    expect((await a.admin.post('/api/admin/v1/invitations', { email: 'queue-manager@x.test', role: 'manager' })).status).toBe(201);
+    await waitFor('invitation email', async () => mails.find((m) => m.to === 'queue-manager@x.test'));
 
     const { ticketId } = await readyTicketWithFollowers(a, ['one']);
     const topics = api.deps.kv.published.map((p) => JSON.parse(p.message) as { topic: string; ticketId?: string }).filter((e) => e.ticketId === ticketId).map((e) => e.topic);

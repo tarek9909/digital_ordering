@@ -1,7 +1,7 @@
 import type { Actor } from '@dop/auth';
 import { freezeActor } from '@dop/auth';
 import { AppError, ERROR_CODES, isAppError, type ProblemDetails, type TenantStatus } from '@dop/contracts';
-import { uuidv7 } from '@dop/domain';
+import { tenantAccess, uuidv7 } from '@dop/domain';
 import { enforceConsoleAllowList, getSetting, getTenantStatus, membershipFor, resolveApiKey, staffMemberFor, resolvePlatformSession, resolveStaffDevice, resolveSupport, resolveUserSession, resolveDisplay, slugRedirect } from '@dop/services';
 import type { IpRules } from '@dop/config';
 import type { NextFunction, Request, Response } from 'express';
@@ -100,8 +100,10 @@ export function resolveContext(deps: ApiDeps, opts: { trustProxy: IpRules | fals
           actor = { kind: 'display', displayId: d.id, tenantId: d.tenant_id, venueId: d.venue_id };
         }
       }
-      // Platform support inside an approved session (BR-19, TR-AUTH-12); the cookie is set by the handoff.
-      if (actor.kind === 'anonymous' && cookie('sup') && (path.startsWith('/api/admin/') || path.startsWith('/api/staff/') || path === '/api/auth/v1/me' || path === '/api/auth/v1/support/leave')) {
+      // Platform support inside an approved session (BR-19, TR-AUTH-12); the cookie is set by the handoff. Sign-out
+      // too when there is no user session, so dropping the support credential is CSRF-checked like the rest (L-8).
+      const supportPath = path.startsWith('/api/admin/') || path.startsWith('/api/staff/') || path === '/api/auth/v1/me' || path === '/api/auth/v1/support/leave' || (path === '/api/auth/v1/sign-out' && !cookie('sid'));
+      if (actor.kind === 'anonymous' && cookie('sup') && supportPath) {
         const s = await resolveSupport(deps, cookie('sup')!, t.id);
         if (s) actor = s;
       }
@@ -125,6 +127,11 @@ export function resolveContext(deps: ApiDeps, opts: { trustProxy: IpRules | fals
         if (!k) throw new AppError('UNAUTHENTICATED', 'Invalid API key');
         const status = await getTenantStatus(deps, k.tenantId);
         if (!status || status === 'deleted') throw new AppError('UNAUTHENTICATED');
+        // §8.2 API access by status, for reads as well as writes: none in a trial, after it expired or after
+        // cancellation; read-only while suspended.
+        const api = tenantAccess(status).api;
+        if (api === 'none' || api === 'unauthenticated') throw new AppError('TENANT_INACTIVE');
+        if (api === 'read_only' && req.method !== 'GET' && req.method !== 'HEAD') throw new AppError('TENANT_SUSPENDED');
         actor = k;
       }
     } else if (surface.kind === 'console' && cookie('psid')) {

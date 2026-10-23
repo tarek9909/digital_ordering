@@ -58,11 +58,15 @@
   "venue": {
     "yourTickets": "Your orders here",
     "noTickets": "No open order on this phone",
-    "askStaff": "Ask staff for a ticket QR code when you order."
+    "askStaff": "Ask staff for a ticket QR code when you order.",
+    "loadFailed": "This page could not be loaded. Check your connection and try again.",
+    "ticketsFailed": "We could not check for your orders. Check your connection and try again."
   },
   "tickets": {
     "title": "Orders on this phone",
-    "empty": "No orders yet."
+    "empty": "No orders yet.",
+    "loadFailed": "Your orders could not be loaded. Check your connection and try again.",
+    "partialFailed": "Some orders could not be loaded. Check your connection and try again."
   },
   "privacy": {
     "title": "Privacy",
@@ -97,5 +101,7 @@
   "loadError": {
     "title": "Could not load your order",
     "body": "Check your connection and try again."
-  }
+  },
+  "alertsPushOn": "We will alert you even if this page is closed",
+  "alertsBlocked": "Notifications are blocked for this site. Keep this page open for alerts."
 }

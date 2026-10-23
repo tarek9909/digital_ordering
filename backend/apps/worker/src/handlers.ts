@@ -13,6 +13,7 @@ import {
   releaseOldSlugs,
   weeklySummaries,
   getEmailTemplate,
+  openEmailData,
   firstAlert,
   graceCheck,
   integrityCheck,
@@ -37,6 +38,7 @@ import {
   venuesDueForAutoClose,
   type Deps,
   type EmailTemplate,
+  type HttpPoster,
   type ObjectStorage,
   type PushSender,
   type WebhookEvent,
@@ -52,6 +54,9 @@ export interface WorkerDeps extends Deps {
   push: PushSender;
   mailer: Mailer;
   storage: ObjectStorage;
+  /** Outgoing webhook transport and DNS resolver; production uses fetchPoster and the system resolver. */
+  webhookPoster?: HttpPoster;
+  webhookResolver?: (host: string) => Promise<string[]>;
 }
 
 export const JOB_HANDLERS: { [N in JobName]: (deps: WorkerDeps, data: unknown) => Promise<unknown> } = {
@@ -62,7 +67,7 @@ export const JOB_HANDLERS: { [N in JobName]: (deps: WorkerDeps, data: unknown) =
     const j = JOB_SCHEMAS['email.send'].parse(raw);
     // Console-edited texts override the built-in subject and blocks (TR-EML-03).
     const override = await getEmailTemplate(d, j.template, j.locale);
-    const r = renderEmail(j.template as EmailTemplate, j.locale, j.data, override ?? undefined);
+    const r = renderEmail(j.template as EmailTemplate, j.locale, await openEmailData(d.keys, j.data), override ?? undefined);
     await d.mailer.send({ to: j.to, ...r });
   },
   'tenant.export': async (d, raw) => {
@@ -77,7 +82,8 @@ export const JOB_HANDLERS: { [N in JobName]: (deps: WorkerDeps, data: unknown) =
   'image.process-logo': async () => undefined, // logos are processed in the upload request (see services/assets.ts)
   'webhook.fanout': async (d, raw) => {
     const j = JOB_SCHEMAS['webhook.fanout'].parse(raw);
-    // Stable event ID per outbox row, so a re-processed row does not create a second event (TR-WH-02).
+    // Stable event ID per outbox row; with it the fan-out stores one original delivery per endpoint, so a retry after a
+    // partial fan-out (or a re-processed row) queues the missing deliver jobs without a second delivery (TR-WH-02, BW09).
     const h = createHash('sha256').update(j.eventKey).digest('hex');
     const eventId = `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
     const ids = await fanOutWebhook(d, j.tenantId, j.venueId, j.type as WebhookEvent, j.data, eventId);
@@ -85,7 +91,7 @@ export const JOB_HANDLERS: { [N in JobName]: (deps: WorkerDeps, data: unknown) =
   },
   'webhook.deliver': async (d, raw) => {
     const j = JOB_SCHEMAS['webhook.deliver'].parse(raw);
-    const r = await deliverWebhook(d, j.tenantId, j.deliveryId, fetchPoster);
+    const r = await deliverWebhook(d, j.tenantId, j.deliveryId, d.webhookPoster ?? fetchPoster, d.webhookResolver);
     if (r.status === 'failed' && r.nextAttemptAt) {
       const attempt = Math.round((r.nextAttemptAt.getTime() - d.now().getTime()) / 1000);
       await d.jobs.add('webhook.deliver', j, { jobId: jobIds.webhookDeliver(j.deliveryId, r.nextAttemptAt.getTime()), delayMs: Math.max(0, attempt * 1000) });

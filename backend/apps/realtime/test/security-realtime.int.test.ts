@@ -3,7 +3,8 @@ import type { AddressInfo } from 'node:net';
 import { parseIpRules, type IpRules } from '@dop/config';
 import type { BusEvent } from '@dop/contracts';
 import { startTestDatabase, type TestDatabase } from '@dop/db/testing';
-import { acceptInvitation, createVenue, inviteMember, listMembers, removeMember, revokeSession, signInUser, createTenantWithOwner } from '@dop/services';
+import { acceptInvitation, openEmailData, approveSupport, createTenantWithOwner, createTicket, createVenue, endSupport, enterSupport, exchangeSupportHandoff, inviteMember, listMembers, removeMember, requestSupport, revokeSession, signInUser, transitionTicket } from '@dop/services';
+import { uuidv7 } from '@dop/domain';
 import { makeTestDeps, type TestDeps } from '@dop/services/testing';
 import { io as connect, type Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -88,7 +89,7 @@ describe('H-7 established board sockets follow the session', () => {
     const x = await tenant();
     const owner = { kind: 'user' as const, userId: x.userId, tenantId: x.tenantId, role: 'owner' as const, sessionId: 's', mfaVerified: true };
     await inviteMember(deps, owner, x.tenantId, `m-${x.slug}@x.test`, 'manager');
-    const link = (deps.jobs.added.filter((j) => j.name === 'email.send').at(-1)!.data as { data: { link: string } }).data.link;
+    const link = (await openEmailData(deps.keys, (deps.jobs.added.filter((j) => j.name === 'email.send').at(-1)!.data as { data: Record<string, unknown> }).data)).link as string;
     await acceptInvitation(deps, new URL(link).searchParams.get('token')!, { name: 'M', password: PASSWORD }, { ip: '1.1.1.1', userAgent: 'test', host: x.host });
     const { sock } = await boardSocket(url, x, `m-${x.slug}@x.test`);
     const membership = (await listMembers(deps, x.tenantId)).members.find((m) => m.email === `m-${x.slug}@x.test`)!;
@@ -102,7 +103,8 @@ describe('H-7 established board sockets follow the session', () => {
     const x = await tenant();
     const { sock, session } = await boardSocket(url, x);
     const gone = closed(sock);
-    await t.clients.platform().updateTable('user_sessions').set({ expires_at: new Date(Date.now() - 1000) }).where('id', '=', session.sessionId).execute();
+    // Expiry is relative to the service clock (tests freeze it at setup), not wall time.
+    await t.clients.platform().updateTable('user_sessions').set({ expires_at: new Date(deps.now().getTime() - 1000) }).where('id', '=', session.sessionId).execute();
     await expect(gone).resolves.toBeDefined();
   });
 });
@@ -122,6 +124,10 @@ describe('M-10 the HTTP two-factor rule applies to board sockets', () => {
 });
 
 describe('H-2 handshake admission counts the real client', () => {
+  // These tests spend the per-minute handshake budgets on purpose; later suites start with fresh counters.
+  afterAll(async () => {
+    for (const k of await deps.kv.keys('rt:hs:')) await deps.kv.del(k);
+  });
   it('limits each forwarded client separately behind a trusted proxy', async () => {
     const url = await server({ trustProxy: parseIpRules(['loopback']) });
     const tryOne = (ip: string) => open(url, { clientId: 'C'.repeat(22), tickets: [] }, { 'X-Forwarded-For': ip }).then((s) => (s.close(), true), () => false);
@@ -139,5 +145,50 @@ describe('H-2 handshake admission counts the real client', () => {
     for (let i = 0; i < 31; i++) if (await tryOne(`198.51.100.${i}`)) admitted++;
     expect(admitted).toBeLessThanOrEqual(30);
     expect(await tryOne('198.51.100.250')).toBe(false);
+  });
+});
+
+describe('CSD10 approved support sessions on the live staff board', () => {
+  async function supportCookie(x: Awaited<ReturnType<typeof tenant>>) {
+    const agentId = uuidv7();
+    await t.clients.platform().insertInto('platform_users').values({ id: agentId, email: `agent-${agentId.slice(-8)}@x.test`, name: 'Agent', role: 'support', status: 'active' }).execute();
+    const agent = { kind: 'platform' as const, platformUserId: agentId, role: 'support' as const, sessionId: 's', mfaVerifiedAt: new Date() };
+    const owner = { kind: 'user' as const, userId: x.userId, tenantId: x.tenantId, role: 'owner' as const, sessionId: 's', mfaVerified: true };
+    const { id } = await requestSupport(deps, agent, x.tenantId, 'Investigate an issue', 60);
+    await approveSupport(deps, owner, id);
+    const code = new URL((await enterSupport(deps, agent, id)).url).searchParams.get('code')!;
+    const { token } = await exchangeSupportHandoff(deps, code, x.tenantId);
+    return { token, sessionId: id, agent };
+  }
+  const supportSocket = (url: string, host: string, token: string, venueId: string) => open(url, { app: 'staff', venueId }, { Cookie: `dop_sup=${token}`, Host: host });
+
+  it('connects with the support cookie, receives live ticket updates, and closes when the session ends', async () => {
+    const url = await server();
+    const x = await tenant();
+    const sup = await supportCookie(x);
+    const sock = await supportSocket(url, x.host, sup.token, x.venueId);
+    const device = { kind: 'support' as const, platformUserId: sup.agent.platformUserId, tenantId: x.tenantId, supportSessionId: sup.sessionId, agentName: 'Agent' };
+    const update = new Promise<{ ticket: { status: string } }>((resolve) => sock.once('ticket.updated', resolve));
+    const { ticket } = await createTicket(deps, device, x.venueId, {});
+    await transitionTicket(deps, device, ticket.id, { to: 'ready', version: 1 });
+    expect((await update).ticket.status).toBe('ready');
+    const gone = closed(sock);
+    await endSupport(deps, sup.agent, sup.sessionId, 'platform');
+    await expect(gone).resolves.toBeDefined();
+    await expect(supportSocket(url, x.host, sup.token, x.venueId)).rejects.toThrow(/UNAUTHENTICATED/);
+  });
+
+  it('refuses no cookie, another tenant host and an expired session', async () => {
+    const url = await server({ revalidateMs: 150 });
+    const x = await tenant();
+    const other = await tenant();
+    const sup = await supportCookie(x);
+    await expect(open(url, { app: 'staff', venueId: x.venueId }, { Host: x.host })).rejects.toThrow(/UNAUTHENTICATED/);
+    await expect(supportSocket(url, other.host, sup.token, other.venueId)).rejects.toThrow(/UNAUTHENTICATED/);
+    await expect(supportSocket(url, x.host, sup.token, other.venueId)).rejects.toThrow(/UNAUTHENTICATED/);
+    const sock = await supportSocket(url, x.host, sup.token, x.venueId);
+    const gone = closed(sock);
+    await t.clients.platform().updateTable('support_sessions').set({ expires_at: new Date(deps.now().getTime() - 1000) }).where('id', '=', sup.sessionId).execute();
+    await expect(gone).resolves.toBeDefined(); // the periodic re-check enforces expiry on an open socket
   });
 });

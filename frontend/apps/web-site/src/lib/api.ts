@@ -26,6 +26,8 @@ export interface SlugAvailability {
 }
 
 export interface LegalDocument {
+  /** The exact published version shown (AS04). */
+  id?: string;
   kind: string;
   version: string;
   locale: string;

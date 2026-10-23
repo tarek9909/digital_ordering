@@ -28,6 +28,7 @@ import {
   deleteRatingComment,
   listCounters,
   listRatings,
+  ratingSummary,
   updateCounter,
   changePassword,
   listChimes,
@@ -120,6 +121,7 @@ export const adminRoutes = defineRoutes('/api/admin/v1', [
     permission: 'tenant.delete',
     body: deletionRequestBody,
     limitedAccessOk: true,
+    rateLimit: { name: 'tenant-deletion', points: 5, durationSec: 3600, key: 'actor' },
     handler: async (c) => requestDeletion(c.deps, userActor(c), userActor(c).tenantId, c.body.password),
   }),
   route({
@@ -263,7 +265,7 @@ export const adminRoutes = defineRoutes('/api/admin/v1', [
     surfaces: ['tenant'],
     permission: 'reports.view',
     query: z.object({ venueId: uuidSchema.optional() }).strict(),
-    handler: async (c) => ({ items: await listRatings(c.deps, tenantActor(c).tenantId, c.query.venueId) }),
+    handler: async (c) => ({ items: await listRatings(c.deps, tenantActor(c).tenantId, c.query.venueId), summary: await ratingSummary(c.deps, tenantActor(c).tenantId, c.query.venueId) }),
   }),
   route({
     method: 'delete',
@@ -444,6 +446,7 @@ export const adminRoutes = defineRoutes('/api/admin/v1', [
     permission: 'team.manage',
     body: ownershipTransferBody,
     limitedAccessOk: true,
+    rateLimit: { name: 'ownership-transfer', points: 5, durationSec: 3600, key: 'actor' },
     handler: async (c) => {
       await transferOwnership(c.deps, userActor(c), userActor(c).tenantId, c.body.memberId, c.body.password);
     },

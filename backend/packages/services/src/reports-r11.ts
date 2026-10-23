@@ -1,4 +1,4 @@
-import { AppError } from '@dop/contracts';
+import { AppError, CANCEL_REASONS } from '@dop/contracts';
 import { scope } from '@dop/db';
 import { addDays, histogramPercentile, mergeHistograms, toZoned } from '@dop/domain';
 import type { Deps } from './deps.js';
@@ -36,10 +36,14 @@ function summarise(rs: Awaited<ReturnType<typeof rows>>) {
   const pickup = mergeHistograms(rs.map((r) => r.pickup_hist as unknown as number[]));
   const total = mergeHistograms(rs.map((r) => r.total_hist as unknown as number[]));
   const ratingsCount = sum('ratings_count');
+  // Cancellations by reason (BRD §12.1): every reason, zero when unused, so periods compare key by key.
+  const cancelReasons: Record<string, number> = Object.fromEntries(CANCEL_REASONS.map((r) => [r, 0]));
+  for (const r of rs) for (const [k, n] of Object.entries((r.cancel_reasons ?? {}) as unknown as Record<string, number>)) cancelReasons[k] = (cancelReasons[k] ?? 0) + Number(n);
   return {
     tickets: sum('tickets_created'),
     collected: sum('tickets_collected'),
     cancelled: sum('tickets_cancelled'),
+    cancelReasons,
     uncollected: sum('tickets_expired_uncollected_ready'),
     reachPushOrLivePct: ready ? Math.round(((sum('reach_push') + sum('reach_live')) / ready) * 100) : null,
     acknowledgedPct: ready ? Math.round((sum('acknowledged') / ready) * 100) : null,

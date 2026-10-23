@@ -9,7 +9,8 @@ import {
   type ServerToClientEvents,
 } from '@dop/contracts';
 import { clientAddress, parseIpRules, type IpRules } from '@dop/config';
-import { acknowledge, displayHeartbeat, heartbeat, resolveBoardUser, resolveDisplay, resolveStaffDevice, type Deps } from '@dop/services';
+import { tenantAccess } from '@dop/domain';
+import { acknowledge, displayHeartbeat, getTenantStatus, heartbeat, resolveBoardSupport, resolveBoardUser, resolveDisplay, resolveStaffDevice, type Deps } from '@dop/services';
 import { parse as parseCookie } from 'cookie';
 import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
@@ -26,7 +27,7 @@ export interface SocketData {
   tickets?: Map<string, { id: string; tenantId: string }>;
   displayId?: string;
   /** What the socket authenticated with, kept in memory so it can be re-checked while connected (H-7). */
-  credential?: { kind: 'device' | 'display' | 'user'; token: string; host: string; userId?: string; sessionId?: string };
+  credential?: { kind: 'device' | 'display' | 'user' | 'support'; token: string; host: string; userId?: string; sessionId?: string };
   /** Per-socket client-event budget: events left and when the window resets. */
   budget?: { left: number; reset: number };
 }
@@ -85,6 +86,9 @@ export const rooms = {
   client: (clientId: string) => `client:${clientId}`,
   user: (userId: string) => `user:${userId}`,
   session: (sessionId: string) => `session:${sessionId}`,
+  support: (supportSessionId: string) => `support:${supportSessionId}`,
+  /** Staff-side sockets of a tenant (boards), without its displays: for staff-only notices. */
+  tenantStaff: (tenantId: string) => `tstaff:${tenantId}`,
 };
 
 export function createRealtime(http: HttpServer | undefined, o: RealtimeOptions): IO {
@@ -117,9 +121,9 @@ export function createRealtime(http: HttpServer | undefined, o: RealtimeOptions)
         const dev = cookies[cookieName(o.insecureCookies, 'dev')];
         if (dev) {
           const d = await resolveStaffDevice(deps, dev);
-          if (d && host === (await tenantHost(deps, d.tenant_id))) {
+          if (d && host === (await tenantHost(deps, d.tenant_id)) && (await staffAccessOn(deps, d.tenant_id))) {
             socket.data = { kind: 'staff', tenantId: d.tenant_id, venueId: d.venue_id, credential: { kind: 'device', token: dev, host } };
-            await socket.join([rooms.staff(d.venue_id), rooms.tenant(d.tenant_id), rooms.device(d.id)]);
+            await socket.join([rooms.staff(d.venue_id), rooms.tenant(d.tenant_id), rooms.tenantStaff(d.tenant_id), rooms.device(d.id)]);
             return next();
           }
         }
@@ -129,7 +133,17 @@ export function createRealtime(http: HttpServer | undefined, o: RealtimeOptions)
           const u = await resolveBoardUser(deps, sid, host, auth.venueId);
           if (u) {
             socket.data = { kind: 'staff', tenantId: u.tenantId, venueId: u.venueId, credential: { kind: 'user', token: sid, host, userId: u.userId, sessionId: u.sessionId } };
-            await socket.join([rooms.staff(u.venueId), rooms.tenant(u.tenantId), rooms.user(u.userId), rooms.session(u.sessionId)]);
+            await socket.join([rooms.staff(u.venueId), rooms.tenant(u.tenantId), rooms.tenantStaff(u.tenantId), rooms.user(u.userId), rooms.session(u.sessionId)]);
+            return next();
+          }
+        }
+        // A platform agent inside an approved support session (FR-STF-17, CSD10): same rule as the HTTP staff API.
+        const sup = cookies[cookieName(o.insecureCookies, 'sup')];
+        if (sup && typeof auth.venueId === 'string') {
+          const s = await resolveBoardSupport(deps, sup, host, auth.venueId);
+          if (s) {
+            socket.data = { kind: 'staff', tenantId: s.tenantId, venueId: s.venueId, credential: { kind: 'support', token: sup, host, sessionId: s.supportSessionId } };
+            await socket.join([rooms.staff(s.venueId), rooms.tenant(s.tenantId), rooms.tenantStaff(s.tenantId), rooms.support(s.supportSessionId)]);
             return next();
           }
         }
@@ -206,7 +220,9 @@ export function createRealtime(http: HttpServer | undefined, o: RealtimeOptions)
     });
     socket.on('alert.delivered', (p, ack) => {
       // "Delivered to open page" (TR-ALR-23), recorded as a metric.
-      deps.log.info({ metric: 'alert_delivered_page', round: p?.round, attempt: p?.attempt }, 'alert reached open page');
+      // Client-sent: only small integers reach the log.
+      const n = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0 && (v as number) < 1000 ? (v as number) : null);
+      deps.log.info({ metric: 'alert_delivered_page', round: n(p?.round), attempt: n(p?.attempt) }, 'alert reached open page');
       ack?.({ ok: true });
     });
     // Unauthenticated sockets never reach here: the handshake middleware rejects them.
@@ -225,13 +241,20 @@ export function createRealtime(http: HttpServer | undefined, o: RealtimeOptions)
 }
 
 /** Whether the socket's credential still allows what it was admitted for. */
+/** Staff access is off for expired trials and cancelled tenants (§8.2); devices follow the same rule as users. */
+async function staffAccessOn(deps: Deps, tenantId: string) {
+  const status = await getTenantStatus(deps, tenantId);
+  return status !== null && tenantAccess(status).staff !== 'off';
+}
+
 async function stillAuthorised(deps: Deps, s: Sock): Promise<boolean> {
   const c = s.data.credential;
   if (!c) return true; // customer sockets hold ticket capabilities, checked per event
   if (c.kind === 'user') return Boolean(await resolveBoardUser(deps, c.token, c.host, s.data.venueId!));
+  if (c.kind === 'support') return Boolean(await resolveBoardSupport(deps, c.token, c.host, s.data.venueId!));
   if (c.kind === 'device') {
     const d = await resolveStaffDevice(deps, c.token);
-    return Boolean(d && d.venue_id === s.data.venueId);
+    return Boolean(d && d.venue_id === s.data.venueId && (await staffAccessOn(deps, d.tenant_id)));
   }
   const d = await resolveDisplay(deps, c.token);
   return Boolean(d && d.id === s.data.displayId);
@@ -281,7 +304,8 @@ export function fanOut(io: IO, e: BusEvent, deps?: Deps) {
     case 'user.revalidate': {
       // H-7: this instance re-checks the named user's or session's board sockets now.
       if (!deps) return;
-      const room = typeof p.sessionId === 'string' ? rooms.session(p.sessionId) : typeof p.userId === 'string' ? rooms.user(p.userId) : null;
+      const room =
+        typeof p.sessionId === 'string' ? rooms.session(p.sessionId) : typeof p.supportSessionId === 'string' ? rooms.support(p.supportSessionId) : typeof p.userId === 'string' ? rooms.user(p.userId) : null;
       const ids = room ? io.of('/').adapter.rooms.get(room) : undefined;
       const sockets = [...(ids ?? [])].map((id) => io.of('/').sockets.get(id)).filter((s): s is Sock => Boolean(s));
       void revalidate(deps, sockets).catch((err: unknown) => deps.log.warn({ err }, 'socket revalidation failed'));
@@ -333,7 +357,8 @@ export function fanOut(io: IO, e: BusEvent, deps?: Deps) {
       if (p.clientId) io.to(rooms.client(p.clientId as string)).emit('claim.decided', { claimId: p.claimId as string, status: p.status as never, ticketToken: p.ticketToken as string | undefined });
       return;
     case 'support.session':
-      if (e.tenantId) io.to(rooms.tenant(e.tenantId)).emit('support.session', p as never);
+      // Carries the agent's name: staff boards only, never the customer-facing displays.
+      if (e.tenantId) io.to(rooms.tenantStaff(e.tenantId)).emit('support.session', p as never);
       return;
     case 'display.revoked':
       if (p.displayId) {

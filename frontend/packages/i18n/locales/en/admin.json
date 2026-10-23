@@ -134,7 +134,13 @@
     "reachTitle": "Alert reach when ready",
     "reachPct": "Push sent or page open",
     "ackPct": "Acknowledged",
-    "byStatus": "Tickets by status"
+    "byStatus": "Tickets by status",
+    "longestTitle": "Longest-waiting orders",
+    "longestEmpty": "No open orders right now.",
+    "longestNumber": "Order",
+    "longestStatus": "Status",
+    "longestWaiting": "Waiting",
+    "longestNote": "Waiting time counts from when the ticket was created."
   },
   "reports": {
     "title": "Reports",
@@ -169,7 +175,9 @@
     "dailyNoCounter": "The per-day view always covers all counters.",
     "csv": "Download CSV",
     "csvHint": "One row per ticket for the dates above (Pro plan).",
-    "csvReady": "CSV downloaded"
+    "csvReady": "CSV downloaded",
+    "prepP90": "90th percentile preparation",
+    "pickupP90": "90th percentile pickup"
   },
   "venue": {
     "tabsLabel": "Venue settings",
@@ -624,6 +632,8 @@
     "mfaPassword": "Confirm with your password",
     "mfaPasswordHint": "Confirms it is you. Leave empty if you sign in with Google only (then sign in again first if it was more than 15 minutes ago).",
     "mfaRemoveCode": "Enter a code from your authenticator app to turn two-factor off.",
+    "mfaSignInAgain": "For your security, sign out and sign in again, then set up two-factor within 15 minutes.",
+    "mfaRequiredByVenues": "Two-factor sign-in is required while you manage several venues, so it cannot be turned off.",
     "deleteTitle": "Delete my account",
     "deleteHint": "Your user account and sign-in are deleted. Restaurants you are a member of are not deleted. Your name is removed from the activity log.",
     "deleteConfirm": "This cannot be undone. You will be signed out.",
@@ -690,7 +700,16 @@
       "terms": "Terms of service",
       "privacy": "Privacy policy",
       "dpa": "Data processing agreement"
-    }
+    },
+    "checking": "Checking for updated terms…",
+    "checkFailedTitle": "Terms could not be checked",
+    "checkFailed": "We could not check whether there are new documents to accept. Try again to continue.",
+    "retry": "Try again",
+    "changed": "These documents were updated while you were reading. Please review the current versions.",
+    "published": "Published {{date}}",
+    "openVersion": "Open this version in a new tab",
+    "consent": "I have read and accept the {{documents}} shown above.",
+    "listSeparator": ", "
   },
   "venues": {
     "addTitle": "Add a venue",
@@ -735,7 +754,7 @@
   },
   "ratings": {
     "intro": "What customers said after collecting their order. Deleting a comment keeps the stars in your reports.",
-    "average": "Average {{avg}} / 5 from the last {{n}} ratings",
+    "average": "Average {{avg}} / 5 from {{n}} ratings",
     "none": "No ratings yet.",
     "stars": "Stars",
     "starsLabel": "{{n}} out of 5 stars",
@@ -747,7 +766,10 @@
     "deleteTitle": "Delete this comment?",
     "deleteBody": "The comment is removed for good. The star rating stays in your reports.",
     "deleted": "Comment deleted",
-    "commentDeleted": "Comment removed"
+    "commentDeleted": "Comment removed",
+    "distributionTitle": "Rating distribution",
+    "count": "Ratings",
+    "share": "Share"
   },
   "support": {
     "codeTitle": "Support code",
@@ -917,7 +939,23 @@
     "points": "{{n}} pts",
     "seriesTitle": "Tickets per day",
     "seriesLabel": "Bar chart of tickets per day. The same numbers are in the table below.",
-    "showTable": "Show as table"
+    "showTable": "Show as table",
+    "totalWait": "Median total wait (created to collected)",
+    "cancelled": "Cancellations",
+    "cancelReasonsTitle": "Cancellations by reason",
+    "cancelReasonsHint": "{{n}} cancelled in this period, compared with the previous period.",
+    "noCancellations": "No cancellations in these periods.",
+    "reason": "Reason",
+    "thisPeriod": "This period",
+    "previousPeriod": "Previous period",
+    "reasons": {
+      "customer_left": "Customer left",
+      "refunded": "Refunded",
+      "out_of_stock": "Out of stock",
+      "duplicate": "Duplicate ticket",
+      "mistake": "Created by mistake",
+      "other": "Other"
+    }
   },
   "heatmap": {
     "title": "Busy hours",

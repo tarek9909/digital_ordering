@@ -106,6 +106,7 @@ function Results({ data }: { data: PlatformReportResponse }) {
       <p className="text-sm text-muted">{t('platformReport.groupsNote')}</p>
       <Cohorts cohorts={data.cohorts ?? []} />
       <Delivery health={data.deliveryHealth} />
+      <ReachByPhone reach={data.reachByUa ?? {}} />
       <MrrChart days={days} currencies={currencies} />
     </div>
   );
@@ -173,6 +174,41 @@ export function Delivery({ health }: { health: DeliveryHealth | undefined }) {
           <Td className="num">{h.webhookFailures}</Td>
         </tr>
       </Table>
+    </section>
+  );
+}
+
+const REACH_LEVELS = ['push', 'live', 'closed', 'none'] as const;
+
+/** Alert reach by phone type (BRD §12.2, FR-RPT-07): alert level when marked Ready, per OS/browser family. */
+export function ReachByPhone({ reach }: { reach: Record<string, Record<string, number>> }) {
+  const { t } = useTranslation();
+  const rows = Object.entries(reach)
+    .map(([ua, levels]) => ({ ua, levels, total: REACH_LEVELS.reduce((a, l) => a + (levels[l] ?? 0), 0) }))
+    .sort((a, b) => b.total - a.total || a.ua.localeCompare(b.ua));
+  return (
+    <section aria-labelledby="reach-ua-h" className="flex flex-col gap-2">
+      <h2 id="reach-ua-h" className="text-lg font-bold">
+        {t('platformReport.reachByUa')}
+      </h2>
+      {rows.length === 0 ? (
+        <p className="text-muted">{t('platformReport.reachByUaEmpty')}</p>
+      ) : (
+        <Table caption={t('platformReport.reachByUaCaption')} head={[t('platformReport.phoneType'), ...REACH_LEVELS.map((l) => t(`reach.${l}`)), t('platformReport.reachPct')]}>
+          {rows.map((r) => (
+            <tr key={r.ua}>
+              <Td>{t(`platformReport.ua.${r.ua}`, { defaultValue: r.ua })}</Td>
+              {REACH_LEVELS.map((l) => (
+                <Td key={l} className="num">
+                  {r.levels[l] ?? 0}
+                </Td>
+              ))}
+              <Td className="num">{pct(r.total ? Math.round((((r.levels.push ?? 0) + (r.levels.live ?? 0)) / r.total) * 100) : null)}</Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+      <p className="text-sm text-muted">{t('platformReport.reachByUaNote')}</p>
     </section>
   );
 }

@@ -26,6 +26,7 @@ function ticket(over: Partial<StaffTicket> = {}): StaffTicket {
     readyRound: 0,
     autoAlertsSent: 0,
     manualAlertsSent: 0,
+    overdueRound: null,
     source: 'staff',
     createdAt: iso(0),
     readyAt: null,

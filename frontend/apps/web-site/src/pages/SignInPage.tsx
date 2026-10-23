@@ -2,7 +2,8 @@ import { useTranslation } from '@dop/i18n';
 import { Spinner } from '@dop/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { FormCard } from '../components/FormCard';
+import { useSearchParams } from 'react-router';
+import { FormCard, FormError } from '../components/FormCard';
 import { CredentialsForm, LinkGoogleForm, MfaForm } from '../components/SignInForms';
 import { TenantChooser } from '../components/TenantChooser';
 import { authApi, type MeResponse } from '../lib/api';
@@ -25,6 +26,8 @@ function takeMfaFromFragment(): Step | null {
 /** Sign-in with tenant chooser (TRD §16.7): credentials → optional TOTP → choose restaurant → handoff. */
 export function SignInPage() {
   const { t } = useTranslation();
+  const [params] = useSearchParams();
+  const googleNoAccount = params.get('google') === 'no-account';
   const qc = useQueryClient();
   const [step, setStep] = useState<Step | null>(takeMfaFromFragment);
   // An existing www session skips straight to the chooser.
@@ -68,6 +71,8 @@ export function SignInPage() {
   }
   return (
     <FormCard title={t('signin.title')}>
+      {/* Google found no Tanbeeh account for that address; nothing was created (AS02). */}
+      <FormError text={googleNoAccount ? t('signin.googleNoAccount') : null} />
       <CredentialsForm onDone={(n) => (n.kind === 'mfa' ? setStep({ kind: 'mfa', mfaToken: n.mfaToken }) : toTenants())} />
     </FormCard>
   );

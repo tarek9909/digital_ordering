@@ -185,8 +185,13 @@ export async function firstAlert(deps: Deps, sender: PushSender, d: { tenantId: 
 
 /** `alert.overdue-flag` (TR-ALR-21): marks the board card "not collected — call out". No status change. */
 export async function overdueFlag(deps: Deps, d: { tenantId: string; ticketId: string; round: number }) {
-  const t = await deps.db.forTenant(d.tenantId).selectFrom('tickets').select(['status', 'ready_round', 'acknowledged_at', 'venue_id']).where('id', '=', d.ticketId).executeTakeFirst();
+  const db = deps.db.forTenant(d.tenantId);
+  const t = await db.selectFrom('tickets').select(['status', 'ready_round', 'acknowledged_at', 'venue_id']).where('id', '=', d.ticketId).executeTakeFirst();
   if (!t || t.status !== 'ready' || t.ready_round !== d.round) return false;
+  // Persisted so a board opened or reloaded later still shows the call-out (CSD07); the event below only makes
+  // open boards show it at once. Conditional on the same round, so a concurrent Undo/collect is never overwritten.
+  // seq/version are untouched: no projection a client applies by sequence changes here.
+  await db.updateTable('tickets').set({ overdue_round: d.round }).where('id', '=', d.ticketId).where('status', '=', 'ready').where('ready_round', '=', d.round).execute();
   await publish(deps, { topic: 'ticket.overdue', tenantId: d.tenantId, venueId: t.venue_id, ticketId: d.ticketId, payload: { id: d.ticketId, round: d.round } });
   return true;
 }
@@ -200,7 +205,7 @@ export async function reconcileAlerts(deps: Deps): Promise<number> {
     .platform()
     .selectFrom('tickets')
     .innerJoin('venues', 'venues.id', 'tickets.venue_id')
-    .select(['tickets.id', 'tickets.tenant_id', 'tickets.ready_round', 'tickets.ready_at', 'tickets.auto_alerts_sent', 'venues.settings'])
+    .select(['tickets.id', 'tickets.tenant_id', 'tickets.ready_round', 'tickets.ready_at', 'tickets.auto_alerts_sent', 'tickets.overdue_round', 'venues.settings'])
     .where('tickets.status', '=', 'ready')
     .where('tickets.acknowledged_at', 'is', null)
     .where('tickets.ready_at', 'is not', null)
@@ -234,7 +239,9 @@ export async function reconcileAlerts(deps: Deps): Promise<number> {
     }
     if (off === undefined) {
       const overdueAt = r.ready_at!.getTime() + overdueAfterSec(v.settings.alerts.repeatOffsetsSec, v.settings.alerts.maxAutoAlerts) * 1000;
-      if (now - overdueAt > 30_000) await deps.jobs.add('alert.overdue-flag', { tenantId: r.tenant_id, ticketId: r.id, round: r.ready_round }, { jobId: jobIds.overdue(r.id, r.ready_round) });
+      // Flagged directly, not through the queue: the deterministic overdue job may already be completed (and so
+      // deduplicated) without its flag having been recorded, e.g. a job from before migration 0009 (CSD07).
+      if (now - overdueAt > 30_000 && r.overdue_round !== r.ready_round) await overdueFlag(deps, { tenantId: r.tenant_id, ticketId: r.id, round: r.ready_round });
       continue;
     }
     if (now - (r.ready_at!.getTime() + off * 1000) > 30_000) {

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 import { client, makeApi } from './helpers.js';
 
 // The public contact and the packages section on the sign-up site are platform settings edited by super admins
-// (`site.contact`, `site.pricing`).
+// (`site.contact`, `site.pricing`), and so is the landing page content (`site.landing`).
 
 let t: TestDatabase;
 let api: ReturnType<typeof makeApi>;
@@ -57,6 +57,33 @@ it('rejects a malformed packages section', async () => {
     pricing({ extra: 1 }),
   ];
   for (const v of bad) await expect(svc.putSetting(api.deps, platform, 'site.pricing', v)).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+});
+
+it('serves the landing content saved in the console', async () => {
+  const www = client(api.app, 'www.dop.test');
+  expect((await www.get('/api/public/v1/site')).body.landing).toEqual({ hidden: [], copy: { ar: {}, en: {} } });
+  const landing = {
+    hidden: ['trust', 'pos'],
+    copy: { ar: { landing: { hero: { title: 'تلفون الزبون صار الجرس' } } }, en: { landing: { hero: { title: 'Ring them.' }, faq: { items: [{ q: 'Why?', a: 'Because.' }] } }, nav: { how: 'How' } } },
+  };
+  await svc.putSetting(api.deps, platform, 'site.landing', landing);
+  expect((await www.get('/api/public/v1/site')).body.landing).toEqual(landing);
+});
+
+it('rejects malformed landing content', async () => {
+  const ok = { hidden: [], copy: { ar: {}, en: {} } };
+  const bad = [
+    { ...ok, hidden: ['hero'] },
+    { ...ok, hidden: ['faq', 'faq'] },
+    { ...ok, copy: { ar: {}, en: {}, fr: {} } },
+    { ...ok, copy: { ar: { footer: {} }, en: {} } },
+    { ...ok, copy: { ar: { landing: { __proto__x: 'x' } }, en: {} } },
+    { ...ok, copy: { ar: { landing: { hero: { title: 7 } } }, en: {} } },
+    { ...ok, copy: { ar: { landing: { hero: { title: 'x'.repeat(1001) } } }, en: {} } },
+    { ...ok, copy: { ar: { landing: { a: { b: { c: { d: { e: { f: 'deep' } } } } } } }, en: {} } },
+    { ...ok, copy: { ar: { nav: { how: { nested: 'x' } } }, en: {} } },
+  ];
+  for (const v of bad) await expect(svc.putSetting(api.deps, platform, 'site.landing', v)).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
 });
 
 it('is only served on the public site host', async () => {

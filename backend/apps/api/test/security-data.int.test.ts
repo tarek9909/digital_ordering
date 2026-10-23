@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { inflateRawSync } from 'node:zlib';
 import { startTestDatabase, type TestDatabase } from '@dop/db/testing';
 import { json } from '@dop/db';
+import { uuidv7 } from '@dop/domain';
 import type { MemoryJobs } from '@dop/jobs';
 import * as svc from '@dop/services';
 import request from 'supertest';
@@ -288,5 +289,27 @@ describe('M-12 outgoing webhook limits', () => {
     for (let i = 0; i < 30; i++) await api.deps.rateLimit('webhook-test-tenant', x.tenantId, 30, 3600);
     const admin = await signedIn(x);
     expect((await admin.post(`/api/admin/v1/webhooks/${id}/test`)).status).toBe(429);
+  });
+});
+
+describe('phone type keys in reach reports are never client strings', () => {
+  it('refuses an unknown phone type on a claim', async () => {
+    const res = await client(api.app, 't.dop.test').post('/api/public/v1/venues/ABCDEF/claims', { clientId: 'P'.repeat(22), number: '1', uaFamily: '__proto__' });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('rolls up a stored unknown phone type as other without touching Object.prototype', async () => {
+    const x = await tenant();
+    const tk = (await svc.createTicket(api.deps, x.device, x.venueId, {})).ticket;
+    // A follower stored before the claim schema was tightened.
+    await t.clients.forTenant(x.tenantId).insertInto('ticket_followers').values({ id: uuidv7(), tenant_id: x.tenantId, ticket_id: tk.id, client_id: 'W'.repeat(22), joined_via: 'claim_code', locale: 'en', ua_family: '__proto__' }).execute();
+    await svc.transitionTicket(api.deps, x.device, tk.id, { to: 'ready', version: 1 });
+    const bd = (await t.clients.forTenant(x.tenantId).selectFrom('tickets').select('business_date').where('id', '=', tk.id).executeTakeFirstOrThrow()).business_date;
+    await svc.rollupVenueDay(api.deps, x.tenantId, x.venueId, bd);
+    expect(Object.keys(Object.prototype)).toEqual([]);
+    const row = await t.clients.forTenant(x.tenantId).selectFrom('report_daily').select('ua_reach').where('venue_id', '=', x.venueId).where('counter_key', '=', '').where('hour_local', '=', 24).executeTakeFirstOrThrow();
+    const reach = (typeof row.ua_reach === 'string' ? JSON.parse(row.ua_reach) : row.ua_reach) as Record<string, unknown>;
+    expect(Object.keys(reach)).toEqual(['other']);
   });
 });
