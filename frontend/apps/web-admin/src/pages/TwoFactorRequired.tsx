@@ -17,7 +17,10 @@ import { AuthCard } from './SignIn';
 /** Confirms this session with the authenticator code. */
 export function StepUp({ onDone, onSignOut }: { onDone: () => void; onSignOut: () => void }) {
   const { t } = useTranslation();
-  const form = useForm({ resolver: zodResolver(totpConfirmBody), defaultValues: { code: '' } });
+  const form = useForm({
+    resolver: zodResolver(totpConfirmBody),
+    defaultValues: { code: '' },
+  });
   const submit = form.handleSubmit(async (body) => {
     try {
       await authApi.post('/mfa/verify', body);
@@ -30,7 +33,14 @@ export function StepUp({ onDone, onSignOut }: { onDone: () => void; onSignOut: (
   return (
     <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
       <Banner tone="info">{t('mfaRequired.enterCode')}</Banner>
-      <Field label={t('mfaRequired.code')} inputMode="numeric" autoComplete="one-time-code" dir="ltr" error={err ? (err.type === 'server' ? err.message : t('mfaRequired.codeFormat')) : undefined} {...form.register('code')} />
+      <Field
+        label={t('mfaRequired.code')}
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        dir="ltr"
+        error={err ? (err.type === 'server' ? err.message : t('mfaRequired.codeFormat')) : undefined}
+        {...form.register('code')}
+      />
       <div className="flex flex-wrap gap-2">
         <Button type="submit" busy={form.formState.isSubmitting}>
           {t('mfaRequired.confirm')}
@@ -56,7 +66,7 @@ export function TwoFactorRequiredPage() {
   };
   return (
     <AuthCard title={t('mfaRequired.title')}>
-      <p className="mb-4">{t('mfaRequired.body')}</p>
+      <p className="text-ink-2">{t('mfaRequired.body')}</p>
       <QueryView q={me}>
         {(m) =>
           m.user.mfaEnrolled ? (

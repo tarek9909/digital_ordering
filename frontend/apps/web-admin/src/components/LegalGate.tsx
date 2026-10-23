@@ -7,7 +7,7 @@ import { api } from '../lib/api';
 import { errorText, isCode } from '../lib/errors';
 import { wwwUrl } from '../lib/hosts';
 import type { LegalPending } from '../lib/types';
-import { Checkbox } from './common';
+import { Checkbox, textLinkClass } from './common';
 
 export const legalKey = (locale: string) => ['legal-pending', locale] as const;
 const docLocale = (lang: string) => (lang === 'en' ? 'en' : 'ar');
@@ -30,7 +30,12 @@ export function LegalGate() {
   const qc = useQueryClient();
   const locale = docLocale(i18n.language);
   const key = legalKey(locale);
-  const q = useQuery({ queryKey: key, queryFn: async () => (await api.get<{ items: LegalPending[] }>('/legal/pending', { locale })).items, staleTime: Infinity, retry: 1 });
+  const q = useQuery({
+    queryKey: key,
+    queryFn: async () => (await api.get<{ items: LegalPending[] }>('/legal/pending', { locale })).items,
+    staleTime: Infinity,
+    retry: 1,
+  });
   const [agreed, setAgreed] = useState(false);
   const [changed, setChanged] = useState(false);
   const accept = useMutation({
@@ -73,22 +78,45 @@ export function LegalGate() {
       {changed && <Banner tone="warn">{t('legal.changed')}</Banner>}
       <ul className="mb-4 flex flex-col gap-3">
         {items.map((d) => (
-          <li key={d.id} className="rounded-lg border border-line p-3">
+          <li key={d.id} className="rounded-input border border-line p-3.5">
             <h3 className="font-semibold">
-              {t(`legal.kinds.${d.kind}`, { defaultValue: d.kind })} <span className="ms-1 text-sm font-normal text-muted" dir="ltr">({d.version})</span>
+              {t(`legal.kinds.${d.kind}`, { defaultValue: d.kind })}{' '}
+              <span className="ms-1 text-sm font-normal text-muted" dir="ltr">
+                ({d.version})
+              </span>
             </h3>
-            {d.publishedAt && <p className="text-xs text-muted">{t('legal.published', { date: formatDateTime(d.publishedAt, i18n.language) })}</p>}
+            {d.publishedAt && (
+              <p className="text-xs text-muted">
+                {t('legal.published', {
+                  date: formatDateTime(d.publishedAt, i18n.language),
+                })}
+              </p>
+            )}
             {d.html ? (
               // Sanitised on the server with a strict allow-list (W12), like the public legal page.
-              <div className={`mt-2 max-h-48 overflow-auto rounded border border-line bg-canvas p-2 ${LEGAL_TYPOGRAPHY}`} lang={d.locale} tabIndex={0} aria-label={t(`legal.kinds.${d.kind}`, { defaultValue: d.kind })} dangerouslySetInnerHTML={{ __html: d.html }} />
+              <div
+                className={`mt-2 max-h-48 overflow-auto rounded-input border border-line bg-canvas p-3 ${LEGAL_TYPOGRAPHY}`}
+                lang={d.locale}
+                tabIndex={0}
+                aria-label={t(`legal.kinds.${d.kind}`, {
+                  defaultValue: d.kind,
+                })}
+                dangerouslySetInnerHTML={{ __html: d.html }}
+              />
             ) : null}
-            <a className="inline-flex min-h-12 items-center text-primary underline" href={wwwUrl(`/legal/${d.kind}?document=${encodeURIComponent(d.id)}`)} target="_blank" rel="noreferrer">
+            <a className={textLinkClass} href={wwwUrl(`/legal/${d.kind}?document=${encodeURIComponent(d.id)}`)} target="_blank" rel="noreferrer">
               {t('legal.openVersion')}
             </a>
           </li>
         ))}
       </ul>
-      <Checkbox label={t('legal.consent', { documents: names.join(t('legal.listSeparator')) })} checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+      <Checkbox
+        label={t('legal.consent', {
+          documents: names.join(t('legal.listSeparator')),
+        })}
+        checked={agreed}
+        onChange={(e) => setAgreed(e.target.checked)}
+      />
       {accept.error && !isCode(accept.error, 'VALIDATION_FAILED') ? <Banner tone="danger">{errorText(t, accept.error)}</Banner> : null}
       <div className="mt-3 flex justify-end">
         <Button busy={accept.isPending} disabled={!agreed || q.isFetching} onClick={() => accept.mutate(items.map((d) => d.id))}>

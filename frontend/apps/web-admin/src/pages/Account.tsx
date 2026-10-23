@@ -1,6 +1,6 @@
 import { changeEmailBody, changePasswordBody, deleteMeBody, mePatch, totpConfirmBody, totpRemoveBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion, Select } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, PageShell, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
@@ -17,7 +17,13 @@ const profileSchema = mePatch.required();
 function Profile({ me }: { me: Me }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const form = useForm({ resolver: zodResolver(profileSchema), defaultValues: { name: me.user.name, locale: me.user.locale === 'en' ? 'en' : 'ar' } });
+  const form = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: me.user.name,
+      locale: me.user.locale === 'en' ? 'en' : 'ar',
+    },
+  });
   const { errors, isSubmitting, isDirty, isSubmitSuccessful } = form.formState;
   const submit = form.handleSubmit(async (body) => {
     try {
@@ -42,7 +48,7 @@ function Profile({ me }: { me: Me }) {
       />
       {errors.root && <Banner tone="danger">{errors.root.message}</Banner>}
       <div>
-        <Button type="submit" busy={isSubmitting} disabled={!isDirty}>
+        <Button type="submit" variant="ink" busy={isSubmitting} disabled={!isDirty}>
           {t('common:save')}
         </Button>
       </div>
@@ -56,7 +62,10 @@ function EmailChange({ me }: { me: Me }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [sent, setSent] = useState<string | null>(null);
-  const form = useForm({ resolver: zodResolver(changeEmailBody), defaultValues: { newEmail: '', password: '' } });
+  const form = useForm({
+    resolver: zodResolver(changeEmailBody),
+    defaultValues: { newEmail: '', password: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   const submit = form.handleSubmit(async (body) => {
     setSent(null);
@@ -66,15 +75,23 @@ function EmailChange({ me }: { me: Me }) {
       form.reset();
       await qc.invalidateQueries({ queryKey: meKey });
     } catch (e) {
-      if (isCode(e, 'UNAUTHENTICATED')) form.setError('password', { type: 'server', message: t('account.wrongPassword') });
-      else if (isCode(e, 'EMAIL_TAKEN')) form.setError('newEmail', { type: 'server', message: t('account.emailTaken') });
+      if (isCode(e, 'UNAUTHENTICATED'))
+        form.setError('password', {
+          type: 'server',
+          message: t('account.wrongPassword'),
+        });
+      else if (isCode(e, 'EMAIL_TAKEN'))
+        form.setError('newEmail', {
+          type: 'server',
+          message: t('account.emailTaken'),
+        });
       else if (!applyFieldErrors(e, form.setError, ['newEmail', 'password'])) form.setError('root', { message: errorText(t, e) });
     }
   });
   const pending = sent ?? me.user.pendingEmail ?? null;
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-4" noValidate>
-      <p>{t('account.currentEmail', { email: me.user.email })}</p>
+      <p className="text-ink-2">{t('account.currentEmail', { email: me.user.email })}</p>
       {pending && <Banner tone="info">{t('account.emailPending', { email: pending })}</Banner>}
       <Field
         type="email"
@@ -94,7 +111,7 @@ function EmailChange({ me }: { me: Me }) {
       <p className="text-sm text-muted">{t('account.emailChangeHint')}</p>
       {errors.root && <Banner tone="danger">{errors.root.message}</Banner>}
       <div>
-        <Button type="submit" busy={isSubmitting}>
+        <Button type="submit" variant="ink" busy={isSubmitting}>
           {t('account.changeEmail')}
         </Button>
       </div>
@@ -125,7 +142,10 @@ function Preferences({ me }: { me: Me }) {
 function Password() {
   const { t } = useTranslation();
   const [done, setDone] = useState(false);
-  const form = useForm({ resolver: zodResolver(changePasswordBody), defaultValues: { currentPassword: '', newPassword: '' } });
+  const form = useForm({
+    resolver: zodResolver(changePasswordBody),
+    defaultValues: { currentPassword: '', newPassword: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   const submit = form.handleSubmit(async (body) => {
     setDone(false);
@@ -139,7 +159,13 @@ function Password() {
   });
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-4" noValidate>
-      <Field type="password" autoComplete="current-password" label={t('account.currentPassword')} error={errors.currentPassword ? (errors.currentPassword.message && errors.currentPassword.type === 'server' ? errors.currentPassword.message : t('form.required')) : undefined} {...form.register('currentPassword')} />
+      <Field
+        type="password"
+        autoComplete="current-password"
+        label={t('account.currentPassword')}
+        error={errors.currentPassword ? (errors.currentPassword.message && errors.currentPassword.type === 'server' ? errors.currentPassword.message : t('form.required')) : undefined}
+        {...form.register('currentPassword')}
+      />
       <Field
         type="password"
         autoComplete="new-password"
@@ -152,7 +178,7 @@ function Password() {
       {errors.root && <Banner tone="danger">{errors.root.message}</Banner>}
       {done && <Banner tone="ok">{t('account.passwordChanged')}</Banner>}
       <div>
-        <Button type="submit" busy={isSubmitting}>
+        <Button type="submit" variant="ink" busy={isSubmitting}>
           {t('account.changePassword')}
         </Button>
       </div>
@@ -164,7 +190,10 @@ function Password() {
 /** Authenticator enrolment: start → QR and key → confirm with a code. Also used by the mandatory two-factor screen. */
 export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise<unknown> }) {
   const { t } = useTranslation();
-  const [enrolment, setEnrolment] = useState<{ secret: string; uri: string } | null>(null);
+  const [enrolment, setEnrolment] = useState<{
+    secret: string;
+    uri: string;
+  } | null>(null);
   const [password, setPassword] = useState('');
   // Starting an authenticator re-proves the account (H-5): the password, or a recent sign-in for Google-only accounts.
   const enroll = useMutation({
@@ -174,7 +203,10 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
       setEnrolment(r);
     },
   });
-  const form = useForm({ resolver: zodResolver(totpConfirmBody), defaultValues: { code: '' } });
+  const form = useForm({
+    resolver: zodResolver(totpConfirmBody),
+    defaultValues: { code: '' },
+  });
   const confirm = form.handleSubmit(async (body) => {
     try {
       await authApi.post('/mfa/totp/confirm', body);
@@ -189,7 +221,7 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
   if (!enrolment)
     return (
       <div className="flex flex-col gap-3">
-        <p>{t('account.mfaIntro')}</p>
+        <p className="max-w-2xl text-ink-2">{t('account.mfaIntro')}</p>
         <Field
           className="max-w-xs"
           label={t('account.mfaPassword')}
@@ -201,9 +233,13 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
           error={isCode(enroll.error, 'UNAUTHENTICATED') ? t('account.wrongPassword') : undefined}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {isCode(enroll.error, 'FORBIDDEN') ? <Banner tone="warn">{t('account.mfaSignInAgain')}</Banner> : enroll.error && !isCode(enroll.error, 'UNAUTHENTICATED') && <ErrorNote error={enroll.error} />}
+        {isCode(enroll.error, 'FORBIDDEN') ? (
+          <Banner tone="warn">{t('account.mfaSignInAgain')}</Banner>
+        ) : (
+          enroll.error && !isCode(enroll.error, 'UNAUTHENTICATED') && <ErrorNote error={enroll.error} />
+        )}
         <div>
-          <Button busy={enroll.isPending} onClick={() => enroll.mutate()}>
+          <Button variant="ink" busy={enroll.isPending} onClick={() => enroll.mutate()}>
             {t('account.mfaStart')}
           </Button>
         </div>
@@ -212,13 +248,13 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
 
   return (
     <form onSubmit={confirm} className="flex flex-col gap-4" noValidate>
-      <p>{t('account.mfaScan')}</p>
-      <div className="w-fit rounded-lg bg-white p-3">
+      <p className="text-ink-2">{t('account.mfaScan')}</p>
+      <div className="w-fit rounded-[var(--radius-card)] bg-surface p-4 shadow-card ring-1 ring-line">
         <QRCodeSVG value={enrolment.uri} size={180} role="img" aria-label={t('account.mfaQr')} />
       </div>
       <p className="text-sm">
         {t('account.mfaSecret')}{' '}
-        <code dir="ltr" className="rounded bg-canvas px-2 py-1 font-mono break-all">
+        <code dir="ltr" className="rounded-input bg-canvas px-2 py-1 font-mono break-all ring-1 ring-line">
           {enrolment.secret}
         </code>
       </p>
@@ -233,7 +269,7 @@ export function TotpEnrolment({ onEnrolled }: { onEnrolled: () => void | Promise
         {...form.register('code')}
       />
       <div className="flex gap-2">
-        <Button type="submit" busy={form.formState.isSubmitting}>
+        <Button type="submit" variant="ink" busy={form.formState.isSubmitting}>
           {t('account.mfaConfirm')}
         </Button>
         <Button type="button" variant="secondary" onClick={() => setEnrolment(null)}>
@@ -248,8 +284,14 @@ function TwoFactor({ me }: { me: Me }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   // Turning two-factor off needs a code from the current authenticator (H-5).
-  const form = useForm({ resolver: zodResolver(totpRemoveBody), defaultValues: { code: '' } });
-  const remove = useMutation({ mutationFn: (body: { code: string }) => authApi.delete('/mfa/totp', body), onSuccess: () => qc.invalidateQueries({ queryKey: meKey }) });
+  const form = useForm({
+    resolver: zodResolver(totpRemoveBody),
+    defaultValues: { code: '' },
+  });
+  const remove = useMutation({
+    mutationFn: (body: { code: string }) => authApi.delete('/mfa/totp', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: meKey }),
+  });
 
   if (me.user.mfaEnrolled)
     return (
@@ -269,7 +311,11 @@ function TwoFactor({ me }: { me: Me }) {
           {...form.register('code')}
         />
         {/* A wrong code is shown on the field; the multi-venue policy refusal (FORBIDDEN) or a lock-out below. */}
-        {isCode(remove.error, 'FORBIDDEN') ? <Banner tone="warn">{t('account.mfaRequiredByVenues')}</Banner> : remove.error && !isCode(remove.error, 'UNAUTHENTICATED') && <ErrorNote error={remove.error} />}
+        {isCode(remove.error, 'FORBIDDEN') ? (
+          <Banner tone="warn">{t('account.mfaRequiredByVenues')}</Banner>
+        ) : (
+          remove.error && !isCode(remove.error, 'UNAUTHENTICATED') && <ErrorNote error={remove.error} />
+        )}
         <div>
           <ConfirmButton
             label={t('account.mfaRemove')}
@@ -287,7 +333,7 @@ function TwoFactor({ me }: { me: Me }) {
   return (
     <div className="flex flex-col gap-3">
       <p>
-        <StatusPill tone="info">{t('account.mfaOff')}</StatusPill>
+        <StatusPill tone="warn">{t('account.mfaOff')}</StatusPill>
       </p>
       <TotpEnrolment onEnrolled={() => qc.invalidateQueries({ queryKey: meKey })} />
     </div>
@@ -297,7 +343,10 @@ function TwoFactor({ me }: { me: Me }) {
 /** Delete my user account (FR-ADM-20, TR-PRV-11); the only owner of a restaurant must transfer ownership first. */
 function DeleteAccount() {
   const { t } = useTranslation();
-  const form = useForm({ resolver: zodResolver(deleteMeBody), defaultValues: { password: '' } });
+  const form = useForm({
+    resolver: zodResolver(deleteMeBody),
+    defaultValues: { password: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   const submit = form.handleSubmit(async (body) => {
     try {
@@ -311,7 +360,7 @@ function DeleteAccount() {
   });
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-3" noValidate>
-      <p>{t('account.deleteHint')}</p>
+      <p className="max-w-2xl text-ink-2">{t('account.deleteHint')}</p>
       <Field
         type="password"
         autoComplete="current-password"
@@ -338,10 +387,10 @@ function DeleteAccount() {
 export function AccountPage() {
   const { t } = useTranslation();
   const me = useMe();
+  const eyebrow = me.data?.user.email;
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.account')}</h1>
-      <QueryView q={me}>
+    <PageShell eyebrow={eyebrow ? <span dir="ltr">{eyebrow}</span> : undefined} title={t('nav.account')} description={t('account.description')}>
+      <QueryView q={me} skeleton="form">
         {(m) => (
           <>
             <Section title={t('account.profile')}>
@@ -361,12 +410,12 @@ export function AccountPage() {
             <Section title={t('account.mfa')} description={t('account.mfaOptional')}>
               <TwoFactor me={m} />
             </Section>
-            <Section title={t('account.deleteTitle')}>
+            <Section tone="danger" title={t('account.deleteTitle')}>
               <DeleteAccount />
             </Section>
           </>
         )}
       </QueryView>
-    </>
+    </PageShell>
   );
 }

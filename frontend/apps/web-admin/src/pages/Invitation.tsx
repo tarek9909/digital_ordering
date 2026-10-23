@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router';
-import { ErrorNote, Loading } from '../components/common';
+import { ErrorNote, Loading, textLinkClass } from '../components/common';
 import { authApi } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
 import type { InvitationDetails, SignInResponse } from '../lib/types';
@@ -36,7 +36,10 @@ function useAccept(token: string) {
 function NewUserForm({ token }: { token: string }) {
   const { t } = useTranslation();
   const { accept, error, mfaToken, finish } = useAccept(token);
-  const form = useForm({ resolver: zodResolver(newUserSchema), defaultValues: { name: '', password: '' } });
+  const form = useForm({
+    resolver: zodResolver(newUserSchema),
+    defaultValues: { name: '', password: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   if (mfaToken) return <MfaStep mfaToken={mfaToken} onDone={finish} />;
   return (
@@ -51,7 +54,7 @@ function NewUserForm({ token }: { token: string }) {
         {...form.register('password')}
       />
       {error && <Banner tone="danger">{error}</Banner>}
-      <Button type="submit" busy={isSubmitting}>
+      <Button type="submit" size="lg" busy={isSubmitting}>
         {t('invitation.accept')}
       </Button>
     </form>
@@ -61,15 +64,18 @@ function NewUserForm({ token }: { token: string }) {
 function ExistingUserForm({ token }: { token: string }) {
   const { t } = useTranslation();
   const { accept, error, mfaToken, finish } = useAccept(token);
-  const form = useForm({ resolver: zodResolver(existingUserSchema), defaultValues: { password: '' } });
+  const form = useForm({
+    resolver: zodResolver(existingUserSchema),
+    defaultValues: { password: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   if (mfaToken) return <MfaStep mfaToken={mfaToken} onDone={finish} />;
   return (
     <form className="flex flex-col gap-4" noValidate onSubmit={form.handleSubmit((b) => accept(b, (e) => applyFieldErrors(e, form.setError, ['password'])))}>
-      <p>{t('invitation.existingUser')}</p>
+      <p className="text-ink-2">{t('invitation.existingUser')}</p>
       <Field label={t('common:password')} type="password" autoComplete="current-password" error={errors.password ? t('form.required') : undefined} {...form.register('password')} />
       {error && <Banner tone="danger">{error}</Banner>}
-      <Button type="submit" busy={isSubmitting}>
+      <Button type="submit" size="lg" busy={isSubmitting}>
         {t('invitation.accept')}
       </Button>
     </form>
@@ -94,7 +100,7 @@ export function InvitationPage() {
       ) : q.error ? (
         <div className="flex flex-col gap-4">
           <ErrorNote error={q.error} />
-          <Link to="/sign-in" className="inline-flex min-h-12 items-center text-primary underline">
+          <Link to="/sign-in" className={textLinkClass}>
             {t('handoff.signInInstead')}
           </Link>
         </div>
@@ -102,7 +108,13 @@ export function InvitationPage() {
         <Loading />
       ) : (
         <>
-          <p className="mb-4">{t('invitation.intro', { tenant: q.data.tenantName, email: q.data.email, role: t(`roles.${q.data.role}`) })}</p>
+          <p className="mb-2 text-ink-2">
+            {t('invitation.intro', {
+              tenant: q.data.tenantName,
+              email: q.data.email,
+              role: t(`roles.${q.data.role}`),
+            })}
+          </p>
           {q.data.userExists ? <ExistingUserForm token={token} /> : <NewUserForm token={token} />}
         </>
       )}

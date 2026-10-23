@@ -1,6 +1,6 @@
 import { signInBody, signInMfaBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, Field } from '@dop/ui';
+import { AuthShell, Banner, Button, Field } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -9,19 +9,33 @@ import { useLocation, useNavigate } from 'react-router';
 import { authApi } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
 import { wwwUrl } from '../lib/hosts';
+import { switchLang } from '../lib/lang';
+import { linkClass, textLinkClass } from '../components/common';
 import { fetchMe, meKey } from '../lib/me';
 import type { SignInResponse } from '../lib/types';
 
 const codeSchema = signInMfaBody.pick({ code: true });
 
-export function AuthCard({ title, children }: { title: string; children: React.ReactNode }) {
+/** Sign-in, invitation, two-factor and handoff screens: the shared split screen with the admin's story. */
+export function AuthCard({ title, eyebrow, children }: { title: string; eyebrow?: string; children: React.ReactNode }) {
+  const { t, i18n } = useTranslation();
+  const other = i18n.language === 'ar' ? 'en' : 'ar';
   return (
-    <main className="grid min-h-dvh place-items-center bg-canvas p-4">
-      <Card className="w-full max-w-md">
-        <h1 className="mb-4 text-2xl font-bold">{title}</h1>
-        {children}
-      </Card>
-    </main>
+    <AuthShell
+      appTitle={t('common:appName')}
+      panelEyebrow={t('auth.eyebrow')}
+      headline={t('auth.headline')}
+      points={[t('auth.points.live'), t('auth.points.reach'), t('auth.points.team')]}
+      title={title}
+      eyebrow={eyebrow}
+      corner={
+        <Button variant="ghost" lang={other} onClick={() => switchLang(other)}>
+          {other === 'ar' ? 'العربية' : 'English'}
+        </Button>
+      }
+    >
+      {children}
+    </AuthShell>
   );
 }
 
@@ -43,7 +57,10 @@ export function useFinishSignIn() {
 export function MfaStep({ mfaToken, onDone }: { mfaToken: string; onDone: () => Promise<boolean> }) {
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
-  const form = useForm({ resolver: zodResolver(codeSchema), defaultValues: { code: '' } });
+  const form = useForm({
+    resolver: zodResolver(codeSchema),
+    defaultValues: { code: '' },
+  });
   const submit = form.handleSubmit(async ({ code }) => {
     setError(null);
     try {
@@ -55,18 +72,20 @@ export function MfaStep({ mfaToken, onDone }: { mfaToken: string; onDone: () => 
   });
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-      <p>{t('signIn.mfaPrompt')}</p>
+      <p className="text-ink-2">{t('signIn.mfaPrompt')}</p>
       <Field
         label={t('signIn.code')}
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={6}
+        dir="ltr"
+        className="[&_input]:text-center [&_input]:font-mono [&_input]:text-2xl [&_input]:tracking-[0.4em]"
         autoFocus
         error={form.formState.errors.code ? t('signIn.codeInvalid') : undefined}
         {...form.register('code')}
       />
       {error && <Banner tone="danger">{error}</Banner>}
-      <Button type="submit" busy={form.formState.isSubmitting}>
+      <Button type="submit" size="lg" busy={form.formState.isSubmitting}>
         {t('signIn.verify')}
       </Button>
     </form>
@@ -78,7 +97,10 @@ export function SignInPage() {
   const finish = useFinishSignIn();
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const form = useForm({ resolver: zodResolver(signInBody), defaultValues: { email: '', password: '' } });
+  const form = useForm({
+    resolver: zodResolver(signInBody),
+    defaultValues: { email: '', password: '' },
+  });
   const { errors, isSubmitting } = form.formState;
 
   const submit = form.handleSubmit(async (body) => {
@@ -102,17 +124,22 @@ export function SignInPage() {
           <Field label={t('common:email')} type="email" autoComplete="username" error={errors.email ? t('form.email') : undefined} {...form.register('email')} />
           <Field label={t('common:password')} type="password" autoComplete="current-password" error={errors.password ? t('form.required') : undefined} {...form.register('password')} />
           {error && <Banner tone="danger">{error}</Banner>}
-          <Button type="submit" busy={isSubmitting}>
+          <Button type="submit" size="lg" busy={isSubmitting}>
             {t('common:signIn')}
           </Button>
           {/* Google sign-in (R1.1): the API answers 404 when it is not configured; the browser shows that page. */}
-          <a className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 font-semibold" href="/api/auth/v1/oauth/google/start">
-            <span aria-hidden="true" className="font-black text-[#4285f4]">
+          <div className="flex items-center gap-3 text-sm text-muted" aria-hidden="true">
+            <span className="h-px flex-1 bg-line" />
+            {t('signIn.or')}
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <a className={linkClass('secondary')} href="/api/auth/v1/oauth/google/start">
+            <span aria-hidden="true" className="grid size-6 place-items-center rounded-full bg-canvas font-display text-sm font-extrabold text-ink">
               G
             </span>
             {t('signIn.google')}
           </a>
-          <a className="inline-flex min-h-12 items-center text-primary underline" href={wwwUrl('/forgot-password')}>
+          <a className={`${textLinkClass} self-center text-sm`} href={wwwUrl('/forgot-password')}>
             {t('signIn.forgot')}
           </a>
         </form>

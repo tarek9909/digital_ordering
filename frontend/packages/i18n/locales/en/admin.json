@@ -21,13 +21,21 @@
     "support": "Support access",
     "switchVenue": "Venue",
     "supportMode": "Support session",
-    "leaveSupport": "Leave support session"
+    "leaveSupport": "Leave support session",
+    "groups": {
+      "service": "Service",
+      "insights": "Insights",
+      "business": "Business"
+    },
+    "menu": "Menu",
+    "closeMenu": "Close"
   },
   "limited": {
     "title": "Limited access",
     "body": "This account is not active right now, so only some sections are available. Staff boards can still finish open orders but cannot create new tickets.",
     "reachable": "You can still use Billing, Team, Settings (data export and deletion) and Account.",
-    "notAllowed": "You do not have access to this section."
+    "notAllowed": "You do not have access to this section.",
+    "reachableTitle": "Still available to you"
   },
   "banners": {
     "goToBilling": "Go to billing",
@@ -72,7 +80,8 @@
     "forgot": "Forgot your password?",
     "notMember": "Your account is not a member of this restaurant. Sign in from the main site to choose a restaurant.",
     "enrollElsewhere": "Two-factor setup is required for this account.",
-    "google": "Sign in with Google"
+    "google": "Sign in with Google",
+    "or": "or"
   },
   "handoff": {
     "title": "Signing you in",
@@ -121,7 +130,8 @@
       "display": "Pair a TV display (optional)",
       "posters": "Print the QR posters",
       "test_ticket": "Create a test ticket"
-    }
+    },
+    "next": "Next"
   },
   "today": {
     "title": "Today",
@@ -140,7 +150,10 @@
     "longestNumber": "Order",
     "longestStatus": "Status",
     "longestWaiting": "Waiting",
-    "longestNote": "Waiting time counts from when the ticket was created."
+    "longestNote": "Waiting time counts from when the ticket was created.",
+    "description": "How service is going right now.",
+    "openHint": "Orders not yet collected",
+    "emptyBody": "Open the staff board and create the first ticket of the day. The figures here update every 30 seconds."
   },
   "reports": {
     "title": "Reports",
@@ -177,7 +190,9 @@
     "csvHint": "One row per ticket for the dates above (Pro plan).",
     "csvReady": "CSV downloaded",
     "prepP90": "90th percentile preparation",
-    "pickupP90": "90th percentile pickup"
+    "pickupP90": "90th percentile pickup",
+    "description": "How fast orders were ready and how alerts reached customers.",
+    "emptyTitle": "Nothing to show for these dates"
   },
   "venue": {
     "tabsLabel": "Venue settings",
@@ -329,7 +344,8 @@
       "chimeHint": "Played on customers' phones and the display when an order is ready.",
       "chimeBuiltin": "built-in",
       "chimePreview": "Play sound"
-    }
+    },
+    "description": "What customers see, and how orders move through this venue."
   },
   "staff": {
     "supportNoCredentials": "During support access you can see and sign out staff devices. The staff link and PIN stay with the restaurant team.",
@@ -365,7 +381,11 @@
     "remove": "Sign out device",
     "removeTitle": "Sign out {{name}}?",
     "removeBody": "The device must enter the link and PIN again to use the board.",
-    "removed": "Device signed out"
+    "removed": "Device signed out",
+    "description": "How your team signs in to the staff board on tablets and phones.",
+    "noDevicesBody": "Open the staff link on a tablet and enter the PIN. It will show up here.",
+    "rotatedLabel": "Link changed",
+    "pinChangedLabel": "PIN changed"
   },
   "displays": {
     "addTitle": "Add a TV display",
@@ -418,7 +438,9 @@
       "quietHours": "Each period needs a start and an end time, and they must differ.",
       "promoText": "Keep each text to 280 characters or fewer.",
       "promoImageUrl": "Enter a full link starting with https://"
-    }
+    },
+    "description": "TV screens that show order numbers and call them out.",
+    "noneBody": "Name your first screen above, then pair it with the code it shows."
   },
   "posters": {
     "pdfTitle": "Print-ready PDF posters",
@@ -445,7 +467,9 @@
       "step2": "Enter your order number or follow the link on your receipt",
       "step3": "We will alert you as soon as your order is ready",
       "noApp": "No app, no sign-up"
-    }
+    },
+    "description": "QR codes customers scan to follow their order.",
+    "downloadPdf": "Download PDF"
   },
   "team": {
     "inviteTitle": "Invite a manager",
@@ -472,7 +496,9 @@
     "noInvitations": "No pending invitations.",
     "expires": "Expires",
     "revoke": "Revoke",
-    "revoked": "Invitation revoked"
+    "revoked": "Invitation revoked",
+    "description": "Owners and managers who can sign in to this admin.",
+    "noInvitationsBody": "Invite a manager above. The invitation stays here until it is accepted."
   },
   "billing": {
     "plan": "Plan",
@@ -517,7 +543,9 @@
       "maxStaffDevicesPerVenue": "Staff devices in a venue: {{current}}, the plan allows {{allowed}}. Sign out {{n}} device(s).",
       "maxApiKeysPerVenue": "API keys in a venue: {{current}}, the plan allows {{allowed}}. Revoke {{n}} key(s).",
       "other": "A limit of the plan is exceeded ({{current}} of {{allowed}}). Remove {{n}} item(s)."
-    }
+    },
+    "description": "Your plan, what it covers and the payments recorded for it.",
+    "noPaymentsBody": "Payments appear here once our team records them."
   },
   "settings": {
     "tenantTitle": "Restaurant",
@@ -552,7 +580,8 @@
     "slugInvalid": "Use 3 to 40 lowercase letters, digits or hyphens (not at the start or end).",
     "changeSlug": "Change address",
     "slugChanged": "Address changed. Continue at:",
-    "passwordWrong": "The password is incorrect."
+    "passwordWrong": "The password is incorrect.",
+    "description": "The restaurant name, web address, data export and account deletion."
   },
   "actors": {
     "user": "Team member",
@@ -650,7 +679,8 @@
     "emailChangeBelow": "Change it in \"Sign-in email\" below.",
     "preferences": "Email preferences",
     "weeklySummary": "Weekly summary email",
-    "weeklySummaryHint": "A short summary of last week for this restaurant, every Sunday morning."
+    "weeklySummaryHint": "A short summary of last week for this restaurant, every Sunday morning.",
+    "description": "Your profile, sign-in and two-factor protection."
   },
   "errors": {
     "MFA_REQUIRED": "Enter your verification code.",
@@ -725,7 +755,9 @@
     "archiveBody": "Its staff devices, displays and API keys stop working. Ticket history stays in your reports. Venues with open tickets cannot be archived.",
     "archived": "Venue archived",
     "archiveOpenTickets": "This venue still has open tickets. Close or collect them on the staff board, then try again.",
-    "billingNote": "The price is per venue: adding or archiving a venue changes what you pay from your next renewal."
+    "billingNote": "The price is per venue: adding or archiving a venue changes what you pay from your next renewal.",
+    "description": "Every location you run, each with its own board, screens and posters.",
+    "none": "No venues yet"
   },
   "counters": {
     "addTitle": "Add a counter",
@@ -750,7 +782,9 @@
     "archive": "Archive",
     "archiveTitle": "Archive {{name}}?",
     "archiveBody": "The counter disappears from the staff board and displays. Its prefix becomes free. Past tickets stay in reports.",
-    "archived": "Counter archived"
+    "archived": "Counter archived",
+    "description": "Pickup points that call their own orders, such as food and drinks.",
+    "noneBody": "Add a counter above when one venue hands out orders from more than one place."
   },
   "ratings": {
     "intro": "What customers said after collecting their order. Deleting a comment keeps the stars in your reports.",
@@ -769,7 +803,8 @@
     "commentDeleted": "Comment removed",
     "distributionTitle": "Rating distribution",
     "count": "Ratings",
-    "share": "Share"
+    "share": "Share",
+    "noneBody": "Customers can rate their order after collecting it. Their ratings will appear here."
   },
   "support": {
     "codeTitle": "Support code",
@@ -801,7 +836,9 @@
       "refused": "Refused",
       "ended": "Ended",
       "expired": "Expired"
-    }
+    },
+    "description": "Decide when the platform team can look at your account.",
+    "noneBody": "When our team asks for access, you approve or refuse it here."
   },
   "staffMembers": {
     "title": "Named staff",
@@ -818,7 +855,8 @@
     "deactivate": "Deactivate",
     "deactivateTitle": "Deactivate {{name}}?",
     "deactivateBody": "Their PIN stops working at once. Their past actions stay in the activity log.",
-    "deactivated": "Staff member deactivated"
+    "deactivated": "Staff member deactivated",
+    "noneBody": "Add the people who run the board so every action shows who did it."
   },
   "integrations": {
     "intro": "Connect your point of sale or other systems to create tickets automatically and receive status updates.",
@@ -921,7 +959,8 @@
     "posProvider": {
       "foodics": "Foodics"
     },
-    "posConnectHint": "You will sign in to the point of sale and approve access, then come back here."
+    "posConnectHint": "You will sign in to the point of sale and approve access, then come back here.",
+    "noKeysBody": "Create a key to send tickets from your point of sale or ordering system."
   },
   "trends": {
     "title": "Compared with the previous period",
@@ -973,6 +1012,15 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
+    }
+  },
+  "auth": {
+    "eyebrow": "Restaurant admin",
+    "headline": "Call every order the moment it is ready.",
+    "points": {
+      "live": "Live tickets for every venue and counter",
+      "reach": "Alerts that reach customers without an app",
+      "team": "Your team, screens and QR posters in one place"
     }
   }
 }

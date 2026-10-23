@@ -4,7 +4,7 @@ import { Button } from '@dop/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router';
-import { QueryView } from '../components/common';
+import { QueryView, linkClass } from '../components/common';
 import { useCurrentVenueId, useVenue } from '../lib/venue';
 
 const PRINT_CSS = `
@@ -24,8 +24,8 @@ export function PosterPrintPage() {
   return (
     <div className="min-h-dvh bg-canvas p-4 print:bg-white print:p-0">
       <style>{PRINT_CSS}</style>
-      <div className="mx-auto mb-4 flex max-w-[210mm] flex-wrap justify-between gap-3 print:hidden">
-        <Link to="/posters" className="inline-flex min-h-12 items-center rounded-lg border border-line bg-surface px-4 font-semibold">
+      <div className="mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-3 print:hidden">
+        <Link to="/posters" className={linkClass('secondary')}>
           {t('common:back')}
         </Link>
         <Button onClick={() => window.print()}>{t('posters.print')}</Button>

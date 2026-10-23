@@ -1,7 +1,7 @@
 import { useTranslation } from '@dop/i18n';
-import { Card } from '@dop/ui';
+import { Card, PageShell } from '@dop/ui';
 import { useSearchParams } from 'react-router';
-import { QueryView } from '../components/common';
+import { QueryView, Tabs, usePageEyebrow } from '../components/common';
 import { BrandingForm } from '../components/venue/BrandingForm';
 import { FlowForm } from '../components/venue/FlowForm';
 import { GeneralForm } from '../components/venue/GeneralForm';
@@ -19,31 +19,16 @@ export function VenuePage() {
   const q = useVenue(venueId);
 
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.venue')}</h1>
-      <div role="tablist" aria-label={t('venue.tabsLabel')} className="mb-4 flex flex-wrap gap-1 border-b border-line">
-        {TABS.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            id={`tab-${k}`}
-            aria-selected={tab === k}
-            aria-controls={`panel-${k}`}
-            onClick={() => setParams({ tab: k }, { replace: true })}
-            className={`min-h-12 border-b-4 px-4 font-medium ${tab === k ? 'border-primary text-primary' : 'border-transparent'}`}
-          >
-            {t(`venue.tabs.${k}`)}
-          </button>
-        ))}
-      </div>
+    <PageShell eyebrow={usePageEyebrow('venue')} title={t('nav.venue')} description={t('venue.description')}>
+      <Tabs label={t('venue.tabsLabel')} tabs={TABS} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} idPrefix="" labelOf={(k) => t(`venue.tabs.${k}`)} />
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        <QueryView q={q}>
+        <QueryView q={q} skeleton="form">
           {(venue) => {
             // Keyed by the venue data so forms reset when another venue is chosen.
             const key = `${venue.id}-${tab}`;
             if (tab === 'flow') return <FlowForm key={key} venue={venue} />;
             return (
-              <Card>
+              <Card className="p-5 sm:p-6">
                 {tab === 'general' && <GeneralForm key={key} venue={venue} />}
                 {tab === 'branding' && <BrandingForm key={key} venue={venue} />}
                 {tab === 'messages' && <MessagesForm key={key} venue={venue} />}
@@ -52,6 +37,6 @@ export function VenuePage() {
           }}
         </QueryView>
       </div>
-    </>
+    </PageShell>
   );
 }

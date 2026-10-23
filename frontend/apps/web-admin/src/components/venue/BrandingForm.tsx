@@ -35,7 +35,7 @@ function LogoUpload({ venue }: { venue: VenueAdmin }) {
   });
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="logo" className="font-medium">
+      <label htmlFor="logo" className="text-sm font-semibold text-ink-2">
         {t('venue.branding.logo')}
       </label>
       <input
@@ -43,7 +43,7 @@ function LogoUpload({ venue }: { venue: VenueAdmin }) {
         type="file"
         accept={LOGO_TYPES.join(',')}
         aria-describedby="logo-hint"
-        className="min-h-12 rounded-lg border border-line bg-surface p-2"
+        className="min-h-12 rounded-input border border-dashed border-line bg-canvas p-2 text-sm file:me-3 file:min-h-10 file:cursor-pointer file:rounded-control file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-white hover:border-ink-2/30"
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = '';
@@ -68,7 +68,10 @@ export function BrandingForm({ venue }: { venue: VenueAdmin }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const form = useForm({ resolver: zodResolver(colourSchema), defaultValues: { brandColor: venue.brandColor } });
+  const form = useForm({
+    resolver: zodResolver(colourSchema),
+    defaultValues: { brandColor: venue.brandColor },
+  });
   const colour = form.watch('brandColor');
   const { errors, isSubmitting, isDirty } = form.formState;
   const save = useMutation({
@@ -95,16 +98,21 @@ export function BrandingForm({ venue }: { venue: VenueAdmin }) {
         <LogoUpload venue={venue} />
         <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
           <div className="flex items-end gap-3">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="colour-pick" className="font-medium">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="colour-pick" className="text-sm font-semibold text-ink-2">
                 {t('venue.branding.pick')}
               </label>
               <input
                 id="colour-pick"
                 type="color"
-                className="h-12 w-16 rounded-lg border border-line"
+                className="h-12 w-16 cursor-pointer rounded-input border border-line bg-surface p-1"
                 value={/^#[0-9A-Fa-f]{6}$/.test(colour) ? colour : '#1F6FEB'}
-                onChange={(e) => form.setValue('brandColor', e.target.value.toUpperCase(), { shouldDirty: true, shouldValidate: true })}
+                onChange={(e) =>
+                  form.setValue('brandColor', e.target.value.toUpperCase(), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
               />
             </div>
             <Field className="flex-1" label={t('venue.branding.colour')} dir="ltr" error={errors.brandColor ? t('venue.branding.colourInvalid') : undefined} {...form.register('brandColor')} />

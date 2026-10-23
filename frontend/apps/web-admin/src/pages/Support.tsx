@@ -1,9 +1,9 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import { Button, LiveRegion } from '@dop/ui';
+import { Button, EmptyState, LiveRegion, PageShell } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td } from '../components/common';
+import { ConfirmButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration } from '../lib/format';
 import type { SupportCode, SupportSession, SupportStatus } from '../lib/types';
@@ -15,29 +15,35 @@ import { useCountdown } from './Displays';
 export const supportSessionsKey = ['support-sessions'] as const;
 export const fetchSupportSessions = async () => (await api.get<{ items: SupportSession[] }>('/support-sessions')).items;
 
-const TONES: Record<SupportStatus, 'ok' | 'warn' | 'danger' | 'info'> = { requested: 'warn', active: 'ok', refused: 'danger', ended: 'info', expired: 'info' };
+const TONES: Record<SupportStatus, 'ok' | 'warn' | 'danger' | 'info' | 'neutral'> = {
+  requested: 'warn',
+  active: 'ok',
+  refused: 'danger',
+  ended: 'neutral',
+  expired: 'neutral',
+};
 
 function CodeView({ code, onNew, busy }: { code: SupportCode; onNew: () => void; busy: boolean }) {
   const { t } = useTranslation();
   const left = useCountdown(code.expiresAt);
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border-2 border-primary p-4 text-center">
-      <p>{t('support.codeIntro')}</p>
+    <div className="ember-glow flex flex-col items-center gap-3 rounded-[var(--radius-card)] bg-ink p-5 text-center text-white">
+      <p className="text-white/80">{t('support.codeIntro')}</p>
       {left > 0 ? (
         <>
-          <p dir="ltr" className="num text-5xl font-black tracking-[0.25em]" aria-label={code.code.split('').join(' ')}>
+          <p data-motion="pop" dir="ltr" className="num font-display text-5xl font-extrabold tracking-[0.25em] text-glow" aria-label={code.code.split('').join(' ')}>
             {code.code.slice(0, 4)} {code.code.slice(4)}
           </p>
-          <p className="text-muted">
+          <p className="text-white/70">
             {t('support.expiresIn')} <span className="num font-semibold">{formatDuration(left)}</span>
           </p>
         </>
       ) : (
-        <p role="status" className="font-semibold text-danger">
+        <p role="status" className="font-semibold text-white">
           {t('support.codeExpired')}
         </p>
       )}
-      <Button variant="secondary" busy={busy} onClick={onNew}>
+      <Button variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20" busy={busy} onClick={onNew}>
         {t('support.newCode')}
       </Button>
     </div>
@@ -48,16 +54,26 @@ export function SupportPage() {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [code, setCode] = useState<SupportCode | null>(null);
-  const q = useQuery({ queryKey: supportSessionsKey, queryFn: fetchSupportSessions, refetchInterval: 30_000 });
+  const q = useQuery({
+    queryKey: supportSessionsKey,
+    queryFn: fetchSupportSessions,
+    refetchInterval: 30_000,
+  });
   const refresh = () => qc.invalidateQueries({ queryKey: supportSessionsKey });
-  const decide = useMutation({ mutationFn: ({ id, action }: { id: string; action: 'approve' | 'refuse' | 'end' }) => api.post(`/support-sessions/${id}/${action}`), onSuccess: refresh });
-  const gen = useMutation({ mutationFn: () => api.post<SupportCode>('/support-codes'), onSuccess: setCode });
+  const decide = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: 'approve' | 'refuse' | 'end' }) => api.post(`/support-sessions/${id}/${action}`),
+    onSuccess: refresh,
+  });
+  const gen = useMutation({
+    mutationFn: () => api.post<SupportCode>('/support-codes'),
+    onSuccess: setCode,
+  });
   const date = (iso: string | null) => (iso ? formatDateTime(iso, i18n.language) : '—');
   const busy = (id: string, action: string) => decide.isPending && decide.variables?.id === id && decide.variables.action === action;
 
+  const eyebrow = usePageEyebrow('tenant');
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.support')}</h1>
+    <PageShell eyebrow={eyebrow} title={t('nav.support')} description={t('support.description')}>
       <Section title={t('support.codeTitle')} description={t('support.codeHint')}>
         <ErrorNote error={gen.error} />
         {code ? (
@@ -70,31 +86,35 @@ export function SupportPage() {
       </Section>
       <Section title={t('support.sessions')} description={t('support.sessionsHint')}>
         <ErrorNote error={decide.error} />
-        <QueryView q={q}>
+        <QueryView q={q} skeleton="table">
           {(items) =>
             items.length === 0 ? (
-              <p className="text-muted">{t('support.none')}</p>
+              <EmptyState title={t('support.none')}>{t('support.noneBody')}</EmptyState>
             ) : (
               <Table caption={t('support.sessions')} head={[t('support.agent'), t('support.reason'), t('support.status'), t('support.requested'), t('support.until'), '']}>
                 {items.map((s) => (
                   <tr key={s.id}>
-                    <Td className="font-medium">{s.agentName}</Td>
+                    <Td className="font-semibold whitespace-nowrap">{s.agentName}</Td>
                     <Td className="max-w-sm break-words">{s.reason}</Td>
                     <Td>
-                      <StatusPill tone={TONES[s.status] ?? 'info'}>{t(`support.statuses.${s.status}`, { defaultValue: s.status })}</StatusPill>
+                      <StatusPill tone={TONES[s.status] ?? 'neutral'}>
+                        {t(`support.statuses.${s.status}`, {
+                          defaultValue: s.status,
+                        })}
+                      </StatusPill>
                       {s.kind === 'emergency' && (
                         <span className="ms-2">
                           <StatusPill tone="danger">{t('support.emergency')}</StatusPill>
                         </span>
                       )}
                     </Td>
-                    <Td className="whitespace-nowrap">{date(s.requestedAt)}</Td>
-                    <Td className="whitespace-nowrap">{date(s.status === 'active' ? s.expiresAt : s.endedAt)}</Td>
+                    <Td className="whitespace-nowrap text-ink-2">{date(s.requestedAt)}</Td>
+                    <Td className="whitespace-nowrap text-ink-2">{date(s.status === 'active' ? s.expiresAt : s.endedAt)}</Td>
                     <Td>
                       <div className="flex flex-wrap gap-2">
                         {s.status === 'requested' && (
                           <>
-                            <Button busy={busy(s.id, 'approve')} onClick={() => decide.mutate({ id: s.id, action: 'approve' })}>
+                            <Button variant="ink" busy={busy(s.id, 'approve')} onClick={() => decide.mutate({ id: s.id, action: 'approve' })}>
                               {t('support.approve')}
                             </Button>
                             <Button variant="secondary" busy={busy(s.id, 'refuse')} onClick={() => decide.mutate({ id: s.id, action: 'refuse' })}>
@@ -106,7 +126,9 @@ export function SupportPage() {
                           <ConfirmButton
                             label={t('support.end')}
                             title={t('support.endTitle')}
-                            description={t('support.endBody', { name: s.agentName })}
+                            description={t('support.endBody', {
+                              name: s.agentName,
+                            })}
                             confirmLabel={t('support.end')}
                             variant="danger"
                             busy={busy(s.id, 'end')}
@@ -123,6 +145,6 @@ export function SupportPage() {
         </QueryView>
       </Section>
       <LiveRegion text={decide.isSuccess ? t('support.updated') : code ? t('support.codeReady') : ''} />
-    </>
+    </PageShell>
   );
 }

@@ -81,7 +81,7 @@ export function SidebarShell({
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas lg:flex-row">
-      <aside className="border-b border-line bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-68 lg:shrink-0 lg:flex-col lg:border-e lg:border-b-0">
+      <aside className="border-b border-line bg-surface print:hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-68 lg:shrink-0 lg:flex-col lg:border-e lg:border-b-0">
         <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:pt-6 lg:pb-4">
           <span className="flex min-w-0 items-center gap-3 font-display text-lg font-bold">
             <span data-motion="draw" className="contents">

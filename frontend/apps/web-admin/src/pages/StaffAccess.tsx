@@ -1,13 +1,13 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { staffPinBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion } from '@dop/ui';
+import { Banner, Button, EmptyState, Field, LiveRegion, PageShell } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ConfirmButton, CopyButton, ErrorNote, QueryView, Section, Table, Td } from '../components/common';
+import { ConfirmButton, CopyButton, ErrorNote, QueryView, Section, StatusPill, Table, Td, usePageEyebrow } from '../components/common';
 import { StaffMembers } from '../components/StaffMembers';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -19,7 +19,10 @@ function PinForm({ venueId }: { venueId: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const form = useForm({ resolver: zodResolver(staffPinBody), defaultValues: { pin: '' } });
+  const form = useForm({
+    resolver: zodResolver(staffPinBody),
+    defaultValues: { pin: '' },
+  });
   const { errors, isSubmitting } = form.formState;
   const save = useMutation({
     mutationFn: (pin: string) => api.put(`/venues/${venueId}/staff-access/pin`, { pin }),
@@ -41,11 +44,20 @@ function PinForm({ venueId }: { venueId: string }) {
   const pinError = errors.pin ? (errors.pin.type === 'server' && errors.pin.message === 'weak' ? t('staff.pinWeak') : t('staff.pinFormat')) : undefined;
   return (
     <form onSubmit={submit} className="flex max-w-sm flex-col gap-3" noValidate>
-      <Field label={t('staff.newPin')} inputMode="numeric" autoComplete="off" maxLength={6} dir="ltr" hint={t('staff.pinHint')} error={pinError} {...form.register('pin')} />
-      <p className="text-sm text-muted">{t('staff.pinSignsOut')}</p>
+      <Field
+        label={t('staff.newPin')}
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={6}
+        dir="ltr"
+        className="[&_input]:font-mono [&_input]:tracking-[0.3em]"
+        hint={t('staff.pinHint')}
+        error={pinError}
+        {...form.register('pin')}
+      />
       {error && <Banner tone="danger">{error}</Banner>}
       <div>
-        <Button type="submit" busy={isSubmitting}>
+        <Button type="submit" variant="ink" busy={isSubmitting}>
           {t('staff.changePin')}
         </Button>
       </div>
@@ -57,7 +69,11 @@ function PinForm({ venueId }: { venueId: string }) {
 function Devices({ venueId }: { venueId: string }) {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ['devices', venueId], queryFn: async () => (await api.get<{ items: Device[] }>(`/venues/${venueId}/devices`)).items, refetchInterval: 60_000 });
+  const q = useQuery({
+    queryKey: ['devices', venueId],
+    queryFn: async () => (await api.get<{ items: Device[] }>(`/venues/${venueId}/devices`)).items,
+    refetchInterval: 60_000,
+  });
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/devices/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['devices', venueId] }),
@@ -65,19 +81,21 @@ function Devices({ venueId }: { venueId: string }) {
   return (
     <Section title={t('staff.devices')} description={t('staff.devicesHint')}>
       <ErrorNote error={remove.error} />
-      <QueryView q={q}>
+      <QueryView q={q} skeleton="table">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-muted">{t('staff.noDevices')}</p>
+            <EmptyState title={t('staff.noDevices')}>{t('staff.noDevicesBody')}</EmptyState>
           ) : (
             <Table caption={t('staff.devices')} head={[t('staff.deviceName'), t('staff.mode'), t('staff.lastSeen'), t('staff.added'), '']}>
               {items.map((d) => (
                 <tr key={d.id}>
-                  <Td>{d.name}</Td>
-                  <Td>{t(`staff.modes.${d.mode}`, { defaultValue: d.mode })}</Td>
-                  <Td>{formatDateTime(d.lastSeenAt, i18n.language)}</Td>
-                  <Td>{formatDateTime(d.createdAt, i18n.language)}</Td>
+                  <Td className="font-semibold">{d.name}</Td>
                   <Td>
+                    <StatusPill tone="neutral">{t(`staff.modes.${d.mode}`, { defaultValue: d.mode })}</StatusPill>
+                  </Td>
+                  <Td className="whitespace-nowrap text-ink-2">{formatDateTime(d.lastSeenAt, i18n.language)}</Td>
+                  <Td className="whitespace-nowrap text-ink-2">{formatDateTime(d.createdAt, i18n.language)}</Td>
+                  <Td className="text-end">
                     <ConfirmButton
                       label={t('staff.remove')}
                       title={t('staff.removeTitle', { name: d.name })}
@@ -105,7 +123,11 @@ export function StaffAccessPage() {
   const venueId = useCurrentVenueId();
   // A support session manages devices but never sees the staff link or sets the PIN (M-13).
   const support = useRole() === 'support';
-  const q = useQuery({ queryKey: ['staff-access', venueId], queryFn: () => api.get<StaffAccess>(`/venues/${venueId}/staff-access`), enabled: Boolean(venueId) && !support });
+  const q = useQuery({
+    queryKey: ['staff-access', venueId],
+    queryFn: () => api.get<StaffAccess>(`/venues/${venueId}/staff-access`),
+    enabled: Boolean(venueId) && !support,
+  });
   const rotate = useMutation({
     mutationFn: () => api.post<StaffAccess>(`/venues/${venueId}/staff-access/rotate-link`),
     onSuccess: (s) => {
@@ -113,54 +135,64 @@ export function StaffAccessPage() {
       void qc.invalidateQueries({ queryKey: ['devices', venueId] });
     },
   });
+  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('nav.staff')}</h1>
+    <PageShell eyebrow={eyebrow} title={t('nav.staff')} description={t('staff.description')}>
       {support ? (
-        <Banner tone="info">{t('staff.supportNoCredentials')}</Banner>
+        <div className="mb-5">
+          <Banner tone="info">{t('staff.supportNoCredentials')}</Banner>
+        </div>
       ) : (
         <>
-      <Section title={t('staff.linkTitle')} description={t('staff.linkHint')}>
-        <QueryView q={q}>
-          {(s) => (
-            <div className="flex flex-wrap items-start gap-6">
-              <div className="rounded-lg bg-white p-3">
-                <QRCodeSVG value={s.link} size={180} role="img" aria-label={t('staff.qrLabel')} />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-3">
-                <code dir="ltr" className="block rounded bg-canvas p-3 text-sm break-all">
-                  {s.link}
-                </code>
-                <div className="flex flex-wrap gap-2">
-                  <CopyButton text={s.link} label={t('staff.copy')} />
-                  <ConfirmButton
-                    label={t('staff.rotate')}
-                    title={t('staff.rotateTitle')}
-                    description={t('staff.rotateBody')}
-                    confirmLabel={t('staff.rotate')}
-                    variant="danger"
-                    busy={rotate.isPending}
-                    onConfirm={() => rotate.mutateAsync().catch(() => undefined)}
-                  />
+          <Section title={t('staff.linkTitle')} description={t('staff.linkHint')}>
+            <QueryView q={q}>
+              {(s) => (
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+                  {/* The QR is what a tablet scans, so it leads. */}
+                  <div className="w-fit shrink-0 rounded-[var(--radius-card)] bg-surface p-4 shadow-card ring-1 ring-line">
+                    <QRCodeSVG value={s.link} size={176} role="img" aria-label={t('staff.qrLabel')} />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-4">
+                    <code dir="ltr" className="block rounded-input bg-canvas p-3.5 font-mono text-sm break-all text-ink-2 ring-1 ring-line">
+                      {s.link}
+                    </code>
+                    <div className="flex flex-wrap gap-2">
+                      <CopyButton text={s.link} label={t('staff.copy')} variant="primary" />
+                      <ConfirmButton
+                        label={t('staff.rotate')}
+                        title={t('staff.rotateTitle')}
+                        description={t('staff.rotateBody')}
+                        confirmLabel={t('staff.rotate')}
+                        variant="danger"
+                        busy={rotate.isPending}
+                        onConfirm={() => rotate.mutateAsync().catch(() => undefined)}
+                      />
+                    </div>
+                    <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                      <div className="flex flex-col gap-0.5">
+                        <dt className="eyebrow">{t('staff.rotatedLabel')}</dt>
+                        <dd className="text-ink-2">{formatDateTime(s.keyRotatedAt, i18n.language)}</dd>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <dt className="eyebrow">{t('staff.pinChangedLabel')}</dt>
+                        <dd className="text-ink-2">{formatDateTime(s.pinChangedAt, i18n.language)}</dd>
+                      </div>
+                    </dl>
+                    {rotate.error && <Banner tone="danger">{errorText(t, rotate.error)}</Banner>}
+                    <LiveRegion text={rotate.isSuccess ? t('staff.rotated') : ''} />
+                  </div>
                 </div>
-                <p className="text-sm text-muted">
-                  {t('staff.rotatedAt', { date: formatDateTime(s.keyRotatedAt, i18n.language) })} · {t('staff.pinChangedAt', { date: formatDateTime(s.pinChangedAt, i18n.language) })}
-                </p>
-                {rotate.error && <Banner tone="danger">{errorText(t, rotate.error)}</Banner>}
-                <LiveRegion text={rotate.isSuccess ? t('staff.rotated') : ''} />
-              </div>
-            </div>
-          )}
-        </QueryView>
-      </Section>
-      <Section title={t('staff.pinTitle')}>
-        <PinForm venueId={venueId} />
-      </Section>
+              )}
+            </QueryView>
+          </Section>
+          <Section title={t('staff.pinTitle')} description={t('staff.pinSignsOut')}>
+            <PinForm venueId={venueId} />
+          </Section>
         </>
       )}
       <Devices venueId={venueId} />
       <StaffMembers venueId={venueId} />
-    </>
+    </PageShell>
   );
 }

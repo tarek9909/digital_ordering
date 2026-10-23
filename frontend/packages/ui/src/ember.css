@@ -125,6 +125,14 @@
     background: radial-gradient(circle, rgb(251 146 60 / 0.55), rgb(194 65 12 / 0.25) 45%, transparent 70%);
     animation: ember-breathe 7s ease-in-out infinite;
   }
+  /* Compact glow for small tiles (Stat accent): a corner ember, not a wash over the whole tile. */
+  .ember-glow-sm::before {
+    inset-inline-end: -4.5rem;
+    top: -5.5rem;
+    width: 11rem;
+    height: 11rem;
+    background: radial-gradient(circle, rgb(251 146 60 / 0.42), rgb(194 65 12 / 0.16) 45%, transparent 70%);
+  }
   @keyframes ember-breathe {
     50% {
       transform: scale(1.12) translate(-0.875rem, 0.625rem);

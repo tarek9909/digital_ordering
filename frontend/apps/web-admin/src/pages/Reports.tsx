@@ -1,10 +1,10 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Field, LiveRegion, Select } from '@dop/ui';
+import { Button, Card, EmptyState, Field, LiveRegion, PageShell, Select } from '@dop/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ErrorNote, QueryView, Section, Table, Td } from '../components/common';
+import { ErrorNote, QueryView, Section, Table, Td, Tabs, usePageEyebrow } from '../components/common';
 import { api } from '../lib/api';
 import { formatDuration, isoDate, pct } from '../lib/format';
 import { ALL_VENUES, activeHours, csvQuery, delta, heatLevel, heatmapMax, heatmapRows, hourLabel, reportQuery, type ReportFilter } from '../lib/reports';
@@ -16,10 +16,12 @@ import { useCurrentVenueId, useVenues } from '../lib/venue';
 // "heard" an alert (FR-ALR-11).
 
 const REACH = ['push', 'live', 'closed', 'none'] as const;
-// Categorical slots 1–4 of the validated chart palette, fixed order (identity also given by legend + table).
-const COLORS: Record<(typeof REACH)[number], string> = { push: '#2a78d6', live: '#eb6834', closed: '#1baf7a', none: '#eda100' };
-// Sequential blue ramp (steps 100, 250, 400, 550, 700) for heatmap levels 1–5; level 0 stays the surface.
-const HEAT = ['', '#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'] as const;
+// Chart colours come from the theme tokens (CSS variables), so charts follow the Ember palette with no hex here.
+// Alert reach is an ink ramp, darkest for the alert that got furthest; the legend and table carry the meaning too.
+const COLORS: Record<(typeof REACH)[number], string> = { push: 'var(--color-ink)', live: 'var(--color-ink-2)', closed: 'var(--color-muted)', none: 'var(--color-line)' };
+// Sequential warm ramp for heatmap levels 1–5 (ink mixed into the surface); level 0 stays the surface.
+const HEAT = ['', ...[12, 28, 46, 68, 90].map((p) => `color-mix(in oklab, var(--color-ink) ${p}%, var(--color-surface))`)] as const;
+const AXIS = { tick: { fill: 'var(--color-muted)', fontSize: 12 }, stroke: 'var(--color-line)' };
 const TABS = ['trends', 'heatmap', 'daily'] as const;
 type Tab = (typeof TABS)[number];
 
@@ -28,7 +30,7 @@ type Tab = (typeof TABS)[number];
 function Row({ label, s }: { label: string; s: PilotSummary }) {
   return (
     <tr>
-      <Td className="whitespace-nowrap font-medium">{label}</Td>
+      <Td className="font-medium whitespace-nowrap">{label}</Td>
       <Td className="num">{s.tickets}</Td>
       {REACH.map((k) => (
         <Td key={k} className="num">
@@ -53,13 +55,22 @@ function ReachChart({ r }: { r: PilotReport }) {
     <div className="h-72" dir="ltr" role="img" aria-label={t('reports.chartLabel')}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="#e5e7eb" />
-          <XAxis dataKey="date" tick={{ fill: '#4b5563', fontSize: 12 }} stroke="#d1d5db" />
-          <YAxis allowDecimals={false} tick={{ fill: '#4b5563', fontSize: 12 }} stroke="#d1d5db" width={40} />
-          <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+          <CartesianGrid vertical={false} stroke="var(--color-line)" />
+          <XAxis dataKey="date" {...AXIS} />
+          <YAxis allowDecimals={false} {...AXIS} width={40} />
+          <Tooltip cursor={{ fill: 'var(--color-primary-wash)' }} />
           <Legend />
           {REACH.map((k, i) => (
-            <Bar key={k} dataKey={k} stackId="reach" name={t(`common:alertLevel.${k}`)} fill={COLORS[k]} stroke="#ffffff" strokeWidth={2} radius={i === REACH.length - 1 ? [4, 4, 0, 0] : 0} />
+            <Bar
+              key={k}
+              dataKey={k}
+              stackId="reach"
+              name={t(`common:alertLevel.${k}`)}
+              fill={COLORS[k]}
+              stroke="var(--color-surface)"
+              strokeWidth={2}
+              radius={i === REACH.length - 1 ? [4, 4, 0, 0] : 0}
+            />
           ))}
         </BarChart>
       </ResponsiveContainer>
@@ -69,13 +80,32 @@ function ReachChart({ r }: { r: PilotReport }) {
 
 function Daily({ f }: { f: ReportFilter }) {
   const { t } = useTranslation();
-  const q = useQuery({ queryKey: ['pilot', f.venueId, f.from, f.to], queryFn: () => api.get<PilotReport>('/reports/pilot', { from: f.from, to: f.to, venueId: f.venueId === ALL_VENUES ? undefined : f.venueId }) });
-  const head = [t('reports.day'), t('reports.tickets'), ...REACH.map((k) => t(`common:alertLevel.${k}`)), t('today.reachPct'), t('today.ackPct'), t('reports.prep'), t('reports.prepP90'), t('reports.pickup'), t('reports.pickupP90'), t('reports.uncollected')];
+  const q = useQuery({
+    queryKey: ['pilot', f.venueId, f.from, f.to],
+    queryFn: () =>
+      api.get<PilotReport>('/reports/pilot', {
+        from: f.from,
+        to: f.to,
+        venueId: f.venueId === ALL_VENUES ? undefined : f.venueId,
+      }),
+  });
+  const head = [
+    t('reports.day'),
+    t('reports.tickets'),
+    ...REACH.map((k) => t(`common:alertLevel.${k}`)),
+    t('today.reachPct'),
+    t('today.ackPct'),
+    t('reports.prep'),
+    t('reports.prepP90'),
+    t('reports.pickup'),
+    t('reports.pickupP90'),
+    t('reports.uncollected'),
+  ];
   return (
-    <QueryView q={q}>
+    <QueryView q={q} skeleton="table">
       {(r) =>
         r.days.length === 0 ? (
-          <p className="text-muted">{t('reports.empty')}</p>
+          <EmptyState title={t('reports.emptyTitle')}>{t('reports.empty')}</EmptyState>
         ) : (
           <>
             {f.counterId && <p className="mb-3 text-sm text-muted">{t('reports.dailyNoCounter')}</p>}
@@ -99,7 +129,13 @@ function Daily({ f }: { f: ReportFilter }) {
 
 // ---------------------------------------------------------------- trends
 
-type Metric = { key: keyof TrendSummary; label: string; format: (v: number | null) => string; unit: 'count' | 'pct' | 'sec' | 'stars'; lowerIsBetter?: boolean };
+type Metric = {
+  key: keyof TrendSummary;
+  label: string;
+  format: (v: number | null) => string;
+  unit: 'count' | 'pct' | 'sec' | 'stars';
+  lowerIsBetter?: boolean;
+};
 
 function DeltaText({ cur, prev, m }: { cur: number | null; prev: number | null; m: Metric }) {
   const { t } = useTranslation();
@@ -118,36 +154,108 @@ function DeltaText({ cur, prev, m }: { cur: number | null; prev: number | null; 
 
 function Trends({ f }: { f: ReportFilter }) {
   const { t } = useTranslation();
-  const q = useQuery({ queryKey: ['trends', f], queryFn: () => api.get<TrendsReport>('/reports/trends', reportQuery(f)) });
+  const q = useQuery({
+    queryKey: ['trends', f],
+    queryFn: () => api.get<TrendsReport>('/reports/trends', reportQuery(f)),
+  });
   const metrics: Metric[] = [
-    { key: 'tickets', label: t('trends.tickets'), format: (v) => (v === null ? '—' : String(v)), unit: 'count' },
-    { key: 'reachPushOrLivePct', label: t('today.reachPct'), format: pct, unit: 'pct' },
-    { key: 'acknowledgedPct', label: t('today.ackPct'), format: pct, unit: 'pct' },
-    { key: 'repeatPct', label: t('trends.repeat'), format: pct, unit: 'pct', lowerIsBetter: true },
-    { key: 'undoPct', label: t('trends.undo'), format: pct, unit: 'pct', lowerIsBetter: true },
-    { key: 'prepSecondsP50', label: t('trends.prep'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
-    { key: 'pickupSecondsP50', label: t('today.pickup'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
-    { key: 'totalSecondsP50', label: t('trends.totalWait'), format: formatDuration, unit: 'sec', lowerIsBetter: true },
-    { key: 'cancelled', label: t('trends.cancelled'), format: (v) => (v === null ? '—' : String(v)), unit: 'count', lowerIsBetter: true },
-    { key: 'ratingAvg', label: t('trends.rating'), format: (v) => (v === null ? '—' : `${v} / 5`), unit: 'stars' },
+    {
+      key: 'tickets',
+      label: t('trends.tickets'),
+      format: (v) => (v === null ? '—' : String(v)),
+      unit: 'count',
+    },
+    {
+      key: 'reachPushOrLivePct',
+      label: t('today.reachPct'),
+      format: pct,
+      unit: 'pct',
+    },
+    {
+      key: 'acknowledgedPct',
+      label: t('today.ackPct'),
+      format: pct,
+      unit: 'pct',
+    },
+    {
+      key: 'repeatPct',
+      label: t('trends.repeat'),
+      format: pct,
+      unit: 'pct',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'undoPct',
+      label: t('trends.undo'),
+      format: pct,
+      unit: 'pct',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'prepSecondsP50',
+      label: t('trends.prep'),
+      format: formatDuration,
+      unit: 'sec',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'pickupSecondsP50',
+      label: t('today.pickup'),
+      format: formatDuration,
+      unit: 'sec',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'totalSecondsP50',
+      label: t('trends.totalWait'),
+      format: formatDuration,
+      unit: 'sec',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'cancelled',
+      label: t('trends.cancelled'),
+      format: (v) => (v === null ? '—' : String(v)),
+      unit: 'count',
+      lowerIsBetter: true,
+    },
+    {
+      key: 'ratingAvg',
+      label: t('trends.rating'),
+      format: (v) => (v === null ? '—' : `${v} / 5`),
+      unit: 'stars',
+    },
   ];
   return (
-    <QueryView q={q}>
+    <QueryView q={q} skeleton="tiles">
       {(r) => (
         <>
-          <Section title={t('trends.title')} description={t('trends.comparedWith', { from: r.previous.from, to: r.previous.to })}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {metrics.map((m) => {
+          <Section
+            title={t('trends.title')}
+            description={t('trends.comparedWith', {
+              from: r.previous.from,
+              to: r.previous.to,
+            })}
+          >
+            <div data-motion="stagger" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {metrics.map((m, i) => {
                 const cur = r.current[m.key] as number | null;
                 const prev = r.previous[m.key] as number | null;
+                // The period's ticket count leads, as the one ink tile.
+                const lead = i === 0;
                 return (
-                  <div key={m.key} className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-                    <div className="text-sm text-muted">{m.label}</div>
-                    <div className="num mt-1 text-start text-3xl font-bold">{m.format(cur)}</div>
-                    <div className="mt-1 text-sm">
+                  <div
+                    key={m.key}
+                    className={`flex flex-col gap-2 rounded-[var(--radius-card)] p-4 ${lead ? 'ember-glow ember-glow-sm col-span-2 bg-ink text-white lg:col-span-1' : 'border border-line bg-surface'}`}
+                  >
+                    <div className={`text-sm ${lead ? 'text-white/70' : 'text-muted'}`}>{m.label}</div>
+                    <div data-motion="count" className={`num font-display text-3xl leading-none font-extrabold tracking-tight ${lead ? 'text-glow' : ''}`}>
+                      {m.format(cur)}
+                    </div>
+                    <div className={`text-sm ${lead ? '[&_.text-danger]:text-white [&_.text-muted]:text-white/70 [&_.text-ok]:text-white' : ''}`}>
                       <DeltaText cur={cur} prev={prev} m={m} />
                     </div>
-                    <div className="mt-1 text-xs text-muted">{t('trends.previous', { value: m.format(prev) })}</div>
+                    <div className={`text-xs ${lead ? 'text-white/60' : 'text-muted'}`}>{t('trends.previous', { value: m.format(prev) })}</div>
                   </div>
                 );
               })}
@@ -164,18 +272,37 @@ function Trends({ f }: { f: ReportFilter }) {
               <>
                 <div className="h-64" dir="ltr" role="img" aria-label={t('trends.seriesLabel')}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={r.series.map((s) => ({ date: s.date.slice(5), tickets: s.tickets }))} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                      <CartesianGrid vertical={false} stroke="#e5e7eb" />
-                      <XAxis dataKey="date" tick={{ fill: '#4b5563', fontSize: 12 }} stroke="#d1d5db" />
-                      <YAxis allowDecimals={false} tick={{ fill: '#4b5563', fontSize: 12 }} stroke="#d1d5db" width={40} />
-                      <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                      <Bar dataKey="tickets" name={t('trends.tickets')} fill="#2a78d6" radius={[4, 4, 0, 0]} />
+                    <BarChart
+                      data={r.series.map((s) => ({
+                        date: s.date.slice(5),
+                        tickets: s.tickets,
+                      }))}
+                      margin={{ top: 8, right: 8, bottom: 8, left: 0 }}
+                    >
+                      <CartesianGrid vertical={false} stroke="var(--color-line)" />
+                      <XAxis dataKey="date" {...AXIS} />
+                      <YAxis allowDecimals={false} {...AXIS} width={40} />
+                      <Tooltip cursor={{ fill: 'var(--color-primary-wash)' }} />
+                      <Bar dataKey="tickets" name={t('trends.tickets')} fill="var(--color-ink-2)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
                 <details className="mt-3">
-                  <summary className="inline-flex min-h-12 cursor-pointer items-center font-medium">{t('trends.showTable')}</summary>
-                  <Table caption={t('trends.seriesTitle')} head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.totalWait'), t('trends.cancelled'), t('trends.rating')]}>
+                  <summary className="inline-flex min-h-12 cursor-pointer items-center rounded-control px-2 font-semibold text-ink-2 hover:text-ink">{t('trends.showTable')}</summary>
+                  <Table
+                    caption={t('trends.seriesTitle')}
+                    head={[
+                      t('reports.day'),
+                      t('trends.tickets'),
+                      t('today.reachPct'),
+                      t('today.ackPct'),
+                      t('trends.prep'),
+                      t('today.pickup'),
+                      t('trends.totalWait'),
+                      t('trends.cancelled'),
+                      t('trends.rating'),
+                    ]}
+                  >
                     {r.series.map((s) => (
                       <tr key={s.date}>
                         <Td className="whitespace-nowrap">{s.date}</Td>
@@ -227,20 +354,29 @@ function CancelReasons({ current, previous }: { current: TrendSummary; previous:
 
 function Heatmap({ f }: { f: ReportFilter }) {
   const { t } = useTranslation();
-  const q = useQuery({ queryKey: ['heatmap', f], queryFn: () => api.get<HeatmapReport>('/reports/heatmap', reportQuery(f)) });
+  const q = useQuery({
+    queryKey: ['heatmap', f],
+    queryFn: () => api.get<HeatmapReport>('/reports/heatmap', reportQuery(f)),
+  });
   const day = (w: number) => t(`heatmap.days.${w}`);
   return (
-    <QueryView q={q}>
+    <QueryView q={q} skeleton="table">
       {(r) => {
         const rows = heatmapRows(r.grid);
         const max = heatmapMax(rows);
-        if (max === 0) return <p className="text-muted">{t('reports.empty')}</p>;
+        if (max === 0) return <EmptyState title={t('reports.emptyTitle')}>{t('reports.empty')}</EmptyState>;
         const hours = activeHours(rows);
         return (
           <>
             <Section title={t('heatmap.title')} description={t('heatmap.hint')}>
               <div className="overflow-x-auto" aria-hidden="true">
-                <div dir="ltr" className="grid min-w-[44rem] gap-[2px]" style={{ gridTemplateColumns: '5rem repeat(24, minmax(1.5rem, 1fr))' }}>
+                <div
+                  dir="ltr"
+                  className="grid min-w-[44rem] gap-[2px]"
+                  style={{
+                    gridTemplateColumns: '5rem repeat(24, minmax(1.5rem, 1fr))',
+                  }}
+                >
                   <div />
                   {Array.from({ length: 24 }, (_, h) => (
                     <div key={h} className="text-center text-[10px] text-muted">
@@ -292,8 +428,11 @@ function HeatRow({ label, cells, max }: { label: string; cells: number[]; max: n
           <div
             key={h}
             title={`${label} ${hourLabel(h)}: ${v}`}
-            className="h-7 rounded-sm border border-line/40"
-            style={{ background: level ? HEAT[level] : 'transparent', color: level >= 3 ? '#ffffff' : 'inherit' }}
+            className="h-7 rounded-[4px] border border-line/60"
+            style={{
+              background: level ? HEAT[level] : 'transparent',
+              color: level >= 3 ? 'var(--color-surface)' : 'inherit',
+            }}
           />
         );
       })}
@@ -328,9 +467,10 @@ function CsvButton({ f }: { f: ReportFilter }) {
     },
   });
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:items-center sm:gap-4">
       <div>
         <Button variant="secondary" busy={dl.isPending} onClick={() => dl.mutate()}>
+          <span aria-hidden="true">↓</span>
           {t('reports.csv')}
         </Button>
       </div>
@@ -347,7 +487,12 @@ export function ReportsPage() {
   const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '') ? (params.get('tab') as Tab) : 'trends';
   const current = useCurrentVenueId();
   const venues = useVenues().data ?? [];
-  const initial = (): ReportFilter => ({ venueId: current ?? ALL_VENUES, counterId: '', from: isoDate(new Date(Date.now() - 13 * 86_400_000)), to: isoDate(new Date()) });
+  const initial = (): ReportFilter => ({
+    venueId: current ?? ALL_VENUES,
+    counterId: '',
+    from: isoDate(new Date(Date.now() - 13 * 86_400_000)),
+    to: isoDate(new Date()),
+  });
   const [draft, setDraft] = useState<ReportFilter>(initial);
   const [filter, setFilter] = useState<ReportFilter>(initial);
   // On a cold load the venue is still unknown, so both filters start at "all venues". Once it resolves, an
@@ -361,10 +506,11 @@ export function ReportsPage() {
   const counters = useCounters(draft.venueId).data ?? [];
   const venueOptions = [...(venues.length > 1 ? [{ value: ALL_VENUES, label: t('reports.allVenues') }] : []), ...venues.map((v) => ({ value: v.id, label: v.name }))];
 
+  const eyebrow = usePageEyebrow('tenant');
   return (
-    <>
-      <h1 className="mb-4 text-2xl font-bold">{t('reports.title')}</h1>
-      <Section title={t('reports.filters')}>
+    <PageShell eyebrow={eyebrow} title={t('reports.title')} description={t('reports.description')}>
+      <Card className="mb-5 flex flex-col gap-4 p-5 sm:p-6">
+        <h2 className="sr-only">{t('reports.filters')}</h2>
         <form
           className="flex flex-wrap items-end gap-3"
           onSubmit={(e) => {
@@ -374,51 +520,43 @@ export function ReportsPage() {
         >
           {venueOptions.length > 1 && (
             <Select
+              className="min-w-48"
               label={t('reports.venue')}
               value={draft.venueId}
               options={venueOptions}
               onChange={(e) => {
                 venueTouched.current = true;
-                setDraft((d) => ({ ...d, venueId: e.target.value, counterId: '' }));
+                setDraft((d) => ({
+                  ...d,
+                  venueId: e.target.value,
+                  counterId: '',
+                }));
               }}
             />
           )}
           {draft.venueId !== ALL_VENUES && counters.length > 0 && (
             <Select
+              className="min-w-40"
               label={t('reports.counter')}
               value={draft.counterId}
               options={[{ value: '', label: t('reports.allCounters') }, ...counters.map((c) => ({ value: c.id, label: c.name }))]}
               onChange={(e) => setDraft((d) => ({ ...d, counterId: e.target.value }))}
             />
           )}
-          <Field label={t('reports.from')} type="date" value={draft.from} max={draft.to} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} />
-          <Field label={t('reports.to')} type="date" value={draft.to} min={draft.from} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} />
-          <Button type="submit">{t('reports.show')}</Button>
+          <Field label={t('reports.from')} type="date" dir="ltr" value={draft.from} max={draft.to} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} />
+          <Field label={t('reports.to')} type="date" dir="ltr" value={draft.to} min={draft.from} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} />
+          <Button type="submit" variant="ink">
+            {t('reports.show')}
+          </Button>
         </form>
-        <div className="mt-4">
-          <CsvButton f={filter} />
-        </div>
-      </Section>
-      <div role="tablist" aria-label={t('reports.tabsLabel')} className="mb-4 flex flex-wrap gap-1 border-b border-line">
-        {TABS.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            id={`rtab-${k}`}
-            aria-selected={tab === k}
-            aria-controls={`rpanel-${k}`}
-            onClick={() => setParams({ tab: k }, { replace: true })}
-            className={`min-h-12 border-b-4 px-4 font-medium ${tab === k ? 'border-primary text-primary' : 'border-transparent'}`}
-          >
-            {t(`reports.tabs.${k}`)}
-          </button>
-        ))}
-      </div>
+        <CsvButton f={filter} />
+      </Card>
+      <Tabs label={t('reports.tabsLabel')} tabs={TABS} value={tab} onChange={(k) => setParams({ tab: k }, { replace: true })} idPrefix="r" labelOf={(k) => t(`reports.tabs.${k}`)} />
       <div role="tabpanel" id={`rpanel-${tab}`} aria-labelledby={`rtab-${tab}`}>
         {tab === 'trends' && <Trends f={filter} />}
         {tab === 'heatmap' && <Heatmap f={filter} />}
         {tab === 'daily' && <Daily f={filter} />}
       </div>
-    </>
+    </PageShell>
   );
 }

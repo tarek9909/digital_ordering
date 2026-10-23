@@ -274,7 +274,7 @@ export function PageShell({
 /** A figure with a label: the big number in display type, the label as an eyebrow. Counts up once. */
 export function Stat({ label, value, hint, accent, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; accent?: boolean; className?: string }) {
   return (
-    <div className={cx('flex flex-col gap-2 rounded-[var(--radius-card)] p-5', accent ? 'ember-glow bg-ink text-white' : 'bg-surface shadow-card', className)}>
+    <div className={cx('flex flex-col gap-2 rounded-[var(--radius-card)] p-5', accent ? 'ember-glow ember-glow-sm bg-ink text-white shadow-card' : 'bg-surface shadow-card', className)}>
       <span className={cx('eyebrow', accent && 'text-white/65')}>{label}</span>
       <span data-motion="count" className={cx('num font-display text-4xl leading-none font-extrabold tracking-tight', accent && 'text-glow')}>
         {value}
