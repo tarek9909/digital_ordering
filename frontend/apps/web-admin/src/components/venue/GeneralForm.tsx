@@ -3,47 +3,32 @@ import { useTranslation } from '@dop/i18n';
 import { Banner, Button, Field, LiveRegion, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { api } from '../../lib/api';
 import { applyFieldErrors, errorText } from '../../lib/errors';
 import { z } from 'zod';
-import { ADDRESS_FIELDS, type VenueAddress, type VenueAdmin } from '../../lib/types';
+import type { VenueAdmin } from '../../lib/types';
 import { venueKey, venuesKey } from '../../lib/venue';
 
-const addressSchema = z.object(Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, z.string().trim().max(200)])) as Record<(typeof ADDRESS_FIELDS)[number], z.ZodString>);
 const generalSchema = venuePatch
   .pick({
     name: true,
-    timeZone: true,
     locales: true,
     resetTime: true,
     autoCloseTime: true,
   })
-  .required()
-  .extend({ address: addressSchema });
+  .required();
 type GeneralValues = z.infer<typeof generalSchema>;
 
 /** Form values from the venue; pending zone and times show what applies from the next business day. */
 export function generalValues(v: VenueAdmin): GeneralValues {
   return {
     name: v.name,
-    timeZone: v.pendingTimeZone ?? v.timeZone,
     locales: v.locales,
     resetTime: v.pendingResetTime ?? v.resetTime,
     autoCloseTime: v.pendingAutoCloseTime ?? v.autoCloseTime,
-    address: Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, v.address?.[k] ?? ''])) as GeneralValues['address'],
   };
-}
-
-/** The address as the API stores it: empty fields left out, null when nothing is set (W10, FR-ADM-03). */
-export function addressBody(a: GeneralValues['address']): VenueAddress | null {
-  const out = Object.fromEntries(
-    Object.entries(a)
-      .filter(([, v]) => v.trim() !== '')
-      .map(([k, v]) => [k, v.trim()]),
-  );
-  return Object.keys(out).length ? out : null;
 }
 
 const LANGUAGE_SETS: Record<string, string[]> = {
@@ -53,19 +38,13 @@ const LANGUAGE_SETS: Record<string, string[]> = {
   'en,ar': ['en', 'ar'],
 };
 
-function timeZones(current: string): string[] {
-  const intl = Intl as unknown as {
-    supportedValuesOf?: (k: string) => string[];
-  };
-  const list = intl.supportedValuesOf?.('timeZone') ?? ['Asia/Riyadh', 'Asia/Dubai', 'Asia/Kuwait', 'Asia/Qatar', 'Asia/Bahrain', 'Asia/Muscat', 'Africa/Cairo', 'Europe/London'];
-  return list.includes(current) ? list : [current, ...list];
-}
+/** The venue follows the time zone of the device the owner saves from. */
+const deviceZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function GeneralForm({ venue }: { venue: VenueAdmin }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const zones = useMemo(() => timeZones(venue.timeZone), [venue.timeZone]);
   const form = useForm<GeneralValues>({
     resolver: zodResolver(generalSchema),
     defaultValues: generalValues(venue),
@@ -85,40 +64,20 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
     // Send only what changed: time changes are scheduled for the next business day.
     const dirty = form.formState.dirtyFields;
     const body: Record<string, unknown> = {};
-    for (const k of Object.keys(values) as Array<keyof typeof values>) if (dirty[k]) body[k] = k === 'address' ? addressBody(values.address) : values[k];
+    for (const k of Object.keys(values) as Array<keyof typeof values>) if (dirty[k]) body[k] = values[k];
+    const zone = deviceZone();
+    if (zone && zone !== (venue.pendingTimeZone ?? venue.timeZone)) body.timeZone = zone;
     try {
       const v = await save.mutateAsync(body);
       form.reset(generalValues(v));
     } catch (e) {
-      if (!applyFieldErrors(e, form.setError, ['name', 'timeZone', 'locales', 'resetTime', 'autoCloseTime', 'address'])) setError(errorText(t, e));
+      if (!applyFieldErrors(e, form.setError, ['name', 'locales', 'resetTime', 'autoCloseTime'])) setError(errorText(t, e));
     }
   });
 
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-4" noValidate>
       <Field label={t('venue.general.name')} error={errors.name ? t('form.required') : undefined} {...form.register('name')} />
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="tz" className="text-sm font-semibold text-ink-2">
-          {t('venue.general.timeZone')}
-        </label>
-        <input
-          id="tz"
-          list="tz-list"
-          className={`min-h-12 rounded-input border bg-surface px-3.5 text-base hover:border-ink-2/30 ${errors.timeZone ? 'border-danger' : 'border-line'}`}
-          aria-invalid={errors.timeZone ? true : undefined}
-          {...form.register('timeZone')}
-        />
-        <datalist id="tz-list">
-          {zones.map((z) => (
-            <option key={z} value={z} />
-          ))}
-        </datalist>
-        {errors.timeZone && (
-          <p role="alert" className="text-sm text-danger">
-            {errors.timeZone.type === 'server' ? t('venue.general.timeZoneUnknown') : t('form.required')}
-          </p>
-        )}
-      </div>
       <Controller
         control={form.control}
         name="locales"
@@ -149,31 +108,6 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
           })}
         </Banner>
       )}
-      {venue.pendingFromDate && venue.pendingTimeZone && (
-        <Banner tone="info">
-          {t('venue.general.pendingZone', {
-            date: venue.pendingFromDate,
-            zone: venue.pendingTimeZone,
-            current: venue.timeZone,
-          })}
-        </Banner>
-      )}
-      <fieldset className="mt-2 flex flex-col gap-3 border-t border-line pt-5">
-        <legend className="float-start mb-1 w-full font-display text-base font-bold">{t('venue.general.address')}</legend>
-        <Field label={t('venue.general.addressLine1')} autoComplete="address-line1" {...form.register('address.line1')} />
-        <Field label={t('venue.general.addressLine2')} autoComplete="address-line2" {...form.register('address.line2')} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t('venue.general.city')} autoComplete="address-level2" {...form.register('address.city')} />
-          <Field label={t('venue.general.region')} autoComplete="address-level1" {...form.register('address.region')} />
-          <Field label={t('venue.general.postcode')} autoComplete="postal-code" dir="ltr" {...form.register('address.postcode')} />
-          <Field label={t('venue.general.country')} autoComplete="country-name" {...form.register('address.country')} />
-        </div>
-        {errors.address && (
-          <p role="alert" className="text-sm text-danger">
-            {t('venue.general.addressTooLong')}
-          </p>
-        )}
-      </fieldset>
       {error && <Banner tone="danger">{error}</Banner>}
       <div>
         <Button type="submit" busy={isSubmitting} disabled={!isDirty}>

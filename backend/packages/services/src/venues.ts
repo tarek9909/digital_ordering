@@ -430,9 +430,12 @@ export async function listDisplays(deps: Deps, tenantId: string, venueId: string
   await requireVenue(deps.db.forTenant(tenantId), venueId);
   const rows = await deps.db.forTenant(tenantId).selectFrom('displays').selectAll().where('venue_id', '=', venueId).where('revoked_at', 'is', null).orderBy('created_at').execute();
   const now = deps.now().getTime();
+  const tenant = await deps.db.platform().selectFrom('tenants').select('slug').where('id', '=', tenantId).executeTakeFirstOrThrow();
+  const url = urls(deps.config).display(tenant.slug);
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
+    url,
     counterIds: r.counter_ids,
     settings: displaySettingsSchema.parse(r.settings ?? {}),
     paired: r.session_hash !== null,

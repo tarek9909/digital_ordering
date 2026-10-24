@@ -187,23 +187,7 @@ export function FlowForm({ venue }: { venue: VenueAdmin }) {
       </Section>
 
       <Section title={t('venue.flow.customerPage')}>
-        <Field
-          className="max-w-xl"
-          label={t('venue.flow.reviewLink')}
-          hint={t('venue.flow.reviewLinkHint')}
-          type="url"
-          dir="ltr"
-          placeholder="https://"
-          error={err('reviewLinkUrl')}
-          {...form.register('reviewLinkUrl')}
-        />
-        <div className="mt-2">
-          <Checkbox label={t('venue.flow.showPoweredBy')} hint={t('venue.flow.showPoweredByHint')} {...form.register('showPoweredBy')} />
-        </div>
-      </Section>
-
-      <Section title={t('venue.flow.staffBoard')}>
-        <Checkbox label={t('venue.flow.soundOnApiTicket')} hint={t('venue.flow.soundOnApiTicketHint')} {...form.register('soundOnApiTicket')} />
+        <Checkbox label={t('venue.flow.showPoweredBy')} hint={t('venue.flow.showPoweredByHint')} {...form.register('showPoweredBy')} />
       </Section>
 
       {Object.keys(errors).length > 0 && <Banner tone="danger">{t('common:errors.VALIDATION_FAILED')}</Banner>}

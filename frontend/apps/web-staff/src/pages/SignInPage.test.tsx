@@ -14,7 +14,7 @@ import { SignInPage } from './SignInPage';
 
 // W17 / FR-ACC-06: after PIN_LOCKED the keypad unlocks by itself when the lock ends, with a countdown meanwhile.
 const post = vi.hoisted(() => vi.fn());
-vi.mock('../lib/api', async (orig) => ({ ...(await orig<typeof import('../lib/api')>()), signInApi: { post } }));
+vi.mock('../lib/api', async (orig) => ({ ...(await orig<typeof import('../lib/api')>()), signInApi: { post, get: vi.fn().mockResolvedValue({ counters: [] }) } }));
 const KEY = 'K'.repeat(32);
 
 beforeAll(async () => {

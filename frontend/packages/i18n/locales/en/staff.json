@@ -99,6 +99,8 @@
   },
   "suspended": "Account suspended — you can still finish open orders",
   "signIn": {
+    "counterTitle": "Choose your counter",
+    "counterHint": "New tickets from this device go to this counter. You can change it when creating a ticket.",
     "title": "Staff board",
     "badLink": "This staff link is not valid",
     "badLinkBody": "Check the link with your manager and open it again.",

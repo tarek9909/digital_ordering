@@ -41,6 +41,7 @@ export function urls(c: ServiceConfig) {
     ticket: (token: string) => `${base(`t.${c.domain}`, 'customer')}/${token}`,
     venue: (venueCode: string) => `${base(`t.${c.domain}`, 'customer')}/v/${venueCode}`,
     staff: (slug: string, staffKey: string) => `${base(`${slug}.${c.domain}`, 'staff')}/staff/${staffKey}`,
+    display: (slug: string) => `${base(`${slug}.${c.domain}`, 'display')}/display`,
     admin: (slug: string, path = '') => `${base(`${slug}.${c.domain}`, 'admin')}/admin${path}`,
     www: (path = '') => `${base(`www.${c.domain}`, 'www')}${path}`,
     console: (path = '') => `${base(`admin.${c.domain}`, 'console')}${path}`,

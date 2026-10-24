@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addressBody, generalValues } from '../components/venue/GeneralForm';
+import { generalValues } from '../components/venue/GeneralForm';
 import { formToSettings, settingsToForm } from '../lib/settingsForm';
 import type { Billing, Me, VenueAdmin } from '../lib/types';
 import { AccountPage } from './Account';
@@ -132,13 +132,9 @@ describe('W05, W06 account', () => {
 });
 
 describe('W10, W11 venue forms', () => {
-  it('keeps the venue address and pending zone in the form, and sends only filled lines', () => {
-    const v = { name: 'Main', timeZone: 'Asia/Riyadh', pendingTimeZone: 'UTC', locales: ['ar'], resetTime: '04:00', autoCloseTime: '04:00', pendingResetTime: null, pendingAutoCloseTime: null, address: { line1: 'King Fahd Rd 1', city: 'Riyadh' } } as unknown as VenueAdmin;
-    const f = generalValues(v);
-    expect(f.timeZone).toBe('UTC');
-    expect(f.address).toMatchObject({ line1: 'King Fahd Rd 1', city: 'Riyadh', line2: '' });
-    expect(addressBody(f.address)).toEqual({ line1: 'King Fahd Rd 1', city: 'Riyadh' });
-    expect(addressBody({ line1: ' ', line2: '', city: '', region: '', postcode: '', country: '' })).toBeNull();
+  it('shows pending reset times in the general form', () => {
+    const v = { name: 'Main', timeZone: 'Asia/Riyadh', locales: ['ar'], resetTime: '04:00', autoCloseTime: '04:00', pendingResetTime: '05:00', pendingAutoCloseTime: null } as unknown as VenueAdmin;
+    expect(generalValues(v)).toMatchObject({ resetTime: '05:00', autoCloseTime: '04:00' });
   });
 
   it('round-trips the chosen chime through the settings form', () => {

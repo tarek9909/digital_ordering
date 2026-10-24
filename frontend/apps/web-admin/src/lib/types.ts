@@ -166,6 +166,8 @@ export interface Device {
 export interface DisplayItem {
   id: string;
   name: string;
+  /** Address to open on the TV. */
+  url: string;
   paired: boolean;
   pairedAt: string | null;
   lastSeenAt: string | null;

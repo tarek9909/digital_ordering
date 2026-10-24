@@ -1,7 +1,7 @@
 import { useTranslation } from '@dop/i18n';
-import { AuthShell, Button, Field } from '@dop/ui';
+import { AuthShell, Button, Field, Select } from '@dop/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { BOARD_KEY } from '../board/boardData';
 import { Icon } from '../components/Icon';
@@ -9,6 +9,7 @@ import { LangSwitch } from '../components/LangSwitch';
 import { PIN_MAX, PinPad } from '../components/PinPad';
 import { Notice } from '../components/Notice';
 import { errorText, isApiError, signInApi } from '../lib/api';
+import { storedCounterId, storeCounterId } from '../lib/counter';
 import { usePinLock } from '../lib/pinLock';
 import { storeDeviceName, storedDeviceName, storeStaffKey } from '../lib/lang';
 import { useStaff } from '../lib/store';
@@ -26,10 +27,37 @@ export function SignInPage() {
   const [deviceName, setDeviceName] = useState(known);
   const [editName, setEditName] = useState(!known);
   const [busy, setBusy] = useState(false);
+  const [counters, setCounters] = useState<Array<{ id: string; name: string }>>([]);
+  const [counterId, setCounterId] = useState('');
   const [error, setError] = useState<{ text: string; locked: boolean } | null>(null);
   // PIN lock (FR-ACC-06): input stays disabled only until the lock ends, with a visible countdown.
   const lock = usePinLock(() => setError(null));
   const locked = lock.locked;
+
+  // The venue's counters come with the staff link, so the device can pick one before the PIN.
+  useEffect(() => {
+    if (!STAFF_KEY.test(staffKey)) return;
+    signInApi
+      .get<{ counters: Array<{ id: string; name: string }> }>(`/sessions/counters?staffKey=${staffKey}`)
+      .then((r) => {
+        setCounters(r.counters);
+        const saved = storedCounterId();
+        setCounterId(r.counters.find((c) => c.id === saved)?.id ?? r.counters[0]?.id ?? '');
+      })
+      .catch(() => undefined);
+  }, [staffKey]);
+
+  // Physical keyboard: digits and Backspace drive the pad unless a text field has focus.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (locked || busy || e.ctrlKey || e.metaKey || e.altKey || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      if (/^\d$/.test(e.key)) setPin((p) => (p.length < PIN_MAX ? p + e.key : p));
+      else if (e.key === 'Backspace') setPin((p) => p.slice(0, -1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [locked, busy]);
 
   if (!STAFF_KEY.test(staffKey)) return <Notice title={t('signIn.badLink')}>{t('signIn.badLinkBody')}</Notice>;
 
@@ -49,6 +77,7 @@ export function SignInPage() {
       storeStaffKey(staffKey);
       useStaff.getState().setSignedOut(false);
       qc.removeQueries({ queryKey: BOARD_KEY });
+      storeCounterId(counters.length > 1 ? counterId : '');
       navigate('/', { replace: true });
     } catch (err) {
       setPin('');
@@ -90,6 +119,10 @@ export function SignInPage() {
               {t('signIn.changeName')}
             </Button>
           </div>
+        )}
+
+        {counters.length > 1 && (
+          <Select label={t('counter')} value={counterId} onChange={(e) => setCounterId(e.target.value)} options={counters.map((c) => ({ value: c.id, label: c.name }))} />
         )}
 
         <div className="flex flex-col gap-3">

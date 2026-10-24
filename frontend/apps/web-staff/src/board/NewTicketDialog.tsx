@@ -5,6 +5,7 @@ import { Button, Field, Modal, Select } from '@dop/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api, errorText, isApiError, vq } from '../lib/api';
+import { storedCounterId } from '../lib/counter';
 import { putTicket } from './boardData';
 
 interface Props {
@@ -22,7 +23,7 @@ export function NewTicketDialog({ counters, disabled, onClose, onCreated, onOpen
   const qc = useQueryClient();
   const [ref, setRef] = useState('');
   const [note, setNote] = useState('');
-  const [counterId, setCounterId] = useState(counters[0]?.id ?? '');
+  const [counterId, setCounterId] = useState(counters.find((c) => c.id === storedCounterId())?.id ?? counters[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existing, setExisting] = useState<StaffTicket | null>(null);

@@ -5,7 +5,7 @@ import { checkPin, newSecretToken, percentile, toZoned, uuidv7 } from '@dop/doma
 import { writeAudit } from './audit.js';
 import { csvCell } from './csv.js';
 import type { Deps } from './deps.js';
-import { getSetting, isEnabled, requireFeature, requireWithinLimit } from './platform.js';
+import { getSetting, requireFeature, requireWithinLimit } from './platform.js';
 import { createVenueRow } from './venues.js';
 
 // R2 services: multi-site venues (FR-TEN-07/10, FR-ADM-17), named staff (FR-ACC-07, TR-AUTH-12),
@@ -85,7 +85,6 @@ export async function listStaffMembers(deps: Deps, tenantId: string, venueId: st
 export async function createStaffMember(deps: Deps, actor: Actor, tenantId: string, venueId: string, name: string, pin: string) {
   const db = deps.db.forTenant(tenantId);
   if (!(await db.selectFrom('venues').select('id').where('id', '=', venueId).executeTakeFirst())) throw new AppError('NOT_FOUND');
-  await requireFeature(deps, tenantId, 'named_staff');
   if (checkPin(pin) !== 'ok') throw new AppError('VALIDATION_FAILED', 'Choose a PIN that is not a sequence or repeated digit', { errors: [{ path: 'pin', message: 'weak' }] });
   // Personal PINs are unique per venue (checked in code, §7.5).
   for (const m of await db.selectFrom('staff_members').select('pin_hash').where('venue_id', '=', venueId).where('active', '=', true).execute()) {
@@ -142,7 +141,8 @@ export async function staffMemberFor(deps: Deps, token: string, deviceId: string
   return { memberId: v.memberId, name: m.name };
 }
 
-export const namedStaffOn = (deps: Deps, tenantId: string) => isEnabled(deps, tenantId, 'named_staff');
+/** Named staff is switched off: the board never asks for a personal PIN. */
+export const namedStaffOn = async (_deps: Deps, _tenantId: string) => false;
 
 // ---------------------------------------------------------------- calculated wait (TR-ALG-09)
 

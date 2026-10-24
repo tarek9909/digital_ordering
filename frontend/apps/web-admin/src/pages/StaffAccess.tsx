@@ -8,7 +8,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ConfirmButton, CopyButton, DialogActions, ErrorNote, TabPanel, QueryView, Section, SectionTabs, StatusPill, Table, Td } from '../components/common';
-import { StaffMembers } from '../components/StaffMembers';
 import { api } from '../lib/api';
 import { applyFieldErrors, errorText } from '../lib/errors';
 import type { Device, StaffAccess } from '../lib/types';
@@ -207,7 +206,6 @@ export function StaffAccessPage() {
             ),
           },
           { key: 'devices', label: t('staff.devices'), node: <Devices venueId={venueId} /> },
-          { key: 'members', label: t('staffMembers.title'), node: <StaffMembers venueId={venueId} /> },
         ]}
       />
     </TabPanel>

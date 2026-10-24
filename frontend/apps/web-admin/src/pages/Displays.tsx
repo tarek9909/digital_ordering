@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
-import { AddDialog, Checkbox, ConfirmButton, DialogActions, ErrorNote, TabPanel, QueryView, StatusPill } from '../components/common';
+import { AddDialog, Checkbox, ConfirmButton, CopyButton, DialogActions, ErrorNote, TabPanel, QueryView, StatusPill } from '../components/common';
 import { api } from '../lib/api';
 import { MAX_ANNOUNCE_LANGUAGES, MAX_QUIET_HOURS, displayToForm, validateDisplayForm, type DisplayForm, type DisplayFormField } from '../lib/displayForm';
 import { applyFieldErrors, errorText } from '../lib/errors';
@@ -347,6 +347,18 @@ function DisplayCard({ d, venueId }: { d: DisplayItem; venueId: string }) {
           })}
         </p>
       )}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold text-ink-2">{t('displays.link')}</p>
+        <code dir="ltr" className="block rounded-input bg-canvas p-3 font-mono text-sm break-all text-ink-2 ring-1 ring-line">
+          {d.url}
+        </code>
+        <div className="flex flex-wrap gap-2">
+          <CopyButton text={d.url} label={t('displays.copyLink')} />
+          <a href={d.url} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-ink ring-1 ring-line hover:bg-canvas">
+            {t('displays.openLink')}
+          </a>
+        </div>
+      </div>
       {code && <PairingCodeView code={code} busy={pairing.isPending} onNew={() => pairing.mutate()} />}
       <ErrorNote error={pairing.error ?? remove.error} />
       <div className="flex flex-wrap gap-2">

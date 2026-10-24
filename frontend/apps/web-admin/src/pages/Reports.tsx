@@ -230,12 +230,6 @@ function Trends({ f }: { f: ReportFilter }) {
       unit: 'count',
       lowerIsBetter: true,
     },
-    {
-      key: 'ratingAvg',
-      label: t('trends.rating'),
-      format: (v) => (v === null ? '—' : `${v} / 5`),
-      unit: 'stars',
-    },
   ];
   return (
     <QueryView q={q} skeleton="tiles">
@@ -322,7 +316,7 @@ function Trends({ f }: { f: ReportFilter }) {
                       <summary className="inline-flex min-h-12 cursor-pointer items-center rounded-control px-2 font-semibold text-ink-2 hover:text-ink">{t('trends.showTable')}</summary>
                       <Table
                         caption={t('trends.seriesTitle')}
-                        head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.totalWait'), t('trends.cancelled'), t('trends.rating')]}
+                        head={[t('reports.day'), t('trends.tickets'), t('today.reachPct'), t('today.ackPct'), t('trends.prep'), t('today.pickup'), t('trends.totalWait'), t('trends.cancelled')]}
                       >
                         {r.series.map((s) => (
                           <tr key={s.date}>
@@ -334,7 +328,6 @@ function Trends({ f }: { f: ReportFilter }) {
                             <Td className="num">{formatDuration(s.pickupSecondsP50)}</Td>
                             <Td className="num">{formatDuration(s.totalSecondsP50)}</Td>
                             <Td className="num">{s.cancelled}</Td>
-                            <Td className="num">{s.ratingAvg ?? '—'}</Td>
                           </tr>
                         ))}
                       </Table>

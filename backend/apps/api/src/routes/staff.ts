@@ -1,4 +1,4 @@
-import { COOKIES, SESSION_TTL } from '@dop/auth';
+import { COOKIES, SESSION_TTL, tokenHash } from '@dop/auth';
 import { AppError, claimDecisionBody, createTicketBody, editTicketBody, searchQuery, staffDevicePatch, staffSessionBody, transitionBody, uuidSchema, type StaffBoard } from '@dop/contracts';
 import {
   alertAgain,
@@ -68,6 +68,29 @@ export const staffRoutes = defineRoutes('/api/staff/v1', [
       if (r.tenantId !== c.tenant?.id) throw new AppError('NOT_FOUND');
       c.setCookie(COOKIES.device, r.token, SESSION_TTL.deviceSlidingMs);
       return { deviceId: r.deviceId };
+    },
+  }),
+  route({
+    method: 'get',
+    path: '/sessions/counters',
+    surfaces: ['tenant'],
+    permission: 'public',
+    query: z.object({ staffKey: z.string().regex(/^[0-9A-Za-z]{32}$/) }).strict(),
+    rateLimit: { name: 'staff-counters', points: 60, durationSec: 600, key: 'ip' },
+    // The counter names a device can pick on the sign-in screen; the secret staff link is the only credential needed.
+    handler: async (c) => {
+      const pdb = c.deps.db.platform();
+      const sa = await pdb.selectFrom('staff_access').select(['venue_id', 'tenant_id']).where('staff_key_hash', '=', tokenHash(c.deps.config.pepper, c.query.staffKey)).executeTakeFirst();
+      if (!sa || sa.tenant_id !== c.tenant?.id) throw new AppError('NOT_FOUND');
+      const rows = await c.deps.db
+        .forTenant(sa.tenant_id)
+        .selectFrom('counters')
+        .select(['id', 'name'])
+        .where('venue_id', '=', sa.venue_id)
+        .where('archived_at', 'is', null)
+        .orderBy('sort_order')
+        .execute();
+      return { counters: rows };
     },
   }),
   route({
