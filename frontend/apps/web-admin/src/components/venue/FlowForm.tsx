@@ -186,10 +186,6 @@ export function FlowForm({ venue }: { venue: VenueAdmin }) {
         />
       </Section>
 
-      <Section title={t('venue.flow.customerPage')}>
-        <Checkbox label={t('venue.flow.showPoweredBy')} hint={t('venue.flow.showPoweredByHint')} {...form.register('showPoweredBy')} />
-      </Section>
-
       {Object.keys(errors).length > 0 && <Banner tone="danger">{t('common:errors.VALIDATION_FAILED')}</Banner>}
       <ErrorNote error={error} />
       <div className="mt-2">
@@ -197,7 +193,7 @@ export function FlowForm({ venue }: { venue: VenueAdmin }) {
           {t('common:save')}
         </Button>
       </div>
-      <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
+      <LiveRegion toast text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
     </form>
   );
 }

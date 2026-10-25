@@ -72,6 +72,7 @@ export async function createRuntime(env: Env, log: Logger = createLogger(env.LOG
       cdnBaseUrl: env.CDN_BASE_URL,
       vapidPublicKey: env.VAPID_PUBLIC_KEY,
       scheme: env.INSECURE_COOKIES ? 'http' : 'https',
+      platformMfa: env.PLATFORM_MFA,
       localPorts: local ? LOCAL_PORTS : undefined,
     },
     db,

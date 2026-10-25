@@ -79,13 +79,11 @@ describe('W02 plans and offline billing', () => {
     ...over,
   });
 
-  it('lists every catalogue plan and offers no online checkout', async () => {
+  it('has no plans and prices tab and offers no online checkout', async () => {
     routes({ '/billing': billing({}), '/me': ME });
     renderAt(<BillingPage />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Plans and prices' }));
-    expect(await screen.findByText('Multi-site')).toBeTruthy();
-    expect(screen.getByText('Standard')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Plan' }));
+    expect(await screen.findByRole('tab', { name: 'Plan' })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Plans and prices' })).toBeNull();
     expect(await screen.findByText(/Contact us to choose a plan/)).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: 'Payment history' }));
     expect(await screen.findByText('No payments recorded yet.')).toBeTruthy();

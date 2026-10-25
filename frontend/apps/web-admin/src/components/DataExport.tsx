@@ -31,7 +31,7 @@ export function DataExport() {
           {t('settings.exportDownload')}
         </Button>
       </div>
-      <LiveRegion text={dl.isSuccess ? t('settings.exportReady') : ''} />
+      <LiveRegion toast text={dl.isSuccess ? t('settings.exportReady') : ''} />
     </div>
   );
 }

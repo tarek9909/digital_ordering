@@ -70,17 +70,26 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
   };
   const failed = save.error && !(save.error instanceof MfaCancelled) ? save.error : null;
   return (
-    <section aria-labelledby="sp-h">
-      <h2 id="sp-h" className="mb-1 text-xl font-bold">
-        {t('sitePricing.title')}
-      </h2>
-      <p className="mb-3 text-muted">{t('sitePricing.intro')}</p>
-      <Card>
+    <section aria-labelledby="sp-h" className="flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+          <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+        </span>
+        <div>
+          <h2 id="sp-h" className="text-lg font-bold text-ink">
+            {t('sitePricing.title')}
+          </h2>
+          <p className="text-xs text-muted">{t('sitePricing.intro')}</p>
+        </div>
+      </div>
+      <Card className="border border-line/80 bg-surface shadow-xs">
         <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {LANGS.map((l) => (
-              <fieldset key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-4">
-                <legend className="mb-2 font-semibold">{t(`sitePricing.lang.${l}`)}</legend>
+              <fieldset key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-4 rounded-lg border border-line/70 bg-canvas/30 p-4">
+                <legend className="px-2 text-xs font-bold uppercase tracking-wider text-ink">{t(`sitePricing.lang.${l}`)}</legend>
                 <Field label={t('sitePricing.heading', { lang: l.toUpperCase() })} value={title[l]} onChange={(e) => setTitle({ ...title, [l]: e.target.value })} maxLength={120} />
                 <TextArea
                   label={t('sitePricing.included', { lang: l.toUpperCase() })}
@@ -93,59 +102,75 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
               </fieldset>
             ))}
           </div>
-          <fieldset className="flex flex-col gap-1">
-            <legend className="mb-1 font-semibold">{t('sitePricing.periods')}</legend>
-            <div className="flex flex-wrap gap-x-6">
+          <fieldset className="flex flex-col gap-2 border-t border-line/70 pt-5">
+            <legend className="mb-0.5 text-sm font-bold text-ink">{t('sitePricing.periods')}</legend>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               {SITE_PRICING_PERIODS.map((p) => (
                 <Checkbox key={p} label={t(`sitePricing.period.${p}`)} checked={periods.includes(p)} onChange={(e) => togglePeriod(p, e.target.checked)} />
               ))}
             </div>
           </fieldset>
-          <fieldset className="flex flex-col gap-3">
-            <legend className="mb-1 font-semibold">{t('sitePricing.plans')}</legend>
-            <p className="text-sm text-muted">{t('sitePricing.plansHint')}</p>
+          <fieldset className="flex flex-col gap-3 border-t border-line/70 pt-5">
+            <legend className="mb-0.5 text-sm font-bold text-ink">{t('sitePricing.plans')}</legend>
+            <p className="text-xs text-muted">{t('sitePricing.plansHint')}</p>
             <ErrorNote error={plans.error} />
             {plans.isSuccess && shown.length === 0 && <p className="text-muted">{t('sitePricing.noPlans')}</p>}
-            {shown.map((p) => (
-              <div key={p.code} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-line p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="min-w-0 font-semibold break-words">
-                    {p.name} <span className="font-mono text-sm break-all text-muted">{p.code}</span>
-                  </p>
-                  <label className="inline-flex min-h-12 items-center gap-2 font-medium">
-                    <input type="radio" name="sp-featured" className="size-5" checked={featured === p.code} onChange={() => setFeatured(p.code)} />
-                    {t('sitePricing.featured')}
-                  </label>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {LANGS.map((l) => (
-                    <div key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-3">
-                      <Field label={t('sitePricing.planName', { lang: l.toUpperCase() })} placeholder={p.name} value={look(p.code).name[l]} onChange={(e) => setLook(p.code, 'name', l, e.target.value)} maxLength={40} />
-                      <Field label={t('sitePricing.tagline', { lang: l.toUpperCase() })} value={look(p.code).tagline[l]} onChange={(e) => setLook(p.code, 'tagline', l, e.target.value)} maxLength={140} />
+            {shown.map((p) => {
+              const isFeat = featured === p.code;
+              return (
+                <div key={p.code} className={`flex flex-col gap-4 rounded-xl border p-4 transition-all duration-150 ${isFeat ? 'border-primary/50 bg-primary/[0.02] shadow-xs ring-1 ring-primary/20' : 'border-line bg-canvas/20'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-bold text-ink break-words">{p.name}</span>
+                      <span className="rounded-md bg-canvas px-2.5 py-0.5 font-mono text-xs font-semibold text-muted ring-1 ring-line">
+                        {p.code}
+                      </span>
+                      {isFeat && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                          ★ {t('sitePricing.featured')}
+                        </span>
+                      )}
                     </div>
-                  ))}
+                    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-line hover:bg-canvas">
+                      <input type="radio" name="sp-featured" className="size-4 text-primary" checked={isFeat} onChange={() => setFeatured(p.code)} />
+                      {t('sitePricing.featured')}
+                    </label>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {LANGS.map((l) => (
+                      <div key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-3">
+                        <Field label={t('sitePricing.planName', { lang: l.toUpperCase() })} placeholder={p.name} value={look(p.code).name[l]} onChange={(e) => setLook(p.code, 'name', l, e.target.value)} maxLength={40} />
+                        <Field label={t('sitePricing.tagline', { lang: l.toUpperCase() })} value={look(p.code).tagline[l]} onChange={(e) => setLook(p.code, 'tagline', l, e.target.value)} maxLength={140} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {shown.length > 0 && (
-              <label className="inline-flex min-h-12 items-center gap-2 font-medium">
-                <input type="radio" name="sp-featured" className="size-5" checked={featured === ''} onChange={() => setFeatured('')} />
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-xs font-semibold text-muted ring-1 ring-line hover:text-ink">
+                <input type="radio" name="sp-featured" className="size-4" checked={featured === ''} onChange={() => setFeatured('')} />
                 {t('sitePricing.noFeatured')}
               </label>
             )}
           </fieldset>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 border-t border-line/70 pt-4">
             <Button type="submit" busy={save.isPending}>
               {t('sitePricing.save')}
             </Button>
-            {save.isSuccess && <span className="text-ok">{t('sitePricing.saved')}</span>}
+            {save.isSuccess && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ok">
+                <span className="size-1.5 rounded-full bg-ok" />
+                {t('sitePricing.saved')}
+              </span>
+            )}
           </div>
           {error && (
-            <p role="alert" className="text-danger">
+            <p role="alert" className="rounded-md border border-danger/30 bg-danger-bg px-3.5 py-2 text-xs font-medium text-danger">
               {error}
             </p>
           )}
-          {failed && (failed instanceof ApiError ? <p role="alert" className="text-danger">{errorText(t, failed)}</p> : <ErrorNote error={failed} />)}
+          {failed && (failed instanceof ApiError ? <p role="alert" className="rounded-md border border-danger/30 bg-danger-bg px-3.5 py-2 text-xs font-medium text-danger">{errorText(t, failed)}</p> : <ErrorNote error={failed} />)}
         </form>
       </Card>
     </section>

@@ -1,7 +1,6 @@
 import { requireFreshMfa } from '@dop/auth';
 import {
   AppError,
-  announcementBody,
   changePlanBody,
   emailTemplateBody,
   flagOverrideBody,
@@ -22,17 +21,14 @@ import {
   addNote,
   addPrice,
   changePlan,
-  createAnnouncement,
   createLegalDocument,
   createPlan,
   deactivatePrice,
-  deleteAnnouncement,
   emergencySupport,
   endSupport,
   enterSupport,
   getEmailTemplate,
   grantFreeMonths,
-  listAnnouncements,
   listFlags,
   listLegalDocuments,
   listNotes,
@@ -222,20 +218,6 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     params: idP,
     handler: async (c) => {
       await signOutVenueDevices(c.deps, pa(c), c.params.id);
-    },
-  }),
-
-  // Announcements (FR-SA-13)
-  route({ method: 'get', path: '/announcements', surfaces: ['console'], permission: 'console.announcements', handler: async (c) => ({ items: await listAnnouncements(c.deps) }) }),
-  route({ method: 'post', path: '/announcements', surfaces: ['console'], permission: 'console.announcements', body: announcementBody, status: 201, handler: async (c) => createAnnouncement(c.deps, pa(c), c.body) }),
-  route({
-    method: 'delete',
-    path: '/announcements/:id',
-    surfaces: ['console'],
-    permission: 'console.announcements',
-    params: idP,
-    handler: async (c) => {
-      await deleteAnnouncement(c.deps, c.params.id);
     },
   }),
 

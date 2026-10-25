@@ -111,7 +111,6 @@ describe('approved support identity (AS01)', () => {
     });
     expect(await screen.findByText(/You are in an approved support session/)).toBeTruthy();
     expect(api.get.mock.calls.map((c) => c[0])).not.toContain('/tenant');
-    expect(api.get.mock.calls.map((c) => c[0])).not.toContain('/announcements');
   });
 });
 

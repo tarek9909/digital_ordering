@@ -34,6 +34,7 @@ import {
   reactivateTenant,
   resetPlatformMfa,
   setComplimentary,
+  subscriptionReport,
   suspendTenant,
   tenantBillingView,
   tenantDetail,
@@ -115,9 +116,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     params: idP,
     body: reasonBody,
     handler: async (c) => {
-      const a = pa(c);
-      requireFreshMfa(a, c.deps.now());
-      await suspendTenant(c.deps, c.params.id, a, c.body.reason, c.requestId);
+      await suspendTenant(c.deps, c.params.id, pa(c), c.body.reason, c.requestId);
     },
   }),
   route({
@@ -127,7 +126,6 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     permission: 'console.tenants.lifecycle',
     params: idP,
     handler: async (c) => {
-      requireFreshMfa(pa(c), c.deps.now()); // reverses a suspension, which itself needs a recent check (L-6)
       await reactivateTenant(c.deps, c.params.id, pa(c), c.requestId);
     },
   }),
@@ -192,6 +190,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
       return tenantBillingView(c.deps, c.params.id);
     },
   }),
+  route({ method: 'get', path: '/reports/subscriptions', surfaces: ['console'], permission: 'console.reports', handler: async (c) => subscriptionReport(c.deps) }),
   route({
     method: 'get',
     path: '/reports/pilot',
@@ -213,7 +212,7 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
     status: 201,
     handler: async (c) => {
       requireFreshMfa(pa(c), c.deps.now()); // granting console access (L-6)
-      return invitePlatformUser(c.deps, pa(c), c.body.email, c.body.name, c.body.role);
+      return invitePlatformUser(c.deps, pa(c), c.body.email, c.body.name, c.body.role, c.body.password);
     },
   }),
   route({

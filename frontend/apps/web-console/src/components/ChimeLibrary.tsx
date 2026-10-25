@@ -26,14 +26,24 @@ export function ChimeLibrary() {
   });
   const patchError = patch.error instanceof ApiError && patch.error.problem?.detail ? `${errorText(t, patch.error)} ${patch.error.problem.detail}` : null;
   return (
-    <section aria-labelledby="chime-h">
-      <LiveRegion text={announce} />
-      <h2 id="chime-h" className="mb-3 text-xl font-bold">
-        {t('settings.chimes')}
-      </h2>
+    <section aria-labelledby="chime-h" className="flex flex-col gap-6">
+      <LiveRegion toast text={announce} />
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+          <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+        </span>
+        <div>
+          <h2 id="chime-h" className="text-lg font-bold text-ink">
+            {t('settings.chimes')}
+          </h2>
+          <p className="text-xs text-muted">{t('settings.chimeUploadHint')}</p>
+        </div>
+      </div>
       <ErrorNote error={q.error} />
       {patch.error ? (
-        <p role="alert" className="mb-3 rounded-input bg-danger-bg px-3 py-2 font-medium text-danger">
+        <p role="alert" className="rounded-input border border-danger/30 bg-danger-bg px-4 py-2.5 text-sm font-medium text-danger">
           {patchError ?? errorText(t, patch.error)}
         </p>
       ) : null}
@@ -44,13 +54,19 @@ export function ChimeLibrary() {
           {q.data?.items.map((c) => (
             <tr key={c.id}>
               <Td>
-                <code dir="ltr">{c.code}</code>
+                <span dir="ltr" className="inline-flex items-center rounded-md bg-canvas px-2.5 py-1 font-mono text-xs font-semibold text-ink ring-1 ring-line">
+                  {c.code}
+                </span>
               </Td>
               <Td>
                 <ChimeRename chime={c} busy={patch.isPending} onSave={(name) => patch.mutate({ id: c.id, body: { name } })} />
               </Td>
-              <Td className="num">{(c.durationMs / 1000).toFixed(1)} s</Td>
-              <Td>{c.builtin || !c.url ? <span className="text-muted">{t('settings.builtinChime')}</span> : <ChimePreview chime={c} />}</Td>
+              <Td className="num">
+                <span className="inline-flex items-center rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-muted ring-1 ring-line">
+                  {(c.durationMs / 1000).toFixed(1)} s
+                </span>
+              </Td>
+              <Td>{c.builtin || !c.url ? <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-0.5 text-xs text-muted ring-1 ring-line">{t('settings.builtinChime')}</span> : <ChimePreview chime={c} />}</Td>
               <Td>
                 <Checkbox
                   label={t('settings.chimeActiveFor', { name: c.name })}
@@ -88,11 +104,11 @@ function ChimePreview({ chime }: { chime: Chime }) {
   return (
     <div className="flex flex-col gap-1">
       <Button type="button" variant="secondary" onClick={play} aria-label={t('settings.previewChime', { name: chime.name })}>
-        <span aria-hidden="true">▶ </span>
+        <span aria-hidden="true" className="text-primary">▶ </span>
         {t('settings.preview')}
       </Button>
       {failed && (
-        <span role="alert" className="text-sm text-danger">
+        <span role="alert" className="text-xs text-danger">
           {t('settings.previewFailed')}
         </span>
       )}
@@ -154,10 +170,19 @@ function ChimeUpload({ onDone }: { onDone: (name: string) => void }) {
     return key ? t(key) : undefined;
   };
   return (
-    <Card className="mt-4">
-      <h3 className="mb-1 text-lg font-bold">{t('settings.chimeUpload')}</h3>
-      <p className="mb-3 text-sm text-muted">{t('settings.chimeUploadHint')}</p>
-      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2" noValidate>
+    <Card className="border border-line/80 bg-surface shadow-xs">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+          <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </span>
+        <div>
+          <h3 className="text-base font-bold text-ink">{t('settings.chimeUpload')}</h3>
+          <p className="text-xs text-muted">{t('settings.chimeUploadHint')}</p>
+        </div>
+      </div>
+      <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2" noValidate>
         {up.error ? (
           <div className="sm:col-span-2">
             <ErrorNote error={up.error} />
@@ -186,7 +211,7 @@ function ChimeUpload({ onDone }: { onDone: (name: string) => void }) {
           error={err('file')}
           onChange={(e) => setV({ ...v, file: e.target.files?.[0] ?? null })}
         />
-        <div className="flex justify-end sm:col-span-2">
+        <div className="flex justify-end pt-2 sm:col-span-2">
           <Button type="submit" busy={up.isPending}>
             {t('settings.chimeUploadSubmit')}
           </Button>

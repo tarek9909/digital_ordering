@@ -134,6 +134,7 @@ export function TeamPage() {
           <SectionTabs
             label={t('team.description')}
             idPrefix="team"
+            base="/team"
             sections={[
               {
                 key: 'members',
@@ -209,7 +210,7 @@ export function TeamPage() {
           />
         )}
       </QueryView>
-      <LiveRegion text={removeMember.isSuccess ? t('team.removed') : revoke.isSuccess ? t('team.revoked') : ''} />
+      <LiveRegion toast text={removeMember.isSuccess ? t('team.removed') : revoke.isSuccess ? t('team.revoked') : ''} />
     </TabPanel>
   );
 }

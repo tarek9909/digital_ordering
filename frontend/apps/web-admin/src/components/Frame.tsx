@@ -3,6 +3,7 @@ import { BrandMark } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NavLink } from 'react-router';
+import { cx } from './common';
 import { api } from '../lib/api';
 import { setTheme, useTheme } from '../lib/theme';
 import type { TodayReport } from '../lib/types';
@@ -11,8 +12,6 @@ import { useCurrentVenueId, useVenues, useVenueStore } from '../lib/venue';
 // The restaurant admin's frame: a floating white sidebar that folds to an icon rail and, above every page, the "pass" —
 // a floating ink bar that keeps the venue being run and its live service in view, the way the pass between kitchen and
 // counter does, and carries the language switch and sign-out.
-
-const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
 
 /** Sidebar link: the active item gets a canvas pill and an ink notch on its start edge; a folded rail shows the icon only. */
 export const sideItemClass = (active: boolean, collapsed = false) =>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTarget, describeTarget, jsonValue } from './announcement';
+import { jsonValue } from './format';
 import { blocksToText, placeholdersIn, textToBlocks } from './emailTemplates';
 import { majorToMinor, minorToMajor } from './money';
 import { DEFAULT_LIMITS, parseFeatures, parsePlanLimits } from './planLimits';
@@ -29,21 +29,8 @@ describe('money', () => {
   });
 });
 
-describe('announcement target', () => {
-  const id = '0190a3b2-1c2d-7e3f-8a9b-0c1d2e3f4a5b';
-  it('builds all / tenants / plans', () => {
-    expect(buildTarget('all', '', [])).toEqual({ ok: true, target: { all: true } });
-    expect(buildTarget('tenants', `${id.toUpperCase()}, ${id}`, [])).toEqual({ ok: true, target: { tenantIds: [id] } });
-    expect(buildTarget('plans', '', ['pro', ' standard ', 'pro'])).toEqual({ ok: true, target: { plans: ['pro', 'standard'] } });
-  });
-  it('rejects empty lists and bad IDs', () => {
-    expect(buildTarget('tenants', '  ', [])).toEqual({ ok: false, error: 'empty' });
-    expect(buildTarget('plans', '', [])).toEqual({ ok: false, error: 'empty' });
-    expect(buildTarget('tenants', `${id} nope`, [])).toEqual({ ok: false, error: 'invalidId', detail: 'nope' });
-  });
-  it('describes stored targets, parsed or as text', () => {
-    expect(describeTarget({ all: true })).toEqual({ kind: 'all', items: [] });
-    expect(describeTarget('{"plans":["pro"]}')).toEqual({ kind: 'plans', items: ['pro'] });
+describe('jsonValue', () => {
+  it('parses stored JSON text and falls back on bad input', () => {
     expect(jsonValue('{"a":1}', {})).toEqual({ a: 1 });
     expect(jsonValue('broken', { x: 1 })).toEqual({ x: 1 });
   });
@@ -99,6 +86,5 @@ describe('support sessions and R1.1 roles', () => {
     expect(can('support', 'commercial')).toBe(false);
     expect(can('finance', 'notes')).toBe(false);
     expect(can('finance', 'reports')).toBe(true);
-    expect(can('super_admin', 'announcements')).toBe(true);
   });
 });

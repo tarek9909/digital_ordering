@@ -50,6 +50,7 @@ export interface PlansTable {
   id: string;
   code: string;
   name: string;
+  description: string | null;
   is_public: Generated<boolean>;
   limits: Json<Record<string, number>>;
   features: Json<string[]>;

@@ -11,7 +11,6 @@ export const PLATFORM_TABLES = new Set([
   'chimes',
   'languages',
   'legal_documents',
-  'announcements',
   'audit_log',
   'tenants',
   'users',

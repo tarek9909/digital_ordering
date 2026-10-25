@@ -503,7 +503,7 @@ function CsvButton({ f }: { f: ReportFilter }) {
         {t('reports.csv')}
       </Button>
       <ErrorNote error={dl.error} />
-      <LiveRegion text={dl.isSuccess ? t('reports.csvReady') : ''} />
+      <LiveRegion toast text={dl.isSuccess ? t('reports.csvReady') : ''} />
     </div>
   );
 }

@@ -24,7 +24,19 @@ interface Props {
   onMenu: (t: StaffTicket) => void;
 }
 
-type CardProps = Omit<Props, 'columns' | 'collected' | 'collectedCount' | 'showReceived'>;
+type CardProps = Omit<Props, 'columns' | 'collected' | 'collectedCount' | 'showReceived'> & {
+  dragId?: string | null;
+  onDragStart?: (t: StaffTicket) => void;
+  onDragEnd?: () => void;
+};
+
+/** Where a card may be dropped from each status; the server still has the final say. */
+const DROP_FROM: Record<Key, StaffTicket['status'][]> = {
+  received: [],
+  preparing: ['received', 'ready'],
+  ready: ['received', 'preparing'],
+  collected: ['ready'],
+};
 
 /** How each column reads at a glance: a shape and label first, a tint only as a second cue. */
 const LOOK: Record<Key, { col: string; head: string }> = {
@@ -44,7 +56,7 @@ const CARD_GRID = { gridTemplateColumns: 'repeat(auto-fill, minmax(min(15rem, 10
 /** Below this the board shows tabs: phones in either orientation (a landscape phone is wide but too short for columns). */
 const COLUMNS_QUERY = '(min-width: 768px) and (min-height: 520px)';
 
-function ColumnBody({ k, tickets, collected, ...rest }: CardProps & { k: Key; tickets: StaffTicket[]; collected: StaffTicket[] }) {
+function ColumnBody({ k, tickets, collected, dragId, ...rest }: CardProps & { k: Key; tickets: StaffTicket[]; collected: StaffTicket[] }) {
   const { t } = useTranslation();
   if (k === 'collected') {
     if (collected.length === 0) return <Empty text={t('collectedEmpty')} />;
@@ -60,7 +72,7 @@ function ColumnBody({ k, tickets, collected, ...rest }: CardProps & { k: Key; ti
   return (
     <div className="grid gap-3" style={CARD_GRID}>
       {tickets.map((tk) => (
-        <TicketCard key={tk.id} ticket={tk} {...rest} />
+        <TicketCard key={tk.id} ticket={tk} dragging={dragId === tk.id} {...rest} />
       ))}
     </div>
   );
@@ -81,6 +93,33 @@ export function BoardColumns({ columns, collected, collectedCount, showReceived,
   const flipRef = useRef<HTMLDivElement>(null);
   useFlip(flipRef, [columns, collected], `${active}:${wide}`);
 
+  const [drag, setDrag] = useState<StaffTicket | null>(null);
+  const [over, setOver] = useState<Key | null>(null);
+  const endDrag = () => {
+    setDrag(null);
+    setOver(null);
+  };
+  const canDrop = (k: Key) => Boolean(drag) && !rest.disabled && DROP_FROM[k].includes(drag!.status);
+  const dropProps = (k: Key) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!canDrop(k)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setOver(k);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver((o) => (o === k ? null : o));
+    },
+    onDrop: (e: React.DragEvent) => {
+      if (!canDrop(k)) return;
+      e.preventDefault();
+      const tk = drag!;
+      endDrag();
+      rest.onAction(tk, k as TransitionTo);
+    },
+  });
+  const cardRest = { ...rest, dragId: drag?.id ?? null, onDragStart: setDrag, onDragEnd: endDrag };
+
   if (!wide) {
     return (
       <div className="flex flex-1 flex-col">
@@ -95,6 +134,7 @@ export function BoardColumns({ columns, collected, collectedCount, showReceived,
                 aria-selected={on}
                 aria-controls={`panel-${k}`}
                 onClick={() => setTab(k)}
+                {...dropProps(k)}
                 className={`relative flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 transition-colors ${on ? 'text-ink' : 'text-muted'}`}
               >
                 <span className="flex items-center gap-1.5">
@@ -108,7 +148,7 @@ export function BoardColumns({ columns, collected, collectedCount, showReceived,
           })}
         </div>
         <div ref={flipRef} role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <ColumnBody k={active} tickets={active === 'collected' ? [] : columns[active]} collected={collected} {...rest} />
+          <ColumnBody k={active} tickets={active === 'collected' ? [] : columns[active]} collected={collected} {...cardRest} />
         </div>
       </div>
     );
@@ -123,7 +163,8 @@ export function BoardColumns({ columns, collected, collectedCount, showReceived,
       style={{ gridTemplateColumns: template }}
     >
       {keys.map((k) => (
-        <section key={k} aria-labelledby={`col-${k}`} className={`flex min-h-full min-w-0 snap-start flex-col gap-3 rounded-[1.75rem] p-2.5 ${LOOK[k].col}`}>
+        <section key={k} aria-labelledby={`col-${k}`} {...dropProps(k)}
+          className={`flex min-h-full min-w-0 snap-start flex-col gap-3 rounded-[1.75rem] p-2.5 transition-shadow ${LOOK[k].col} ${canDrop(k) ? 'ring-2 ring-ink/25' : ''} ${over === k ? 'ring-4 !ring-ink/60' : ''}`}>
           <h2 id={`col-${k}`} className="flex items-center gap-2 px-2 pt-1.5 pb-0.5">
             <StatusGlyph status={k} className={`size-5 ${LOOK[k].head}`} />
             {/* The Collected column is narrow: a smaller label and count keep "Collected" whole beside its total. */}
@@ -131,7 +172,7 @@ export function BoardColumns({ columns, collected, collectedCount, showReceived,
             <span className={`num ms-auto font-display leading-none font-extrabold tracking-tight ${k === 'collected' ? 'text-xl' : 'text-2xl'}`}>{count(k)}</span>
           </h2>
           {k === 'collected' && <p className="eyebrow -mt-2.5 px-2 text-end">{t('today')}</p>}
-          <ColumnBody k={k} tickets={k === 'collected' ? [] : columns[k]} collected={collected} {...rest} />
+          <ColumnBody k={k} tickets={k === 'collected' ? [] : columns[k]} collected={collected} {...cardRest} />
         </section>
       ))}
     </div>

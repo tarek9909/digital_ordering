@@ -114,7 +114,7 @@ export function GeneralForm({ venue }: { venue: VenueAdmin }) {
           {t('common:save')}
         </Button>
       </div>
-      <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
+      <LiveRegion toast text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
     </form>
   );
 }

@@ -16,8 +16,7 @@ export type ConsolePermission =
   | 'support.emergency'
   | 'commercial'
   | 'ownership'
-  | 'devices'
-  | 'announcements';
+  | 'devices';
 
 const GRANTS: Record<PlatformRole, readonly ConsolePermission[]> = {
   super_admin: [
@@ -34,7 +33,6 @@ const GRANTS: Record<PlatformRole, readonly ConsolePermission[]> = {
     'commercial',
     'ownership',
     'devices',
-    'announcements',
   ],
   support: ['tenants.read', 'notes', 'support'],
   finance: ['tenants.read', 'reports', 'billing.read'],

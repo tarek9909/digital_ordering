@@ -720,6 +720,22 @@ export interface PlatformSession {
   mfaVerifiedAt: Date | null;
 }
 
+/** PLATFORM_MFA=off: the password alone opens a console session and every session counts as freshly verified. */
+const platformMfaOff = (deps: Deps) => deps.config.platformMfa === 'off';
+
+async function openPlatformSession(deps: Deps, userId: string, client: ClientInfo): Promise<SignInResult> {
+  const db = deps.db.platform();
+  const token = newSecretToken();
+  const id = uuidv7();
+  const now = deps.now();
+  await db
+    .insertInto('platform_sessions')
+    .values({ id, platform_user_id: userId, token_hash: hash(deps, token), mfa_verified_at: now, ip: client.ip, user_agent: client.userAgent.slice(0, 300), expires_at: new Date(now.getTime() + SESSION_TTL.platformAbsoluteMs) })
+    .execute();
+  await db.updateTable('platform_users').set({ last_sign_in_at: now }).where('id', '=', userId).execute();
+  return { kind: 'session', token, sessionId: id, userId };
+}
+
 export async function signInPlatform(deps: Deps, email: string, password: string, client: ClientInfo): Promise<SignInResult> {
   await checkThrottle(deps, `p:${email}`, client.ip, () => familiarAddress(deps, 'platform', email, client.ip));
   const db = deps.db.platform();
@@ -729,6 +745,7 @@ export async function signInPlatform(deps: Deps, email: string, password: string
     await recordFailure(deps, `p:${email}`, client.ip);
     throw new AppError('UNAUTHENTICATED', 'Email or password is incorrect');
   }
+  if (platformMfaOff(deps)) return openPlatformSession(deps, u.id, client);
   const mfaToken = newSecretToken();
   await deps.kv.set(keys.mfaToken(hash(deps, mfaToken)), JSON.stringify({ kind: 'platform', platformUserId: u.id }), SESSION_TTL.mfaTokenMs / 1000);
   // No second factor yet: the user must enrol before any session exists (FR-SA-02).
@@ -764,15 +781,7 @@ export async function signInPlatformMfa(deps: Deps, mfaToken: string, code: stri
     await deps.kv.del(`totp:pending:p:${u.id}`);
   }
   secret = null;
-  const token = newSecretToken();
-  const id = uuidv7();
-  const now = deps.now();
-  await db
-    .insertInto('platform_sessions')
-    .values({ id, platform_user_id: u.id, token_hash: hash(deps, token), mfa_verified_at: now, ip: client.ip, user_agent: client.userAgent.slice(0, 300), expires_at: new Date(now.getTime() + SESSION_TTL.platformAbsoluteMs) })
-    .execute();
-  await db.updateTable('platform_users').set({ last_sign_in_at: now }).where('id', '=', u.id).execute();
-  return { kind: 'session', token, sessionId: id, userId: u.id };
+  return openPlatformSession(deps, u.id, client);
 }
 
 /**
@@ -804,25 +813,31 @@ export async function resolvePlatformSession(deps: Deps, token: string): Promise
     .where('platform_sessions.token_hash', '=', hash(deps, token))
     .where('platform_sessions.revoked_at', 'is', null)
     .executeTakeFirst();
-  if (!s || s.status !== 'active' || !s.mfa_verified_at) return null;
+  if (!s || s.status !== 'active' || (!s.mfa_verified_at && !platformMfaOff(deps))) return null;
   if (s.expires_at <= now || now.getTime() - s.last_seen_at.getTime() > SESSION_TTL.platformIdleMs) return null;
   await db.updateTable('platform_sessions').set({ last_seen_at: now }).where('id', '=', s.id).execute();
-  return { sessionId: s.id, platformUserId: s.platform_user_id, role: s.role, name: s.name, mfaVerifiedAt: s.mfa_verified_at };
+  return { sessionId: s.id, platformUserId: s.platform_user_id, role: s.role, name: s.name, mfaVerifiedAt: platformMfaOff(deps) ? now : s.mfa_verified_at };
 }
 
 export async function revokePlatformSession(deps: Deps, sessionId: string) {
   await deps.db.platform().updateTable('platform_sessions').set({ revoked_at: deps.now() }).where('id', '=', sessionId).execute();
 }
 
-/** Platform user invitation: a 7-day token kept in the KV store; accepting sets the password. */
-export async function invitePlatformUser(deps: Deps, actor: Actor & { kind: 'platform' }, email: string, name: string, role: PlatformRole) {
+/** Platform user invitation: a 7-day token kept in the KV store; accepting sets the password. With `password` the account is created active instead and no email is sent (the user enrols two-factor at first sign-in). */
+export async function invitePlatformUser(deps: Deps, actor: Actor & { kind: 'platform' }, email: string, name: string, role: PlatformRole, password?: string) {
   const db = deps.db.platform();
   if (await db.selectFrom('platform_users').select('id').where('email', '=', email).executeTakeFirst()) throw new AppError('EMAIL_TAKEN');
+  if (password !== undefined) {
+    const problem = checkPassword(password);
+    if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'password', message: problem }] });
+  }
   const id = uuidv7();
+  const passwordHash = password === undefined ? null : await hashSecret(password);
   await db.transaction().execute(async (tx) => {
-    await tx.insertInto('platform_users').values({ id, email, name, role }).execute();
-    await writeAudit(tx, { actor, action: 'platform_user.invited', tenantId: null, entityType: 'platform_user', entityId: id, after: { email, role }, visibleToTenant: false });
+    await tx.insertInto('platform_users').values(passwordHash ? { id, email, name, role, password_hash: passwordHash, status: 'active' } : { id, email, name, role }).execute();
+    await writeAudit(tx, { actor, action: 'platform_user.invited', tenantId: null, entityType: 'platform_user', entityId: id, after: { email, role, method: passwordHash ? 'credentials' : 'email' }, visibleToTenant: false });
   });
+  if (passwordHash) return { id };
   await issuePlatformInvitation(deps, id, email, name);
   return { id };
 }

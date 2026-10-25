@@ -1,6 +1,5 @@
 import { AppError, dateRange, legalAcceptBody, legalPendingQuery, slugChangeBody, uuidSchema } from '@dop/contracts';
 import {
-  announcementsFor,
   approveSupport,
   changeSlug,
   createSupportCode,
@@ -15,7 +14,7 @@ import {
 import { z } from 'zod';
 import { defineRoutes, route, type Ctx } from '../http/router.js';
 
-// Tenant admin API, R1.1 additions (TRD §12.7): support requests, announcements, plan change, slug change,
+// Tenant admin API, R1.1 additions (TRD §12.7): support requests, plan change, slug change,
 // trends and heatmap reports, legal re-acceptance.
 
 const idP = z.object({ id: uuidSchema }).strict();
@@ -78,7 +77,6 @@ export const adminR11Routes = defineRoutes('/api/admin/v1', [
     rateLimit: { name: 'supcode', points: 10, durationSec: 3600, key: 'actor' },
     handler: async (c) => createSupportCode(c.deps, user(c)),
   }),
-  route({ method: 'get', path: '/announcements', surfaces: ['tenant'], permission: 'announcements.read', limitedAccessOk: true, handler: async (c) => ({ items: await announcementsFor(c.deps, tenantId(c)) }) }),
 
   // Slug change with 180-day redirect (TR-URL-03); owner only.
   route({

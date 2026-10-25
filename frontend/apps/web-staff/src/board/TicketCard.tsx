@@ -58,9 +58,13 @@ interface Props {
   showCheckCode: boolean;
   onAction: (t: StaffTicket, to: TransitionTo) => void;
   onMenu: (t: StaffTicket) => void;
+  /** Drag-and-drop between columns (mouse and pen; touch keeps the buttons). */
+  dragging?: boolean;
+  onDragStart?: (t: StaffTicket) => void;
+  onDragEnd?: () => void;
 }
 
-export function TicketCard({ ticket, now, disabled, showCheckCode, onAction, onMenu }: Props) {
+export function TicketCard({ ticket, now, disabled, showCheckCode, onAction, onMenu, dragging, onDragStart, onDragEnd }: Props) {
   const { t } = useTranslation();
   const busy = useStaff((s) => Boolean(s.busy[ticket.id]));
   const overdueRound = useStaff((s) => s.overdue[ticket.id]);
@@ -76,7 +80,14 @@ export function TicketCard({ ticket, now, disabled, showCheckCode, onAction, onM
       data-flip-id={ticket.id}
       aria-label={`${ticket.displayNumber} ${t(`common:status.${ticket.status}`)}`}
       aria-busy={busy || undefined}
-      className={`@container relative flex min-w-0 flex-col gap-3 rounded-[var(--radius-card)] p-4 shadow-card ${tone}`}
+      draggable={Boolean(onDragStart) && !busy && !disabled}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', ticket.id);
+        onDragStart?.(ticket);
+      }}
+      onDragEnd={onDragEnd}
+      className={`@container relative flex min-w-0 flex-col gap-3 rounded-[var(--radius-card)] p-4 shadow-card ${onDragStart && !disabled ? 'cursor-grab active:cursor-grabbing' : ''} ${dragging ? 'opacity-40' : ''} ${tone}`}
     >
       <div className="flex items-start justify-between gap-2">
         {/* Scales down in a narrow card (container width) rather than pushing the menu out; a long number wraps. */}

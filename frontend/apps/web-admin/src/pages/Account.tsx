@@ -52,7 +52,7 @@ function Profile({ me }: { me: Me }) {
           {t('common:save')}
         </Button>
       </div>
-      <LiveRegion text={isSubmitSuccessful && !isDirty ? t('common:saved') : ''} />
+      <LiveRegion toast text={isSubmitSuccessful && !isDirty ? t('common:saved') : ''} />
     </form>
   );
 }
@@ -120,7 +120,7 @@ function EmailChange({ me }: { me: Me }) {
           {t('account.changeEmail')}
         </Button>
       </div>
-      <LiveRegion text={sent ? t('account.emailPending', { email: sent }) : ''} />
+      <LiveRegion toast text={sent ? t('account.emailPending', { email: sent }) : ''} />
     </form>
   );
 }
@@ -139,7 +139,7 @@ function Preferences({ me }: { me: Me }) {
     <div className="flex flex-col gap-3">
       <Checkbox label={t('account.weeklySummary')} hint={t('account.weeklySummaryHint')} checked={checked} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
       <ErrorNote error={save.error} />
-      <LiveRegion text={save.isSuccess ? t('common:saved') : ''} />
+      <LiveRegion toast text={save.isSuccess ? t('common:saved') : ''} />
     </div>
   );
 }
@@ -187,7 +187,7 @@ function Password() {
           {t('account.changePassword')}
         </Button>
       </div>
-      <LiveRegion text={done ? t('account.passwordChanged') : ''} />
+      <LiveRegion toast text={done ? t('account.passwordChanged') : ''} />
     </form>
   );
 }
@@ -401,6 +401,7 @@ export function AccountPage() {
           <SectionTabs
             label={t('account.description')}
             idPrefix="acc"
+            base="/account"
             sections={[
               { key: 'profile', label: t('account.profile'), node: <Section title={t('account.profile')}><Profile me={m} /></Section> },
               { key: 'email', label: t('account.email'), node: <Section title={t('account.email')}><EmailChange me={m} /></Section> },

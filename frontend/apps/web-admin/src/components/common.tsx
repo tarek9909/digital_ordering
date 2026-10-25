@@ -1,14 +1,14 @@
 import { useTranslation } from '@dop/i18n';
 import { Banner, Button, Modal, Pill, Skeleton, Spinner } from '@dop/ui';
 import { createContext, useContext, useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { errorText, isCode } from '../lib/errors';
 import { useRole } from '../lib/me';
 
 // Local building blocks of the restaurant admin, on top of @dop/ui. Pages sit on the canvas as flat, bordered panels;
 // the one raised surface on a page is its headline figures (brand: Ember).
 
-const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
+export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
 
 type LinkVariant = 'primary' | 'secondary' | 'ink' | 'ghost' | 'quiet';
 const LINK_VARIANTS: Record<LinkVariant, string> = {
@@ -464,55 +464,67 @@ export function Tabs<K extends string>({
   tabs,
   value,
   onChange,
+  hrefOf,
   idPrefix,
   labelOf,
 }: {
   label: string;
   tabs: readonly K[];
   value: K;
-  onChange: (k: K) => void;
+  onChange?: (k: K) => void;
+  /** When set, each tab is a link to its own sub-page address instead of a button. */
+  hrefOf?: (k: K) => string;
   idPrefix: string;
   labelOf: (k: K) => string;
 }) {
   return (
     <div role="tablist" aria-label={label} className={tabBarClass}>
-      {tabs.map((k) => (
-        <button
-          key={k}
-          type="button"
-          role="tab"
-          id={`${idPrefix}tab-${k}`}
-          aria-selected={value === k}
-          aria-controls={`${idPrefix}panel-${k}`}
-          onClick={() => onChange(k)}
-          className={tabClass(value === k)}
-        >
-          {labelOf(k)}
-        </button>
-      ))}
+      {tabs.map((k) => {
+        const props = {
+          role: 'tab',
+          id: `${idPrefix}tab-${k}`,
+          'aria-selected': value === k,
+          'aria-controls': `${idPrefix}panel-${k}`,
+          className: tabClass(value === k),
+        } as const;
+        return hrefOf ? (
+          <Link key={k} to={hrefOf(k)} replace {...props}>
+            {labelOf(k)}
+          </Link>
+        ) : (
+          <button key={k} type="button" onClick={() => onChange?.(k)} {...props}>
+            {labelOf(k)}
+          </button>
+        );
+      })}
     </div>
   );
+}
+
+/** The first path segment after `base` ("" when the address is `base` itself), e.g. "activity" for /settings/activity. */
+export function useSubPath(base: string): string {
+  const { pathname } = useLocation();
+  const rest = pathname.startsWith(base) ? pathname.slice(base.length) : '';
+  return rest.split('/').filter(Boolean)[0] ?? '';
 }
 
 export type TabSection = { key: string; label: string; node: ReactNode };
 
 /**
- * A page of several containers shown one at a time as tabs. Falsy entries are skipped; with a single section the tab bar
- * is dropped. A URL hash equal to a section key (e.g. #deletion) opens that section first.
+ * A page of several containers shown one at a time as sub-pages. Each section has its own address under `base`
+ * (`/settings/activity`); the first one is also reachable at `base` itself. Falsy entries are skipped; with a single
+ * section the tab bar is dropped.
  */
-export function SectionTabs({ label, sections, idPrefix = 's' }: { label: string; sections: ReadonlyArray<TabSection | false | null | undefined>; idPrefix?: string }) {
+export function SectionTabs({ label, sections, idPrefix = 's', base }: { label: string; sections: ReadonlyArray<TabSection | false | null | undefined>; idPrefix?: string; base: string }) {
   const list = sections.filter((s): s is TabSection => Boolean(s));
   const keys = list.map((s) => s.key);
-  const [picked, setPicked] = useState(() => {
-    const h = typeof window === 'undefined' ? '' : window.location.hash.slice(1);
-    return keys.includes(h) ? h : '';
-  });
+  const picked = useSubPath(base);
   const current = list.find((s) => s.key === picked) ?? list[0];
   if (!current) return null;
   if (list.length === 1) return <>{current.node}</>;
   return (
     <>
-      <Tabs label={label} tabs={keys} value={current.key} onChange={setPicked} idPrefix={idPrefix} labelOf={(k) => list.find((s) => s.key === k)?.label ?? k} />
+      <Tabs label={label} tabs={keys} value={current.key} hrefOf={(k) => (k === list[0]?.key ? base : `${base}/${k}`)} idPrefix={idPrefix} labelOf={(k) => list.find((s) => s.key === k)?.label ?? k} />
       <div role="tabpanel" id={`${idPrefix}panel-${current.key}`} aria-labelledby={`${idPrefix}tab-${current.key}`}>
         {current.node}
       </div>

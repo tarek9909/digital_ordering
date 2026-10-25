@@ -15,7 +15,7 @@ const MAX = 280;
 
 /** What the customer sees about their ticket vs. the alert wording sent when it is ready or cancelled. */
 const GROUPS: ReadonlyArray<{ key: 'tickets' | 'alerts'; keys: readonly MessageKey[] }> = [
-  { key: 'tickets', keys: ['welcome', 'afterCollection', 'websiteUrl'] },
+  { key: 'tickets', keys: ['welcome', 'afterCollection'] },
   { key: 'alerts', keys: ['collection', 'cancelled'] },
 ];
 
@@ -71,6 +71,7 @@ export function MessagesForm({ venue }: { venue: VenueAdmin }) {
       <SectionTabs
         label={t('venue.messages.intro')}
         idPrefix="msg"
+        base="/venue/messages"
         sections={GROUPS.map((g) => ({ key: g.key, label: t(`venue.messages.groups.${g.key}`), node: <div className="flex flex-col gap-6">{venue.locales.map((locale) => fieldsFor(locale, g.keys))}</div> }))}
       />
       {error && <Banner tone="danger">{error}</Banner>}
@@ -79,7 +80,7 @@ export function MessagesForm({ venue }: { venue: VenueAdmin }) {
           {t('common:save')}
         </Button>
       </div>
-      <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
+      <LiveRegion toast text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
     </form>
   );
 

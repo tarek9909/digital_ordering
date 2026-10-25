@@ -7,6 +7,8 @@ export interface Me {
   mfaVerifiedAt: string | null;
   csrfToken: string;
   environment: string;
+  /** False when the platform runs without a console second factor (PLATFORM_MFA=off). */
+  mfaRequired?: boolean;
 }
 
 export type SignInResponse = { ok: true } | { mfaRequired: boolean; mfaEnrollmentRequired: boolean; mfaToken: string };
@@ -184,20 +186,12 @@ export interface Plan {
   id: string;
   code: string;
   name: string;
+  description: string;
   isPublic: boolean;
   limits: unknown;
   features: unknown;
   archived: boolean;
   prices: PlanPrice[];
-}
-
-export interface Announcement {
-  id: string;
-  message: unknown;
-  severity: 'info' | 'warning' | 'critical';
-  target: unknown;
-  starts_at: string;
-  ends_at: string;
 }
 
 export interface PushKeyStatus {

@@ -19,6 +19,8 @@ export interface ServiceConfig {
   /** Where links in emails and QR codes point; `https://` in every deployed environment. */
   scheme: 'https' | 'http';
   /** Local development only: each front-end app runs on its own Vite port (frontend/README.md). */
+  /** Console second factor; unset means required. */
+  platformMfa?: 'required' | 'off';
   localPorts?: Partial<Record<LocalApp, number>>;
 }
 

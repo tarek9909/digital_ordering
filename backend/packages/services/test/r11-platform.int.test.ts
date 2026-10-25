@@ -6,8 +6,6 @@ import {
   approveSupport,
   changePlan,
   changeSlug,
-  createAnnouncement,
-  announcementsFor,
   createCounter,
   createSupportCode,
   createTicket,
@@ -110,16 +108,6 @@ describe('plans and flags (FR-BIL-10, FR-SA-11, TR-ALG-17)', () => {
     await setFlagOverride(deps, platform, a.tenantId, 'remove_powered_by', true);
     expect(await isEnabled(deps, a.tenantId, 'remove_powered_by')).toBe(true);
     expect(await isEnabled(deps, b.tenantId, 'remove_powered_by')).toBe(false);
-  });
-});
-
-describe('announcements (FR-SA-13)', () => {
-  it('shows targeted banners to targeted tenants only', async () => {
-    const a = await tenant();
-    const b = await tenant();
-    await createAnnouncement(deps, platform, { message: { en: 'Maintenance tonight' }, severity: 'warning', target: { tenantIds: [a.tenantId] }, startsAt: new Date(deps.now().getTime() - 1000).toISOString(), endsAt: new Date(deps.now().getTime() + 3600_000).toISOString() });
-    expect((await announcementsFor(deps, a.tenantId)).length).toBe(1);
-    expect((await announcementsFor(deps, b.tenantId)).length).toBe(0);
   });
 });
 

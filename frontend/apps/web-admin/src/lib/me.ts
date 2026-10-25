@@ -89,8 +89,6 @@ export function useRole(): ViewerRole | null {
   return viewerRole(useMe().data);
 }
 
-export const useIsSupport = () => useMe().data?.support === true;
-
 /**
  * GET /tenant needs a user session (support agents cannot read it, TR-AUTH-10). It waits for the identity, so a
  * support agent's first render never requests it before /me says who is signed in (AS01).

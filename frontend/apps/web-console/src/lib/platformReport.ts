@@ -1,4 +1,4 @@
-import { jsonValue } from './announcement';
+import { jsonValue } from './format';
 
 // Normalises `platform_metrics_daily` rows from GET /reports/platform (FR-RPT-07, TR-RPT-06).
 

@@ -1,0 +1,137 @@
+/* Ember Nova: Superadmin Console Design Enhancements */
+
+/* Smooth pulsing live indicators for production and active statuses */
+@keyframes nova-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.65;
+  }
+}
+
+.nova-live-dot {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+}
+
+.nova-live-dot::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background-color: currentColor;
+  opacity: 0.4;
+  animation: nova-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-live-dot::before {
+    animation: none;
+  }
+}
+
+/* Elevated glassmorphic & micro-border surfaces */
+.console-card {
+  background-color: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-line) 80%, transparent);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.console-card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.console-card-hover:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-line));
+  box-shadow: 0 4px 16px -4px rgb(28 25 23 / 0.08), 0 12px 32px -12px rgb(28 25 23 / 0.12);
+}
+
+/* High-precision input styling */
+.console-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.console-input-wrapper:hover {
+  border-color: color-mix(in srgb, var(--color-ink-2) 40%, var(--color-line));
+}
+
+.console-input-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.console-input-wrapper[data-error='true'] {
+  border-color: var(--color-danger);
+}
+
+.console-input-wrapper[data-error='true']:focus-within {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 15%, transparent);
+}
+
+/* Custom sleek scrollbar for tables and modal bodies */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-line) 90%, black);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted);
+}
+
+/* Code and slug chips */
+.console-mono-chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.375rem;
+  background-color: var(--color-canvas);
+  border: 1px solid color-mix(in srgb, var(--color-line) 85%, transparent);
+  color: var(--color-ink-2);
+}
+
+/* Modal and dialog entrance transition helpers */
+.dialog-overlay {
+  animation: overlay-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-content {
+  animation: content-scale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes content-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

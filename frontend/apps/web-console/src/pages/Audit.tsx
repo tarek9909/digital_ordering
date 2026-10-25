@@ -1,6 +1,6 @@
 import { AUDIT_ACTIONS } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Field, PageShell, Select } from '@dop/ui';
+import { Button, Field, Select } from '@dop/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
@@ -15,7 +15,7 @@ import type { AuditRow, Paged } from '../lib/types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function AuditPage() {
+export function AuditBody() {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const initial = {
@@ -59,15 +59,19 @@ export function AuditPage() {
   const set = (k: keyof typeof draft) => (e: { target: { value: string } }) => setDraft({ ...draft, [k]: e.target.value });
 
   return (
-    <PageShell wide eyebrow={t('layout.groups.insights')} title={t('audit.title')} description={t('audit.description')}>
-      {/* Six in a row only on very wide screens: next to the sidebar, date-and-time inputs need ~12rem each. */}
-      <form role="search" onSubmit={apply} className="mb-5 grid gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card sm:grid-cols-2 sm:items-end lg:grid-cols-3 2xl:grid-cols-6" noValidate>
-        <Field label={t('audit.tenantId')} dir="ltr" value={draft.tenantId} onChange={set('tenantId')} error={invalid.includes('tenantId') ? t('audit.uuidInvalid') : undefined} />
-        <Field label={t('audit.actorId')} dir="ltr" value={draft.actorId} onChange={set('actorId')} error={invalid.includes('actorId') ? t('audit.uuidInvalid') : undefined} />
+    <>
+      <form role="search" onSubmit={apply} className="mb-6 grid gap-4 rounded-xl border border-line/80 bg-surface p-5 shadow-xs sm:grid-cols-2 sm:items-end lg:grid-cols-3 2xl:grid-cols-6" noValidate>
+        <Field label={t('audit.tenantId')} dir="ltr" value={draft.tenantId} onChange={set('tenantId')} error={invalid.includes('tenantId') ? t('audit.uuidInvalid') : undefined} placeholder="UUID" />
+        <Field label={t('audit.actorId')} dir="ltr" value={draft.actorId} onChange={set('actorId')} error={invalid.includes('actorId') ? t('audit.uuidInvalid') : undefined} placeholder="UUID" />
         <Select label={t('audit.action')} value={draft.action} onChange={set('action')} options={[{ value: '', label: t('tenants.any') }, ...AUDIT_ACTIONS.map((a) => ({ value: a, label: a }))]} />
         <Field label={t('audit.from')} type="datetime-local" value={draft.from} onChange={set('from')} />
         <Field label={t('audit.to')} type="datetime-local" value={draft.to} onChange={set('to')} />
-        <Button type="submit">{t('tenants.apply')}</Button>
+        <Button type="submit">
+          <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          {t('tenants.apply')}
+        </Button>
       </form>
       <ErrorNote error={q.error} />
       {q.isPending ? (
@@ -80,6 +84,6 @@ export function AuditPage() {
           </>
         )
       )}
-    </PageShell>
+    </>
   );
 }

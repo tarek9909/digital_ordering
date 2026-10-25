@@ -38,6 +38,7 @@ const EN: Record<EmailTemplate, Text> = {
   support_started: { subject: () => 'Support session started', lines: () => ['A platform support session is active on your account.'] },
   emergency_access: { subject: () => 'Emergency access opened', lines: (d) => [`Platform staff opened emergency access to your account. Reason: ${s(d.reason)}`] },
   weekly_summary: { subject: () => 'Your week in numbers', lines: (d) => weeklyLines(d, 'en') },
+  subscription_digest: { subject: (d) => `Monthly subscriptions review — ${s(d.month)}`, lines: (d) => digestLines(d, 'en') },
   webhook_disabled: { subject: () => 'Webhook endpoint disabled', lines: (d) => [`The webhook endpoint ${s(d.url)} was disabled after repeated failures.`] },
   email_change: { subject: () => 'Confirm your new email address', lines: (d) => [`Hi ${s(d.name)},`, 'You asked to use this address to sign in. Confirm the change within 24 hours.'], cta: { label: 'Confirm new email', link: (d) => d.link } },
   email_changed: {
@@ -77,6 +78,7 @@ const AR: Record<EmailTemplate, Text> = {
   support_started: { subject: () => 'بدأت جلسة الدعم', lines: () => ['جلسة دعم من فريق المنصة نشطة الآن على حسابك.'] },
   emergency_access: { subject: () => 'تم فتح دخول طارئ', lines: (d) => [`فتح فريق المنصة دخولًا طارئًا إلى حسابك. السبب: ${s(d.reason)}`] },
   weekly_summary: { subject: () => 'أسبوعك بالأرقام', lines: (d) => weeklyLines(d, 'ar') },
+  subscription_digest: { subject: (d) => `مراجعة الاشتراكات الشهرية — ${s(d.month)}`, lines: (d) => digestLines(d, 'ar') },
   webhook_disabled: { subject: () => 'تم إيقاف عنوان Webhook', lines: (d) => [`تم إيقاف عنوان Webhook ‏${s(d.url)} بعد إخفاقات متكررة.`] },
   email_change: { subject: () => 'أكّد بريدك الجديد', lines: (d) => [`مرحبًا ${s(d.name)}،`, 'طلبت تغيير بريد تسجيل الدخول إلى هذا العنوان. أكّد التغيير خلال 24 ساعة.'], cta: { label: 'تأكيد البريد الجديد', link: (d) => d.link } },
   email_changed: {
@@ -90,6 +92,16 @@ const AR: Record<EmailTemplate, Text> = {
 };
 
 /** Weekly summary (FR-RPT-05) from figures, so each owner reads it in their own language. */
+function digestLines(d: Data, lang: 'ar' | 'en'): string[] {
+  const list = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+  const soon = list(d.endingSoon);
+  const stopped = list(d.stoppedList);
+  const t = lang === 'ar'
+    ? { head: `نشط: ${s(d.running)} — متوقف: ${s(d.stopped)}`, soon: 'ينتهي خلال 30 يومًا:', stopped: 'المتوقفون (وتاريخ التوقف):', none: 'لا أحد' }
+    : { head: `Active: ${s(d.running)} — Stopped: ${s(d.stopped)}`, soon: 'Ending within 30 days:', stopped: 'Stopped (and when):', none: 'None' };
+  return [t.head, t.soon, ...(soon.length ? soon : [t.none]), t.stopped, ...(stopped.length ? stopped : [t.none])];
+}
+
 function weeklyLines(d: Data, lang: 'ar' | 'en'): string[] {
   if (typeof d.summary === 'string') return [d.summary]; // messages queued before the figures were sent
   const n = (v: unknown, unit = '') => (v === null || v === undefined ? '–' : `${String(v)}${unit}`);

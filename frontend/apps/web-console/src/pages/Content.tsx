@@ -22,16 +22,40 @@ export function ContentPage() {
   const [announce, setAnnounce] = useState('');
   return (
     <PageShell wide eyebrow={t('layout.groups.platform')} title={t('content.title')} description={t('content.description')}>
-      <LiveRegion text={announce} />
+      <LiveRegion toast text={announce} />
       <Tabs
         id="content"
         label={t('content.title')}
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: 'legal', label: t('content.legal.title') },
-          { value: 'email', label: t('content.email.title') },
-          { value: 'push', label: t('content.push.title') },
+          {
+            value: 'legal',
+            label: t('content.legal.title'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            ),
+          },
+          {
+            value: 'email',
+            label: t('content.email.title'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            ),
+          },
+          {
+            value: 'push',
+            label: t('content.push.title'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            ),
+          },
         ]}
       />
       <div {...tabPanelProps('content', 'legal')} hidden={tab !== 'legal'}>
@@ -112,16 +136,31 @@ function Legal({ onAnnounce }: { onAnnounce: (s: string) => void }) {
                 ) : (
                   <ul className="flex flex-col divide-y divide-line">
                     {list.map((d) => (
-                      <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
-                        <span className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span dir="ltr" className="font-mono text-sm font-semibold break-all">
+                      <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                        <span className="flex min-w-0 flex-wrap items-center gap-2.5">
+                          <span dir="ltr" className="inline-flex items-center rounded-md bg-canvas px-2.5 py-1 font-mono text-xs font-bold text-ink ring-1 ring-line">
                             {d.version}
                           </span>
-                          <span className="text-sm text-muted">{t(`lang.${d.locale}`, { defaultValue: d.locale })}</span>
-                          {current.has(d.id) ? <Pill tone="ok">{t('contentUx.current')}</Pill> : d.publishedAt ? <Pill>{t('content.legal.isPublished')}</Pill> : <Pill tone="warn">{t('content.legal.isDraft')}</Pill>}
+                          <span className="rounded-full bg-canvas/60 px-2 py-0.5 text-xs font-semibold text-muted ring-1 ring-line/50">
+                            {t(`lang.${d.locale}`, { defaultValue: d.locale })}
+                          </span>
+                          {current.has(d.id) ? (
+                            <Pill tone="ok" className="shadow-xs">
+                              {t('contentUx.current')}
+                            </Pill>
+                          ) : d.publishedAt ? (
+                            <Pill>{t('content.legal.isPublished')}</Pill>
+                          ) : (
+                            <Pill tone="warn">{t('content.legal.isDraft')}</Pill>
+                          )}
                         </span>
                         {d.publishedAt ? (
-                          <span className="text-xs text-muted">{fmtDate(d.publishedAt, i18n.language)}</span>
+                          <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+                            <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {fmtDate(d.publishedAt, i18n.language)}
+                          </span>
                         ) : (
                           <Button variant="secondary" onClick={() => setPublish(d)}>
                             {t('content.legal.publish')}
@@ -346,25 +385,38 @@ function PushKeys() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ['push-keys'], queryFn: () => api.get<PushKeyStatus>('/push-keys/status') });
   return (
-    <Section title={t('content.push.title')} description={t('content.push.viewOnly')} className="max-w-2xl">
+    <Section
+      title={
+        <span className="flex items-center gap-2.5">
+          <span className="grid size-8 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+            <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </span>
+          <span>{t('content.push.title')}</span>
+        </span>
+      }
+      description={t('content.push.viewOnly')}
+      className="max-w-3xl"
+    >
       <ErrorNote error={q.error} />
       {q.isPending ? (
         <Spinner label={t('common:loading')} />
       ) : (
         q.data && (
-          <dl className="grid gap-3 sm:grid-cols-3">
-            <div className="flex flex-col gap-1 rounded-input bg-canvas p-3">
-              <dt className="text-xs text-muted">{t('content.push.configured')}</dt>
-              <dd>{q.data.configured ? <Pill tone="ok">{t('yes')}</Pill> : <Pill tone="danger">{t('no')}</Pill>}</dd>
+          <dl className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-2 rounded-xl border border-line bg-canvas/40 p-4">
+              <dt className="text-xs font-semibold text-muted">{t('content.push.configured')}</dt>
+              <dd className="pt-1">{q.data.configured ? <Pill tone="ok" className="shadow-xs">{t('yes')}</Pill> : <Pill tone="danger">{t('no')}</Pill>}</dd>
             </div>
-            <div className="flex flex-col gap-1 rounded-input bg-canvas p-3">
-              <dt className="text-xs text-muted">{t('content.push.subscriptions')}</dt>
-              <dd className="num font-display text-xl font-bold">{q.data.activeSubscriptions}</dd>
+            <div className="flex flex-col gap-1 rounded-xl border border-line bg-canvas/40 p-4">
+              <dt className="text-xs font-semibold text-muted">{t('content.push.subscriptions')}</dt>
+              <dd className="num font-display text-2xl font-bold text-ink">{q.data.activeSubscriptions}</dd>
             </div>
-            <div className="flex min-w-0 flex-col gap-1 rounded-input bg-canvas p-3">
-              <dt className="text-xs text-muted">{t('content.push.fingerprint')}</dt>
+            <div className="flex min-w-0 flex-col gap-1.5 rounded-xl border border-line bg-canvas/40 p-4">
+              <dt className="text-xs font-semibold text-muted">{t('content.push.fingerprint')}</dt>
               <dd>
-                <code dir="ltr" className="block truncate text-xs">
+                <code dir="ltr" className="block truncate rounded-md bg-canvas px-2.5 py-1 font-mono text-xs text-ink ring-1 ring-line">
                   {q.data.publicKeyFingerprint ?? '—'}
                 </code>
               </dd>

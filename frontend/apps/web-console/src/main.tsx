@@ -1,5 +1,6 @@
 import '@dop/ui/tokens.css';
 import '@dop/ui/ember.css';
+import './console.css';
 import { preloadMotion } from '@dop/ui';
 import { initI18n, useTranslation } from '@dop/i18n';
 import ar from '../../../packages/i18n/locales/ar/console.json';
@@ -15,8 +16,6 @@ import { RequireAuth } from './components/RequireAuth';
 import { createQueryClient } from './lib/api';
 import { storedLang } from './lib/lang';
 import { AcceptInvitePage } from './pages/AcceptInvite';
-import { AuditPage } from './pages/Audit';
-import { CreateTenantPage } from './pages/CreateTenant';
 import { PlatformUsersPage } from './pages/PlatformUsers';
 import { SettingsPage } from './pages/Settings';
 import { SignInPage } from './pages/SignIn';
@@ -50,25 +49,26 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/tenants" replace /> },
       { path: 'tenants', element: guard(<TenantsPage />) },
-      { path: 'tenants/new', element: guard(<CreateTenantPage />) },
+      { path: 'tenants/new', element: <Navigate to="/tenants?new=1" replace /> },
       { path: 'tenants/:id', element: guard(<TenantDetailPage />) },
       { path: 'platform-users', element: guard(<PlatformUsersPage />) },
       { path: 'settings', element: guard(<SettingsPage />) },
-      { path: 'audit', element: guard(<AuditPage />) },
+      { path: 'audit', element: <Navigate to={`/reports?tab=audit${window.location.search.replace('?', '&')}`} replace /> },
       {
-        path: 'reports/pilot',
+        path: 'reports',
         // Recharts is only needed here: keep it out of the initial bundle (TR-FE-05).
         lazy: async () => {
-          const m = await import('./pages/PilotReport');
-          return { element: guard(<m.PilotReportPage />) };
+          const m = await import('./pages/Reports');
+          return { element: guard(<m.ReportsPage />) };
         },
       },
-      // R1.1 platform team pages, loaded on demand to keep the initial bundle small (TR-FE-05).
+      { path: 'reports/pilot', element: <Navigate to="/reports?tab=pilot" replace /> },
+      { path: 'reports/platform', element: <Navigate to="/reports" replace /> },
       {
-        path: 'reports/platform',
+        path: 'reports/subscriptions',
         lazy: async () => {
-          const m = await import('./pages/PlatformReport');
-          return { element: guard(<m.PlatformReportPage />) };
+          const m = await import('./pages/Subscriptions');
+          return { element: guard(<m.SubscriptionsPage />) };
         },
       },
       {
@@ -76,13 +76,6 @@ const router = createBrowserRouter([
         lazy: async () => {
           const m = await import('./pages/Plans');
           return { element: guard(<m.PlansPage />) };
-        },
-      },
-      {
-        path: 'announcements',
-        lazy: async () => {
-          const m = await import('./pages/Announcements');
-          return { element: guard(<m.AnnouncementsPage />) };
         },
       },
       {

@@ -26,11 +26,20 @@ export function SiteLanding({ value, onSaved }: { value: Landing; onSaved: () =>
   const { t } = useTranslation();
   const builtIn = useQuery({ queryKey: ['site-copy'], queryFn: loadSiteCopy, staleTime: Infinity });
   return (
-    <section aria-labelledby="sl-h">
-      <h2 id="sl-h" className="mb-1 text-xl font-bold">
-        {t('siteLanding.title')}
-      </h2>
-      <p className="mb-3 text-muted">{t('siteLanding.intro')}</p>
+    <section aria-labelledby="sl-h" className="flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+          <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </span>
+        <div>
+          <h2 id="sl-h" className="text-lg font-bold text-ink">
+            {t('siteLanding.title')}
+          </h2>
+          <p className="text-xs text-muted">{t('siteLanding.intro')}</p>
+        </div>
+      </div>
       <ErrorNote error={builtIn.error} />
       {builtIn.isPending ? <Spinner label={t('common:loading')} /> : builtIn.data && <LandingForm builtIn={builtIn.data} value={value} onSaved={onSaved} />}
     </section>
@@ -75,34 +84,45 @@ function LandingForm({ builtIn, value, onSaved }: { builtIn: CopyLangs; value: L
   };
   const failed = save.error && !(save.error instanceof MfaCancelled) ? save.error : null;
   return (
-    <Card>
+    <Card className="border border-line/80 bg-surface shadow-xs">
       <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-        <fieldset className="flex flex-col gap-1">
-          <legend className="mb-1 font-semibold">{t('siteLanding.sections')}</legend>
-          <p className="text-sm text-muted">{t('siteLanding.sectionsHint')}</p>
-          <div className="mt-2 grid gap-x-8 gap-y-1 rounded-input border border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-0.5 text-sm font-bold text-ink">{t('siteLanding.sections')}</legend>
+          <p className="text-xs text-muted">{t('siteLanding.sectionsHint')}</p>
+          <div className="mt-2 grid gap-x-6 gap-y-2 rounded-input border border-line bg-canvas/30 p-4 sm:grid-cols-2 lg:grid-cols-3">
             {SITE_LANDING_SECTIONS.map((s) => (
               <Toggle key={s} label={groupLabel(s)} checked={!hidden.includes(s)} onChange={(e) => setHidden((h) => (e.target.checked ? h.filter((x) => x !== s) : [...h, s]))} />
             ))}
           </div>
         </fieldset>
-        <div className="flex flex-col gap-4">
-          <Select label={t('siteLanding.part')} value={group} onChange={(e) => setGroup(e.target.value)} options={groups.map((g) => ({ value: g, label: groupLabel(g) }))} className="max-w-sm" />
-          {group === 'pricing' && <p className="text-sm text-muted">{t('siteLanding.pricingNote')}</p>}
+        <div className="flex flex-col gap-5 border-t border-line/70 pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Select label={t('siteLanding.part')} value={group} onChange={(e) => setGroup(e.target.value)} options={groups.map((g) => ({ value: g, label: groupLabel(g) }))} className="max-w-sm" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 font-mono text-xs text-muted ring-1 ring-line">
+              <span className="size-1.5 rounded-full bg-primary" />
+              {groupPath.join('.')}
+            </span>
+          </div>
+          {group === 'pricing' && <p className="rounded-md bg-canvas px-3 py-2 text-xs text-muted ring-1 ring-line">{t('siteLanding.pricingNote')}</p>}
           <CopyNode key={group} path={groupPath} builtIn={builtIn} draft={draft} edit={edit} />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-line/70 pt-4">
           <Button type="submit" busy={save.isPending}>
             {t('siteLanding.save')}
           </Button>
-          {save.isSuccess && <span className="text-ok">{t('siteLanding.saved')}</span>}
+          {save.isSuccess && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ok">
+              <span className="size-1.5 rounded-full bg-ok" />
+              {t('siteLanding.saved')}
+            </span>
+          )}
         </div>
         {error && (
-          <p role="alert" className="text-danger">
+          <p role="alert" className="rounded-md border border-danger/30 bg-danger-bg px-3.5 py-2 text-xs font-medium text-danger">
             {error}
           </p>
         )}
-        {failed && (failed instanceof ApiError ? <p role="alert" className="text-danger">{errorText(t, failed)}</p> : <ErrorNote error={failed} />)}
+        {failed && (failed instanceof ApiError ? <p role="alert" className="rounded-md border border-danger/30 bg-danger-bg px-3.5 py-2 text-xs font-medium text-danger">{errorText(t, failed)}</p> : <ErrorNote error={failed} />)}
       </form>
     </Card>
   );
@@ -153,7 +173,7 @@ function TextPair({ path, builtIn, draft, edit }: NodeProps) {
   const { t } = useTranslation();
   const label = labelOf(path);
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2">
       {LANGS.map((l) => {
         const base = String(getIn(builtIn[l], path) ?? '');
         const v = String(getIn(draft[l], path) ?? '');
@@ -167,14 +187,28 @@ function TextPair({ path, builtIn, draft, edit }: NodeProps) {
           hint: edited ? t('siteLanding.edited') : undefined,
         } as const;
         return (
-          <div key={l} className="flex flex-col gap-1">
+          <div key={l} className="flex flex-col gap-1.5 rounded-lg border border-line/60 bg-canvas/30 p-3">
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                {l === 'ar' ? 'العربية' : 'English'}
+              </span>
+              {edited && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  {t('siteLanding.edited')}
+                </span>
+              )}
+            </div>
             {base.length > 70 ? (
               <TextArea {...common} className="min-h-24 rounded-input border border-line bg-surface p-3" onChange={(e) => edit(l, path, e.target.value)} />
             ) : (
               <Field {...common} onChange={(e) => edit(l, path, e.target.value)} />
             )}
             {edited && (
-              <button type="button" className="min-h-11 self-start text-sm font-semibold underline underline-offset-4" onClick={() => edit(l, path, base)}>
+              <button type="button" className="inline-flex min-h-11 items-center gap-1.5 self-start text-xs font-semibold text-primary hover:underline underline-offset-4" onClick={() => edit(l, path, base)}>
+                <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
                 {t('siteLanding.reset', { field: common.label })}
               </button>
             )}
@@ -197,17 +231,23 @@ function ListEditor({ lang, path, builtIn, draft, edit }: NodeProps & { lang: La
   const blank = isObject(sample) ? Object.fromEntries(Object.keys(sample).map((k) => [k, ''])) : '';
   return (
     <div lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-3">
-      <p className="text-sm font-semibold text-muted">{t(`siteLanding.lang.${lang}`)}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted">{t(`siteLanding.lang.${lang}`)}</p>
+        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-muted ring-1 ring-line">
+          {items.length} {t('siteLanding.itemsCount', { defaultValue: 'items' })}
+        </span>
+      </div>
       {items.map((item, i) => {
         const n = i + 1;
         const remove = (
-          <Button type="button" variant="ghost" className="self-start text-sm" onClick={() => edit(lang, path, items.filter((_, j) => j !== i))}>
+          <Button type="button" variant="ghost" className="self-start text-xs text-danger hover:bg-danger-bg" onClick={() => edit(lang, path, items.filter((_, j) => j !== i))}>
+            <span aria-hidden="true">✕ </span>
             {t('siteLanding.removeItem', { list: label, n, lang: L })}
           </Button>
         );
         return isObject(sample) ? (
-          <fieldset key={i} className="flex flex-col gap-2 rounded-input border border-line p-3">
-            <legend className="px-1 text-sm font-semibold">{t('siteLanding.item', { n })}</legend>
+          <fieldset key={i} className="flex flex-col gap-3 rounded-lg border border-line bg-canvas/20 p-4">
+            <legend className="px-2 text-xs font-bold text-ink uppercase tracking-wider">{t('siteLanding.item', { n })}</legend>
             {Object.keys(sample).map((k) => {
               const fieldLabel = `${humanize(FIELD_LABELS[k] ?? k)} ${n} (${L})`;
               const v = String(getIn(item, [k]) ?? '');
@@ -220,15 +260,16 @@ function ListEditor({ lang, path, builtIn, draft, edit }: NodeProps & { lang: La
             {remove}
           </fieldset>
         ) : (
-          <div key={i} className="flex flex-col gap-1">
+          <div key={i} className="flex flex-col gap-1.5 rounded-lg border border-line bg-canvas/20 p-3">
             <Field label={`${label} ${n} (${L})`} value={String(item ?? '')} onChange={(e) => edit(lang, [...path, i], e.target.value)} />
             {remove}
           </div>
         );
       })}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2 pt-1">
         {items.length < 24 && (
           <Button type="button" variant="secondary" onClick={() => edit(lang, path, [...items, blank])}>
+            <span aria-hidden="true">+ </span>
             {t('siteLanding.addItem', { list: label, lang: L })}
           </Button>
         )}

@@ -1,6 +1,6 @@
 import { useTranslation } from '@dop/i18n';
 import { formatDateTime } from '@dop/client-sdk';
-import { Button, EmptyState, Modal, Pill } from '@dop/ui';
+import { Button, EmptyState, Modal } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -11,18 +11,7 @@ import { api } from '../lib/api';
 import { formatDuration, pct } from '../lib/format';
 import { useMe, useTenant } from '../lib/me';
 import { useCurrentVenueId } from '../lib/venue';
-import type { Onboarding, OnboardingKey, Reach, TodayReport, TrendsReport, WaitingTicket } from '../lib/types';
-
-const STEP_LINKS: Record<OnboardingKey, string> = {
-  verify_email: '/account',
-  branding: '/venue?tab=branding',
-  messages: '/venue?tab=messages',
-  staff_pin: '/staff-access',
-  staff_device: '/staff-access',
-  display: '/displays',
-  posters: '/posters',
-  test_ticket: '/staff',
-};
+import type { Reach, TodayReport, TrendsReport, WaitingTicket } from '../lib/types';
 
 /** Staff board link for owners and managers (FR-STF-17); the board is a separate app on the same host. */
 export const staffBoardUrl = (venueId: string | null) => `/staff${venueId ? `?venueId=${encodeURIComponent(venueId)}` : ''}`;
@@ -70,82 +59,8 @@ function TrialNotice() {
 function Notices() {
   return (
     <div className="mb-6 flex flex-wrap gap-3 empty:hidden">
-      <Checklist />
       <TrialNotice />
     </div>
-  );
-}
-
-/** "What to do next": the set-up steps with a progress track; the first open step is the one to do now. */
-function Checklist() {
-  const { t } = useTranslation();
-  // Re-polled so it ticks itself as the owner completes steps elsewhere (FR-ADM-02).
-  const q = useQuery({
-    queryKey: ['onboarding'],
-    queryFn: () => api.get<Onboarding>('/onboarding'),
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
-  });
-  // Nothing while it loads: most days the list is complete and never shows.
-  if (q.isPending) return null;
-  return (
-    <QueryView q={q}>
-      {(o) => {
-        if (o.complete) return null;
-        const done = o.steps.filter((s) => s.done).length;
-        const next = o.steps.find((s) => !s.done)?.key;
-        return (
-          <NoticeDialog
-            label={t('onboarding.title')}
-            badge={`${done}/${o.steps.length}`}
-            title={t('onboarding.title')}
-            description={t('onboarding.progress', {
-              done,
-              total: o.steps.length,
-            })}
-          >
-            <div className="mb-3 flex gap-1" aria-hidden="true">
-              {o.steps.map((s) => (
-                <span key={s.key} className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${s.done ? 'bg-ink' : s.key === next ? 'bg-ink/25' : 'bg-line'}`} />
-              ))}
-            </div>
-            <ol className="flex flex-col">
-              {o.steps.map((s, i) => {
-                const isNext = s.key === next;
-                return (
-                  <li
-                    key={s.key}
-                    className={`flex flex-wrap items-center justify-between gap-3 border-t border-line py-2.5 first:border-t-0 ${isNext ? '-mx-3 rounded-input border-transparent bg-canvas px-3' : ''}`}
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className={`grid size-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold ${s.done ? 'bg-ok-bg text-ok' : isNext ? 'bg-panel text-white' : 'border border-line text-muted'}`}
-                      >
-                        {s.done ? '✓' : i + 1}
-                      </span>
-                      <span className={s.done ? 'text-muted line-through decoration-line' : isNext ? 'font-semibold' : 'font-medium text-ink-2'}>{t(`onboarding.steps.${s.key}`)}</span>
-                      <span className="sr-only">{s.done ? t('onboarding.done') : t('onboarding.todo')}</span>
-                      {isNext && <Pill tone="ink">{t('onboarding.next')}</Pill>}
-                    </span>
-                    {!s.done &&
-                      (s.key === 'test_ticket' ? (
-                        <a className={linkClass(isNext ? 'ink' : 'secondary')} href={staffBoardUrl(o.venueId)}>
-                          {t('onboarding.openBoard')}
-                        </a>
-                      ) : (
-                        <Link className={linkClass(isNext ? 'ink' : 'secondary')} to={STEP_LINKS[s.key]}>
-                          {t('onboarding.go')}
-                        </Link>
-                      ))}
-                  </li>
-                );
-              })}
-            </ol>
-          </NoticeDialog>
-        );
-      }}
-    </QueryView>
   );
 }
 

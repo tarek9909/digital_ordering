@@ -139,7 +139,7 @@ export function VenuesPage() {
         <span aria-hidden="true" className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted/60" />
         {t('venues.billingNote')}
       </p>
-      <LiveRegion text={archive.isSuccess ? t('venues.archived') : ''} />
+      <LiveRegion toast text={archive.isSuccess ? t('venues.archived') : ''} />
     </Page>
   );
 }

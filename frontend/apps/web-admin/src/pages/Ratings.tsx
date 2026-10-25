@@ -141,7 +141,7 @@ export function RatingsPage() {
           )
         }
       </QueryView>
-      <LiveRegion text={remove.isSuccess ? t('ratings.deleted') : ''} />
+      <LiveRegion toast text={remove.isSuccess ? t('ratings.deleted') : ''} />
     </Page>
   );
 }

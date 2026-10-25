@@ -6,24 +6,9 @@ import { TabPanel, QueryView, Section, SectionTabs, StatusPill, Table, Td } from
 import { canManage } from '../lib/access';
 import { api } from '../lib/api';
 import { useRole } from '../lib/me';
-import type { Billing, BillingPlan } from '../lib/types';
+import type { Billing } from '../lib/types';
 
 const billingKey = ['billing'] as const;
-
-/** Prices of a plan, e.g. "USD 30.00 per venue · Monthly". */
-function PlanPrices({ p }: { p: BillingPlan }) {
-  const { t, i18n } = useTranslation();
-  return (
-    <ul className="flex flex-col gap-1">
-      {p.prices.map((x) => (
-        <li key={`${x.period}-${x.currency}`}>
-          <span className="num font-semibold">{formatMoney(x.amountMinor, x.currency, i18n.language)}</span> <span className="text-ink-2">{t('billing.perVenue')}</span>{' '}
-          <span className="text-muted">({t(`billing.periods.${x.period}`)})</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 /**
  * Billing (§12.7), read-only. Venues pay the platform team directly (cash, transfer or wallet); the team records each
@@ -44,6 +29,7 @@ export function BillingPage() {
           <SectionTabs
             label={t('billing.description')}
             idPrefix="bill"
+            base="/billing"
             sections={[
               {
                 key: 'plan',
@@ -71,36 +57,6 @@ export function BillingPage() {
               </div>
             )}
                   </>
-                ),
-              },
-              {
-                key: 'prices',
-                label: t('billing.pricesTitle'),
-                node: (
-            <Section title={t('billing.pricesTitle')}>
-              {(b.plans ?? []).length === 0 ? (
-                <p className="text-muted">{t('billing.noPrices')}</p>
-              ) : (
-                <Table caption={t('billing.pricesTitle')} head={[t('billing.plan'), t('billing.limits'), t('billing.price')]}>
-                  {(b.plans ?? []).map((p) => (
-                    <tr key={p.code}>
-                      <Td>
-                        <span className="font-semibold">{p.name}</span>
-                      </Td>
-                      <Td>
-                        {t('billing.planLimits', {
-                          venues: p.limits.maxVenues,
-                          counters: p.limits.maxCountersPerVenue,
-                        })}
-                      </Td>
-                      <Td>
-                        <PlanPrices p={p} />
-                      </Td>
-                    </tr>
-                  ))}
-                </Table>
-              )}
-            </Section>
                 ),
               },
               {

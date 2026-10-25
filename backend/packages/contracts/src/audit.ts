@@ -57,7 +57,6 @@ export const AUDIT_ACTIONS = [
   'setting.changed',
   'chime.created',
   'legal.published',
-  'announcement.created',
   'platform_user.invited',
   'platform_user.role_changed',
   'platform_user.mfa_reset',

@@ -59,7 +59,7 @@ function LogoUpload({ venue }: { venue: VenueAdmin }) {
       {upload.isPending && <p role="status">{t('venue.branding.uploading')}</p>}
       {problem && <Banner tone="danger">{problem}</Banner>}
       {upload.error && <Banner tone="danger">{errorText(t, upload.error)}</Banner>}
-      <LiveRegion text={upload.isSuccess ? t('venue.branding.uploaded') : ''} />
+      <LiveRegion toast text={upload.isSuccess ? t('venue.branding.uploaded') : ''} />
     </div>
   );
 }
@@ -125,7 +125,7 @@ export function BrandingForm({ venue }: { venue: VenueAdmin }) {
               {t('common:save')}
             </Button>
           </div>
-          <LiveRegion text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
+          <LiveRegion toast text={save.isSuccess && !isDirty ? t('common:saved') : ''} />
         </form>
       </div>
       <CustomerPreview name={venue.name} brandColor={colour} logoUrl={venue.logoUrl} welcome={venue.messages[primary]?.welcome} locale={primary} />

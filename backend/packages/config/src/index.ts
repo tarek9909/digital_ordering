@@ -61,6 +61,8 @@ export const envSchema = z.object({
    * everyone out: restart the API with it, fix the list in the console, then restart without it.
    */
   CONSOLE_IP_POLICY: z.enum(['enforce', 'off']).default('enforce'),
+  /** Console second factor. `off`: platform users sign in with email and password only, and sensitive actions ask for nothing more. */
+  PLATFORM_MFA: z.enum(['required', 'off']).default('off'),
   /** Local only: cookies without `Secure`/`__Host-` when serving plain http. */
   INSECURE_COOKIES: bool.default('false'),
 });

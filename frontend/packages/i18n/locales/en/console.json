@@ -16,10 +16,11 @@
     "audit": "Audit log",
     "reports": "Pilot report",
     "platformReport": "Platform report",
+    "subscriptions": "Subscriptions",
     "plans": "Plans & prices",
-    "announcements": "Announcements",
     "content": "Legal & emails",
-    "website": "Website"
+    "website": "Website",
+    "reportsHub": "Reports"
   },
   "role": {
     "super_admin": "Super admin",
@@ -86,7 +87,7 @@
     "trial": "Trial",
     "active": "Active",
     "past_due": "Past due",
-    "suspended": "Suspended",
+    "suspended": "Inactive",
     "trial_expired": "Trial expired",
     "cancelled": "Cancelled",
     "deleted": "Deleted"
@@ -142,16 +143,16 @@
     "typeSlug": "Type the tenant address \"{{slug}}\" to confirm",
     "slugMismatch": "The address does not match.",
     "suspend": {
-      "button": "Suspend",
-      "title": "Suspend tenant",
+      "button": "Deactivate",
+      "title": "Deactivate tenant",
       "body": "Staff can no longer create tickets for {{slug}}; open tickets can still be finished. The owner is emailed.",
-      "done": "Tenant suspended."
+      "done": "Tenant deactivated."
     },
     "reactivate": {
-      "button": "Reactivate",
-      "title": "Reactivate tenant",
+      "button": "Activate",
+      "title": "Activate tenant",
       "body": "{{slug}} returns to normal service.",
-      "done": "Tenant reactivated."
+      "done": "Tenant activated."
     },
     "extend": {
       "button": "Extend trial",
@@ -298,13 +299,13 @@
     "roleFor": "Role for {{name}}",
     "statusValue": {
       "active": "Active",
-      "disabled": "Disabled",
+      "disabled": "Inactive",
       "invited": "Invited"
     },
     "mfaOn": "Set up",
     "mfaOff": "Not set up",
-    "enable": "Enable",
-    "disable": "Disable",
+    "enable": "Activate",
+    "disable": "Deactivate",
     "resetMfa": "Reset two-factor",
     "mfaResetDone": "Two-factor reset. The user must set it up again at next sign-in.",
     "invite": "Invite a platform user",
@@ -313,7 +314,15 @@
     "resetMfaBody": "{{email}} is signed out everywhere and must set up two-factor again.",
     "typeEmail": "Type \"{{email}}\" to confirm",
     "emailMismatch": "The email does not match.",
-    "description": "The platform team. Invite people, set their role and reset two-factor sign-in."
+    "description": "The platform team. Invite people, set their role and reset two-factor sign-in.",
+    "addMethod": "How to add",
+    "methodEmail": "Email invite",
+    "methodCredentials": "Set credentials",
+    "password": "Password",
+    "passwordHint": "At least 10 characters. Share it with the person yourself; they set up two-factor sign-in at first sign-in.",
+    "passwordInvalid": "Use at least 10 characters.",
+    "createUser": "Create user",
+    "created": "User created."
   },
   "settings": {
     "title": "Platform settings",
@@ -593,42 +602,6 @@
     "deactivated": "Price deactivated.",
     "description": "Limits, features and monthly prices for each plan. Public plans appear on the pricing page."
   },
-  "announcements": {
-    "title": "Announcements",
-    "create": "New announcement",
-    "list": "Announcements",
-    "message": "Message",
-    "messageIn": "Message ({{lang}})",
-    "messageInvalid": "Write the message in at least one language (up to 500 characters each).",
-    "severity": "Severity",
-    "sev": {
-      "info": "Information",
-      "warning": "Warning",
-      "critical": "Critical"
-    },
-    "target": "Shown to",
-    "mode": {
-      "all": "All tenants",
-      "tenants": "Selected tenants",
-      "plans": "Tenants on plans"
-    },
-    "targetEmpty": "Choose at least one tenant or plan.",
-    "targetBadId": "This is not a tenant ID: {{id}}",
-    "starts": "Starts",
-    "ends": "Ends",
-    "dateInvalid": "Enter a date and time.",
-    "endBeforeStart": "The end must be after the start.",
-    "timeZoneNote": "Times are in your browser's time zone.",
-    "publish": "Create announcement",
-    "created": "Announcement created.",
-    "none": "No announcements.",
-    "delete": "Delete",
-    "deleteTitle": "Delete announcement",
-    "deleteBody": "The banner disappears from tenant admin areas.",
-    "deleted": "Announcement deleted.",
-    "description": "Messages shown in the restaurant admin, to every tenant or a chosen group, for a set time.",
-    "emptyHint": "Nothing is scheduled. New announcements appear here."
-  },
   "content": {
     "title": "Legal documents and emails",
     "locale": "Language",
@@ -677,6 +650,19 @@
       "viewOnly": "View only. Keys are rotated through deployment configuration."
     },
     "description": "Publish the terms and privacy documents, and edit the emails the platform sends."
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "description": "Who is active and who is not, and when each one ends. Emailed to the team on the 1st of every month.",
+    "active": "Active",
+    "endingSoon": "Ending in 30 days",
+    "stopped": "Stopped",
+    "restaurant": "Restaurant",
+    "status": "Status",
+    "endsOn": "Ends on",
+    "daysLeft": "Days left",
+    "stoppedOn": "Stopped on",
+    "never": "Complimentary"
   },
   "platformReport": {
     "title": "Platform report",
@@ -896,7 +882,7 @@
     "owner": "The owner",
     "ownerHint": "We email this person an invitation to set a password and sign in.",
     "plan": "Plan",
-    "planHint": "Start on a trial, a paid plan, or make the account complimentary.",
+    "planHint": "The restaurant is active at once, with no trial. Pick its plan, or make the account complimentary.",
     "summary": "Summary",
     "unnamed": "New restaurant",
     "next": {
@@ -904,7 +890,7 @@
       "invite": "The owner gets an invitation email.",
       "inviteTo": "An invitation is sent to {{email}}.",
       "trial": "The trial runs {{days}} days, until {{date}}.",
-      "plan": "It starts on the {{plan}} plan.",
+      "plan": "It is active at once on the {{plan}} plan. The first month is covered until {{date}}; you can suspend it any time.",
       "complimentary": "It is active on {{plan}} with nothing to pay."
     }
   },
@@ -912,7 +898,7 @@
     "intro": "Change the account's status. Every action is written to the audit log.",
     "danger": "Danger zone",
     "hint": {
-      "reactivate": "Bring a suspended account back to normal service.",
+      "reactivate": "Make this inactive account active again.",
       "extend": "Give the restaurant more days on its current trial.",
       "complimentaryOn": "Keep the account active without a subscription.",
       "complimentaryOff": "Stop the free access; the restaurant then has 14 days to subscribe.",
@@ -936,6 +922,9 @@
     "archivedPlans": "Archived plans ({{count}})",
     "createIntro": "Choose a name, what the plan allows, and whether it shows on the website. Add prices after saving.",
     "namePlaceholder": "e.g. Pro",
+    "descriptionLabel": "Description",
+    "descriptionHint": "A short line about who this plan is for.",
+    "noDescription": "No description.",
     "publicHint": "Public plans can be picked on the website's pricing section.",
     "limitsHint": "What a restaurant on this plan may use. 0 means none.",
     "limitInvalid": "Enter a whole number of {{min}} or more.",
@@ -944,24 +933,6 @@
     "noFeatures": "No extra features.",
     "pricePreview": "Customers see {{price}}.",
     "replaces": "This replaces the current {{price}} price for this period."
-  },
-  "announcementsUx": {
-    "createIntro": "A banner at the top of the restaurant admin, for the time you choose.",
-    "chars": "{{count}} of 500 characters",
-    "preview": "Preview",
-    "previewEmpty": "Your message appears here.",
-    "chooseTenants": "Restaurants",
-    "lasts": "Show for:",
-    "days_one": "{{count}} day",
-    "days_other": "{{count}} days",
-    "shown": "Shown",
-    "tenantCount_one": "{{count}} restaurant",
-    "tenantCount_other": "{{count}} restaurants",
-    "when": {
-      "live": "Live now",
-      "scheduled": "Scheduled",
-      "ended": "Ended"
-    }
   },
   "usersUx": {
     "summary": "Team by role",
@@ -1015,6 +986,7 @@
       "support_started": "Support session started",
       "emergency_access": "Emergency access opened",
       "weekly_summary": "Weekly summary",
+      "subscription_digest": "Monthly subscriptions review",
       "webhook_disabled": "Webhook turned off",
       "email_change": "Confirm new email",
       "email_changed": "Email changed",
@@ -1256,5 +1228,9 @@
         "hint": "Empty means any network. Once set, the console only opens from these addresses, and your current address must be one of them."
       }
     }
+  },
+  "reportsHub": {
+    "title": "Reports",
+    "description": "Platform health, pilot results and the audit log, one tab each."
   }
 }

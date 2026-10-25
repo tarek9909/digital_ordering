@@ -157,7 +157,7 @@ function PrefixSwitch({ venue }: { venue: VenueAdmin }) {
         onChange={(e) => save.mutate(e.target.checked)}
       />
       <ErrorNote error={save.error} />
-      <LiveRegion text={save.isSuccess ? t('common:saved') : ''} />
+      <LiveRegion toast text={save.isSuccess ? t('common:saved') : ''} />
     </div>
   );
 }
@@ -220,7 +220,7 @@ export function CountersPage() {
           )
         }
       </QueryView>
-      <LiveRegion text={archive.isSuccess ? t('counters.archived') : ''} />
+      <LiveRegion toast text={archive.isSuccess ? t('counters.archived') : ''} />
     </TabPanel>
   );
 }
@@ -238,10 +238,37 @@ type ArchiveMutation = {
 /** Rows carry data-flip-id so a reorder glides inside the table body. */
 function CounterRows({ active, venueId, move, archive }: { active: Counter[]; venueId: string; move: MoveMutation; archive: ArchiveMutation }) {
   const { t } = useTranslation();
+  const [from, setFrom] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const end = () => {
+    setFrom(null);
+    setOver(null);
+  };
   return (
     <>
       {active.map((c, i) => (
-        <tr key={c.id} data-flip-id={c.id}>
+        <tr
+          key={c.id}
+          data-flip-id={c.id}
+          draggable={!move.isPending}
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', c.id);
+            setFrom(i);
+          }}
+          onDragOver={(e) => {
+            if (from === null) return;
+            e.preventDefault();
+            setOver(i);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (from !== null && from !== i) move.mutate({ list: active, from, to: i });
+            end();
+          }}
+          onDragEnd={end}
+          className={`cursor-grab active:cursor-grabbing ${from === i ? 'opacity-40' : ''} ${over === i && from !== null && from !== i ? (from < i ? 'shadow-[inset_0_-3px_0_var(--color-ink)]' : 'shadow-[inset_0_3px_0_var(--color-ink)]') : ''}`}
+        >
           <Td className="num w-16 font-display text-base font-bold text-muted">{i + 1}</Td>
           <Td className="font-semibold">{c.name}</Td>
           <Td>

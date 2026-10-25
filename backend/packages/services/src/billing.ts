@@ -325,3 +325,64 @@ export async function trialCheck(deps: Deps) {
   for (const t of soon) await remind(deps, t.id, t.name, 'trial_ending', `trialend:${t.id}`);
   return { expired: ended.length };
 }
+
+// ---------------------------------------------------------------- subscription report (monthly review)
+
+/**
+ * Who is active and who is not, and when each one stops or stopped: the paid-until date for running tenants, the
+ * suspension or cancellation date for the rest. Sorted so the next to end comes first.
+ */
+export async function subscriptionReport(deps: Deps) {
+  const now = deps.now();
+  const rows = await deps.db
+    .platform()
+    .selectFrom('tenants')
+    .select(['id', 'name', 'slug', 'status', 'complimentary', 'paid_until', 'trial_ends_at', 'grace_ends_at', 'suspended_at', 'suspended_by', 'cancelled_at'])
+    .where('status', 'in', ['trial', 'active', 'past_due', 'trial_expired', 'suspended', 'cancelled'])
+    .orderBy('name')
+    .execute();
+  const iso = (d: Date | null) => d?.toISOString() ?? null;
+  const items = rows.map((r) => {
+    const running = r.status === 'trial' || r.status === 'active' || r.status === 'past_due';
+    // Active tenants end when the paid period does; a complimentary one never lapses.
+    const endsAt = r.status === 'trial' ? r.trial_ends_at : r.complimentary && r.status === 'active' ? null : r.status === 'active' ? r.paid_until : r.status === 'past_due' ? r.grace_ends_at : null;
+    const stoppedAt = running ? null : (r.status === 'cancelled' ? r.cancelled_at : r.suspended_at);
+    return {
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      status: r.status,
+      complimentary: Boolean(r.complimentary),
+      suspendedBy: r.suspended_by,
+      endsAt: iso(endsAt),
+      stoppedAt: iso(stoppedAt),
+      endsInDays: endsAt ? Math.ceil((endsAt.getTime() - now.getTime()) / 86_400_000) : null,
+    };
+  });
+  const byEnd = (a: { endsAt: string | null }, b: { endsAt: string | null }) => (a.endsAt ?? '9').localeCompare(b.endsAt ?? '9');
+  const running = items.filter((i) => i.status === 'active' || i.status === 'past_due' || i.status === 'trial').sort(byEnd);
+  const stopped = items.filter((i) => !running.includes(i)).sort((a, b) => (b.stoppedAt ?? '').localeCompare(a.stoppedAt ?? ''));
+  return {
+    generatedAt: now.toISOString(),
+    counts: { running: running.length, stopped: stopped.length, endingIn30Days: running.filter((i) => i.endsInDays !== null && i.endsInDays <= 30).length },
+    running,
+    stopped,
+  };
+}
+
+/** `reports.subscriptions-monthly` on the 1st of each month: the same report, emailed to every active console user. */
+export async function sendSubscriptionDigest(deps: Deps) {
+  const report = await subscriptionReport(deps);
+  const month = report.generatedAt.slice(0, 7);
+  const day = (iso: string | null) => (iso ? iso.slice(0, 10) : '—');
+  const data = {
+    month,
+    running: report.counts.running,
+    stopped: report.counts.stopped,
+    endingSoon: report.running.filter((i) => i.endsInDays !== null && i.endsInDays <= 30).map((i) => `${i.name}: ${day(i.endsAt)}`),
+    stoppedList: report.stopped.map((i) => `${i.name} (${i.status}): ${day(i.stoppedAt)}`),
+  };
+  const users = await deps.db.platform().selectFrom('platform_users').select(['id', 'email']).where('status', '=', 'active').execute();
+  for (const u of users) await sendEmail(deps, { template: 'subscription_digest', to: u.email, locale: 'en', data, key: `subdigest:${month}:${u.id}` });
+  return users.length;
+}

@@ -35,32 +35,45 @@ export function AcceptInvitePage() {
   return (
     <AuthShell title={t('accept.title')}>
       {!token ? (
-          <Banner tone="danger">{t('accept.missingToken')}</Banner>
-        ) : done ? (
-          <div className="flex flex-col gap-4">
-            <Banner tone="ok">{t('accept.done')}</Banner>
-            <Link to="/sign-in" className="inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-4 font-semibold text-on-primary hover:bg-primary-hover">
-              {t('common:signIn')}
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-            <p className="text-muted">{t('accept.body')}</p>
-            <ErrorNote error={error} />
+        <Banner tone="danger">{t('accept.missingToken')}</Banner>
+      ) : done ? (
+        <div className="flex flex-col gap-4 rounded-xl bg-ok-bg p-5 border border-ok/20">
+          <Banner tone="ok">{t('accept.done')}</Banner>
+          <Link
+            to="/sign-in"
+            className="inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 font-bold text-on-primary shadow-button hover:bg-primary-hover transition-all"
+          >
+            {t('common:signIn')} →
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
+          <p className="text-sm text-muted">{t('accept.body')}</p>
+          <ErrorNote error={error} />
+          <div className="flex flex-col gap-3.5">
             <Field
               label={t('accept.password')}
               type="password"
               autoComplete="new-password"
+              dir="ltr"
               hint={t('form.passwordHint')}
               error={errs.password && (errs.password.type === 'server' ? errs.password.message : t('form.passwordHint'))}
               {...form.register('password')}
             />
-            <Field label={t('accept.confirm')} type="password" autoComplete="new-password" error={errs.confirm && t('form.passwordMismatch')} {...form.register('confirm')} />
-            <Button type="submit" size="lg" busy={form.formState.isSubmitting}>
-              {t('accept.submit')}
-            </Button>
-          </form>
-        )}
+            <Field
+              label={t('accept.confirm')}
+              type="password"
+              autoComplete="new-password"
+              dir="ltr"
+              error={errs.confirm && t('form.passwordMismatch')}
+              {...form.register('confirm')}
+            />
+          </div>
+          <Button type="submit" size="lg" className="w-full mt-2 font-bold shadow-button" busy={form.formState.isSubmitting}>
+            {t('accept.submit')}
+          </Button>
+        </form>
+      )}
     </AuthShell>
   );
 }

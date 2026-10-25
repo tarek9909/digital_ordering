@@ -33,6 +33,7 @@ export const EMAIL_TEMPLATES = [
   'support_started',
   'emergency_access',
   'weekly_summary',
+  'subscription_digest',
   'webhook_disabled',
   'email_change',
   'email_changed',

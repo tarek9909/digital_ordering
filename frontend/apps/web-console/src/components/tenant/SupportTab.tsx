@@ -1,7 +1,7 @@
 import type { AuditPurpose } from '@dop/contracts';
 import { supportCodeBody, supportRequestBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, Field, LiveRegion, Modal, Spinner } from '@dop/ui';
+import { Banner, Button, Card, Field, LiveRegion, Modal, Pill, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../../lib/api';
@@ -42,9 +42,6 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
   const enter = useMutation({
     mutationFn: (s: SupportSession) => api.post<{ url: string }>(`/support-sessions/${s.id}/enter`, undefined, purposeHeaders(purpose)),
     onSuccess: ({ url }) => {
-      // The handoff link is one-time and short-lived. `noopener` makes window.open return null even when the tab
-      // opens (I-9), so open a blank tab, cut its opener and then navigate it. Only when the pop-up is blocked
-      // (it opens after an await) is the link shown instead.
       const w = window.open('', '_blank');
       if (w) {
         w.opener = null;
@@ -58,13 +55,18 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
   const l = i18n.language;
   return (
     <div className="flex flex-col gap-6">
-      <LiveRegion text={announce} />
+      <LiveRegion toast text={announce} />
       <RequestForm tenantId={tenant.id} purpose={purpose} onDone={() => refresh(t('support.requested'))} />
       {can(me?.role, 'support.emergency') && (
-        <Card>
-          <h2 className="mb-1 text-lg font-bold">{t('support.emergency.title')}</h2>
-          <p className="mb-3 text-sm text-muted">{t('support.emergency.intro')}</p>
-          <Button variant="danger" onClick={() => setDialog({ kind: 'emergency' })}>
+        <Card className="rounded-2xl border border-danger/30 bg-danger-bg/25 p-5 shadow-card">
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <span className="grid size-6 place-items-center rounded-md bg-danger text-white text-xs font-bold" aria-hidden="true">
+              !
+            </span>
+            <h2 className="text-base font-bold text-danger uppercase tracking-wider">{t('support.emergency.title')}</h2>
+          </div>
+          <p className="mb-4 text-xs sm:text-sm text-ink-2 max-w-2xl">{t('support.emergency.intro')}</p>
+          <Button variant="danger" size="md" className="font-bold shadow-button" onClick={() => setDialog({ kind: 'emergency' })}>
             {t('support.emergency.button')}
           </Button>
         </Card>
@@ -73,18 +75,25 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
       {handoff && (
         <Banner tone="warn">
           {t('support.popupBlocked')}{' '}
-          <a href={handoff} target="_blank" rel="noreferrer noopener" className="underline" onClick={() => setHandoff(null)}>
+          <a href={handoff} target="_blank" rel="noreferrer noopener" className="underline font-bold" onClick={() => setHandoff(null)}>
             {t('support.openLink')}
           </a>
         </Banner>
       )}
       {q.isPending ? (
-        <Spinner label={t('common:loading')} />
+        <div className="p-8 text-center">
+          <Spinner label={t('common:loading')} />
+        </div>
       ) : (
-        <Table caption={t('support.sessions')} head={[t('support.status'), t('support.agent'), t('support.reason'), t('support.requestedAt'), t('support.expiresAt'), t('support.actions')]}>
+        <Table
+          caption={t('support.sessions')}
+          head={[t('support.status'), t('support.agent'), t('support.reason'), t('support.requestedAt'), t('support.expiresAt'), t('support.actions')]}
+        >
           {q.data?.items.length === 0 && (
             <tr>
-              <Td className="text-muted">{t('support.none')}</Td>
+              <Td className="text-muted text-center py-6" colSpan={6}>
+                {t('support.none')}
+              </Td>
             </tr>
           )}
           {q.data?.items.map((s) => {
@@ -94,27 +103,32 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
             return (
               <tr key={s.id}>
                 <Td>
-                  {t(`support.state.${shown}`, { defaultValue: shown })}
-                  {s.kind === 'emergency' && <span className="ms-1 font-semibold text-danger">· {t('support.emergencyKind')}</span>}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Pill tone={live ? 'ok' : shown === 'requested' ? 'warn' : 'neutral'} className="text-xs">
+                      {live && <span className="nova-live-dot size-1.5 bg-current" aria-hidden="true" />}
+                      {t(`support.state.${shown}`, { defaultValue: shown })}
+                    </Pill>
+                    {s.kind === 'emergency' && <span className="font-bold text-danger text-xs">· {t('support.emergencyKind')}</span>}
+                  </span>
                 </Td>
-                <Td>{s.agentName}</Td>
-                <Td className="max-w-64 break-words whitespace-pre-wrap">{s.reason}</Td>
-                <Td>{fmtDate(s.requestedAt, l)}</Td>
-                <Td>{fmtDate(s.expiresAt, l)}</Td>
+                <Td className="font-semibold text-xs text-ink">{s.agentName}</Td>
+                <Td className="max-w-64 break-words whitespace-pre-wrap text-xs text-ink-2">{s.reason}</Td>
+                <Td className="text-xs text-muted whitespace-nowrap">{fmtDate(s.requestedAt, l)}</Td>
+                <Td className="text-xs text-muted whitespace-nowrap">{fmtDate(s.expiresAt, l)}</Td>
                 <Td>
                   <div className="flex flex-wrap gap-2">
                     {s.status === 'requested' && mine && (
-                      <Button variant="secondary" onClick={() => setDialog({ kind: 'code', session: s })}>
+                      <Button variant="secondary" size="md" className="text-xs font-bold" onClick={() => setDialog({ kind: 'code', session: s })}>
                         {t('support.enterCode')}
                       </Button>
                     )}
                     {live && mine && (
-                      <Button busy={enter.isPending && enter.variables?.id === s.id} onClick={() => enter.mutate(s)}>
+                      <Button size="md" className="text-xs font-bold shadow-button" busy={enter.isPending && enter.variables?.id === s.id} onClick={() => enter.mutate(s)}>
                         {t('support.open')}
                       </Button>
                     )}
                     {live && (mine || me?.role === 'super_admin') && (
-                      <Button variant="danger" onClick={() => setDialog({ kind: 'end', session: s })}>
+                      <Button variant="danger" size="md" className="text-xs font-bold" onClick={() => setDialog({ kind: 'end', session: s })}>
                         {t('support.end')}
                       </Button>
                     )}
@@ -127,17 +141,23 @@ export function SupportTab({ tenant, purpose }: { tenant: Tenant; purpose: Audit
       )}
       {dialog?.kind === 'code' && (
         <Modal open onOpenChange={(o) => !o && setDialog(null)} title={t('support.code.title')} description={t('support.code.body')}>
-          <CodeForm session={dialog.session} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.code.done'))} />
+          <div className="pt-2">
+            <CodeForm session={dialog.session} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.code.done'))} />
+          </div>
         </Modal>
       )}
       {dialog?.kind === 'end' && (
         <Modal open onOpenChange={(o) => !o && setDialog(null)} title={t('support.endTitle')} description={t('support.endBody')}>
-          <EndForm session={dialog.session} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.ended'))} />
+          <div className="pt-2">
+            <EndForm session={dialog.session} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.ended'))} />
+          </div>
         </Modal>
       )}
       {dialog?.kind === 'emergency' && (
         <Modal open onOpenChange={(o) => !o && setDialog(null)} title={t('support.emergency.title')} description={t('support.emergency.body', { slug: tenant.slug })}>
-          <EmergencyForm tenant={tenant} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.emergency.done'))} />
+          <div className="pt-2">
+            <EmergencyForm tenant={tenant} purpose={purpose} onCancel={() => setDialog(null)} onDone={() => refresh(t('support.emergency.done'))} />
+          </div>
         </Modal>
       )}
     </div>
@@ -170,26 +190,51 @@ function RequestForm({ tenantId, purpose, onDone }: { tenantId: string; purpose:
   };
   const range = { min: SUPPORT_MIN_MINUTES, max: SUPPORT_MAX_MINUTES };
   return (
-    <Card>
-      <h2 className="mb-1 text-lg font-bold">{t('support.request.title')}</h2>
-      <p className="mb-3 text-sm text-muted">{t('support.request.intro')}</p>
-      <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
+    <Card className="rounded-2xl border border-line shadow-card p-5">
+      <h2 className="mb-1 font-display text-lg font-bold text-ink">{t('support.request.title')}</h2>
+      <p className="mb-4 text-xs sm:text-sm text-muted">{t('support.request.intro')}</p>
+      <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <ErrorNote error={m.error} />
-        <TextArea label={t('support.reason')} maxLength={500} value={reason} error={errs.reason ? t('support.request.reasonInvalid') : undefined} onChange={(e) => setReason(e.target.value)} />
-        <Field
-          label={t('support.request.duration')}
-          type="number"
-          inputMode="numeric"
-          min={SUPPORT_MIN_MINUTES}
-          max={SUPPORT_MAX_MINUTES}
-          className="max-w-xs"
-          value={minutes}
-          error={errs.minutes ? t('support.request.durationInvalid', range) : undefined}
-          hint={t('support.request.durationHint', range)}
-          onChange={(e) => setMinutes(e.target.value)}
+        <TextArea
+          label={t('support.reason')}
+          maxLength={500}
+          value={reason}
+          placeholder="Detailed explanation of the issue or ticket context..."
+          error={errs.reason ? t('support.request.reasonInvalid') : undefined}
+          onChange={(e) => setReason(e.target.value)}
         />
-        <div className="flex justify-end">
-          <Button type="submit" busy={m.isPending}>
+        <div className="flex flex-col gap-2">
+          <Field
+            label={t('support.request.duration')}
+            type="number"
+            inputMode="numeric"
+            min={SUPPORT_MIN_MINUTES}
+            max={SUPPORT_MAX_MINUTES}
+            className="max-w-xs"
+            value={minutes}
+            error={errs.minutes ? t('support.request.durationInvalid', range) : undefined}
+            hint={t('support.request.durationHint', range)}
+            onChange={(e) => setMinutes(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[15, 30, 60, 240].map((mVal) => (
+              <button
+                key={mVal}
+                type="button"
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold ring-1 transition-all ${
+                  minutes === String(mVal)
+                    ? 'bg-ink text-white ring-ink shadow-sm'
+                    : 'bg-canvas text-ink-2 ring-line hover:bg-surface'
+                }`}
+                onClick={() => setMinutes(String(mVal))}
+              >
+                {mVal < 60 ? `${mVal} min` : `${mVal / 60} hr`}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end pt-2 border-t border-line/50">
+          <Button type="submit" size="md" className="font-bold shadow-button px-5" busy={m.isPending}>
             {t('support.request.button')}
           </Button>
         </div>
@@ -211,7 +256,7 @@ function CodeForm({ session, purpose, onCancel, onDone }: { session: SupportSess
   };
   const serverErr = m.error ? (isCode(m.error, 'SUPPORT_CODE_INVALID') ? t('support.code.wrong') : errorText(t, m.error)) : undefined;
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <Field
         label={t('support.code.label')}
         dir="ltr"
@@ -219,6 +264,7 @@ function CodeForm({ session, purpose, onCancel, onDone }: { session: SupportSess
         autoComplete="off"
         maxLength={8}
         autoFocus
+        className="font-mono text-center tracking-[0.25em] text-lg font-bold"
         value={code}
         error={invalid ? t('support.code.format') : serverErr}
         onChange={(e) => setCode(cleanCode(e.target.value))}
@@ -237,7 +283,7 @@ function EndForm({ session, purpose, onCancel, onDone }: { session: SupportSessi
         e.preventDefault();
         m.mutate();
       }}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-4.5"
     >
       <ErrorNote error={m.error} />
       <FormButtons onCancel={onCancel} busy={m.isPending} label={t('support.end')} danger />
@@ -271,11 +317,24 @@ function EmergencyForm({ tenant, purpose, onCancel, onDone }: { tenant: Tenant; 
     }
   };
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4.5" noValidate>
       <Banner tone="warn">{t('support.emergency.ownerNotified')}</Banner>
       <ErrorNote error={error} />
-      <TextArea label={t('support.reason')} maxLength={500} value={reason} error={errs.reason ? t('support.emergency.reasonInvalid') : undefined} onChange={(e) => setReason(e.target.value)} />
-      <Field label={t('actions.typeSlug', { slug: tenant.slug })} dir="ltr" autoComplete="off" value={confirm} error={errs.confirm ? t('actions.slugMismatch') : undefined} onChange={(e) => setConfirm(e.target.value)} />
+      <TextArea
+        label={t('support.reason')}
+        maxLength={500}
+        value={reason}
+        error={errs.reason ? t('support.emergency.reasonInvalid') : undefined}
+        onChange={(e) => setReason(e.target.value)}
+      />
+      <Field
+        label={t('actions.typeSlug', { slug: tenant.slug })}
+        dir="ltr"
+        autoComplete="off"
+        value={confirm}
+        error={errs.confirm ? t('actions.slugMismatch') : undefined}
+        onChange={(e) => setConfirm(e.target.value)}
+      />
       <FormButtons onCancel={onCancel} busy={busy} label={t('support.emergency.button')} danger />
     </form>
   );

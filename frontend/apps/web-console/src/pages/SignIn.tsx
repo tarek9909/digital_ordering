@@ -32,18 +32,18 @@ export function SignInPage() {
   return (
     <AuthShell title={t('signIn.title')} eyebrow={t('auth.step', { n: step.kind === 'password' ? 1 : 2 })}>
       {step.kind === 'password' ? (
-          <PasswordStep
-            onResult={async (r) => {
-              if ('ok' in r) return done();
-              if (r.mfaEnrollmentRequired) {
-                const enroll = await authApi.post<{ secret: string; uri: string }>('/sign-in/mfa/enroll', { mfaToken: r.mfaToken });
-                setStep({ kind: 'code', mfaToken: r.mfaToken, enroll });
-              } else setStep({ kind: 'code', mfaToken: r.mfaToken });
-            }}
-          />
-        ) : (
-          <CodeStep step={step} onDone={done} onBack={() => setStep({ kind: 'password' })} />
-        )}
+        <PasswordStep
+          onResult={async (r) => {
+            if ('ok' in r) return done();
+            if (r.mfaEnrollmentRequired) {
+              const enroll = await authApi.post<{ secret: string; uri: string }>('/sign-in/mfa/enroll', { mfaToken: r.mfaToken });
+              setStep({ kind: 'code', mfaToken: r.mfaToken, enroll });
+            } else setStep({ kind: 'code', mfaToken: r.mfaToken });
+          }}
+        />
+      ) : (
+        <CodeStep step={step} onDone={done} onBack={() => setStep({ kind: 'password' })} />
+      )}
     </AuthShell>
   );
 }
@@ -62,11 +62,28 @@ function PasswordStep({ onResult }: { onResult: (r: SignInResponse) => Promise<v
   });
   const errs = form.formState.errors;
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
-      <Field label={t('common:email')} type="email" autoComplete="username" error={errs.email && t('form.emailInvalid')} {...form.register('email')} />
-      <Field label={t('common:password')} type="password" autoComplete="current-password" error={errs.password && t('form.required')} {...form.register('password')} />
-      <Button type="submit" size="lg" busy={form.formState.isSubmitting}>
+      <div className="flex flex-col gap-3.5">
+        <Field
+          label={t('common:email')}
+          type="email"
+          autoComplete="username"
+          dir="ltr"
+          placeholder="admin@tanbeeh.io"
+          error={errs.email && t('form.emailInvalid')}
+          {...form.register('email')}
+        />
+        <Field
+          label={t('common:password')}
+          type="password"
+          autoComplete="current-password"
+          dir="ltr"
+          error={errs.password && t('form.required')}
+          {...form.register('password')}
+        />
+      </div>
+      <Button type="submit" size="lg" className="w-full mt-2 font-bold shadow-button" busy={form.formState.isSubmitting}>
         {t('common:signIn')}
       </Button>
     </form>
@@ -77,6 +94,7 @@ function CodeStep({ step, onDone, onBack }: { step: Extract<Step, { kind: 'code'
   const { t } = useTranslation();
   const form = useForm({ resolver: zodResolver(totpConfirmBody), defaultValues: { code: '' } });
   const [error, setError] = useState<unknown>(null);
+  const [copied, setCopied] = useState(false);
   const submit = form.handleSubmit(async (v) => {
     setError(null);
     try {
@@ -86,26 +104,50 @@ function CodeStep({ step, onDone, onBack }: { step: Extract<Step, { kind: 'code'
       setError(e);
     }
   });
+
+  const copySecret = async (secret: string) => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <LiveRegion text={step.enroll ? t('signIn.enrollTitle') : t('signIn.codeTitle')} />
       {step.enroll ? (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">{t('signIn.enrollTitle')}</h2>
-          <p className="text-muted">{t('signIn.enrollBody')}</p>
-          <p className="font-medium">{t('signIn.secret')}</p>
-          <code dir="ltr" className="rounded-input border border-line bg-canvas p-3 font-mono text-lg tracking-widest break-all select-all">
-            {step.enroll.secret}
-          </code>
-          <details>
-            <summary className="min-h-12 cursor-pointer py-3">{t('signIn.uri')}</summary>
-            <code dir="ltr" className="block rounded-input bg-canvas p-3 font-mono text-xs break-all select-all">
+        <div className="flex flex-col gap-3 rounded-xl bg-canvas p-4 border border-line">
+          <h2 className="text-base font-bold text-ink">{t('signIn.enrollTitle')}</h2>
+          <p className="text-xs sm:text-sm text-muted">{t('signIn.enrollBody')}</p>
+          <div className="flex flex-col gap-1.5 pt-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted">{t('signIn.secret')}</span>
+            <div className="flex items-center gap-2">
+              <code dir="ltr" className="flex-1 rounded-lg border border-line bg-surface p-2.5 font-mono text-sm tracking-wider font-bold text-ink select-all">
+                {step.enroll.secret}
+              </code>
+              <button
+                type="button"
+                onClick={() => copySecret(step.enroll!.secret)}
+                className="shrink-0 rounded-lg border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink-2 hover:bg-canvas hover:text-ink transition-colors"
+              >
+                {copied ? '✓' : 'Copy'}
+              </button>
+            </div>
+          </div>
+          <details className="text-xs text-muted pt-1">
+            <summary className="cursor-pointer py-1 font-medium hover:text-ink">{t('signIn.uri')}</summary>
+            <code dir="ltr" className="mt-1 block rounded-lg bg-surface p-2 font-mono text-[0.6875rem] break-all select-all border border-line">
               {step.enroll.uri}
             </code>
           </details>
         </div>
       ) : (
-        <p className="text-muted">{t('signIn.codeBody')}</p>
+        <div className="rounded-xl bg-canvas/60 p-3.5 border border-line text-sm text-muted">
+          {t('signIn.codeBody')}
+        </div>
       )}
       <ErrorNote error={error} />
       <Field
@@ -113,15 +155,17 @@ function CodeStep({ step, onDone, onBack }: { step: Extract<Step, { kind: 'code'
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={6}
+        dir="ltr"
+        className="font-mono text-center tracking-[0.35em] text-lg font-bold"
         autoFocus
         error={form.formState.errors.code && t('mfa.codeInvalid')}
         {...form.register('code')}
       />
-      <div className="flex flex-wrap justify-between gap-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
         <Button type="button" variant="ghost" onClick={onBack}>
-          {t('common:back')}
+          ← {t('common:back')}
         </Button>
-        <Button type="submit" busy={form.formState.isSubmitting}>
+        <Button type="submit" size="md" className="font-bold shadow-button px-6" busy={form.formState.isSubmitting}>
           {t('mfa.verify')}
         </Button>
       </div>

@@ -23,3 +23,18 @@ export function localToIso(v: string): string | undefined {
 
 /** Comma/space/newline separated IDs → unique list. */
 export const parseIdList = (s: string) => [...new Set(s.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean))];
+
+export function safeJson(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
+/** JSON columns may arrive parsed or as text depending on the driver. */
+export function jsonValue<T>(v: unknown, fallback: T): T {
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === 'string') return (safeJson(v) as T | null) ?? fallback;
+  return v as T;
+}

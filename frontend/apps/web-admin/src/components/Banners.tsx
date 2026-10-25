@@ -4,11 +4,10 @@ import { Banner, Button, LiveRegion } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { SEVERITY_TONE, pickMessage, readDismissed, visibleAnnouncements, writeDismissed } from '../lib/announcements';
 import { api, authApi } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { useMe, useTenant } from '../lib/me';
-import type { Announcement, SupportSession } from '../lib/types';
+import type { SupportSession } from '../lib/types';
 import { linkClass } from './common';
 
 const supportSessionsKey = ['support-sessions'] as const;
@@ -54,48 +53,12 @@ function SupportBanner({ isSupport }: { isSupport: boolean }) {
           {end.error ? <span className="ms-2">{errorText(t, end.error)}</span> : null}
         </Banner>
       ))}
-      <LiveRegion text={end.isSuccess ? t('banners.supportEnded') : ''} />
+      <LiveRegion toast text={end.isSuccess ? t('banners.supportEnded') : ''} />
     </>
   );
 }
 
-function Announcements() {
-  const { t, i18n } = useTranslation();
-  const q = useQuery({
-    queryKey: ['announcements'],
-    queryFn: async () => (await api.get<{ items: Announcement[] }>('/announcements')).items,
-    staleTime: 5 * 60_000,
-    refetchInterval: 10 * 60_000,
-  });
-  const [dismissed, setDismissed] = useState(readDismissed);
-  const dismiss = (id: string) => {
-    const next = [...dismissed, id];
-    writeDismissed(next);
-    setDismissed(next);
-  };
-  return (
-    <>
-      {visibleAnnouncements(q.data ?? [], dismissed).map((a) => (
-        <Banner
-          key={a.id}
-          tone={SEVERITY_TONE[a.severity] ?? 'info'}
-          action={
-            a.severity === 'critical' ? undefined : (
-              <Button variant="ghost" onClick={() => dismiss(a.id)}>
-                {t('banners.dismiss')}
-              </Button>
-            )
-          }
-        >
-          <span className="sr-only">{t(`banners.severity.${a.severity}`, { defaultValue: '' })} </span>
-          {pickMessage(a.message, i18n.language)}
-        </Banner>
-      ))}
-    </>
-  );
-}
-
-/** Global banner area (TR-FE-22): announcements, support session, billing state, trial, deletion, email verification. */
+/** Global banner area (TR-FE-22): support session, billing state, trial, deletion, email verification. */
 export function Banners() {
   const { t, i18n } = useTranslation();
   const me = useMe().data;
@@ -117,7 +80,6 @@ export function Banners() {
   return (
     // Padded only when a banner shows (live regions are visually hidden).
     <div className="flex max-w-6xl flex-col gap-2 has-[>:not(.sr-only)]:px-4 has-[>:not(.sr-only)]:pt-5 sm:has-[>:not(.sr-only)]:px-8 lg:has-[>:not(.sr-only)]:px-10">
-      {!isSupport && <Announcements />}
       <SupportBanner isSupport={isSupport} />
       {tenant && (
         <>
@@ -150,7 +112,7 @@ export function Banners() {
               tone="warn"
               action={
                 isOwner ? (
-                  <Link to="/settings#deletion" className={linkClass('quiet')}>
+                  <Link to="/settings/deletion" className={linkClass('quiet')}>
                     {t('banners.cancelDeletion')}
                   </Link>
                 ) : undefined
@@ -177,7 +139,7 @@ export function Banners() {
           {resend.error ? <span className="ms-2">{errorText(t, resend.error)}</span> : null}
         </Banner>
       )}
-      <LiveRegion text={resend.isSuccess ? t('banners.resent') : ''} />
+      <LiveRegion toast text={resend.isSuccess ? t('banners.resent') : ''} />
     </div>
   );
 }

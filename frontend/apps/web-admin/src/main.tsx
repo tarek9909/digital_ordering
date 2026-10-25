@@ -81,7 +81,7 @@ const router = createBrowserRouter(
       children: [
         { index: true, element: guard(<HomePage />), handle: h('home') },
         { path: 'venues', element: guard(<VenuesPage />), handle: h('venues') },
-        { path: 'venue', element: guard(<VenuePage />), handle: h('venue') },
+        { path: 'venue/*', element: guard(<VenuePage />), handle: h('venue') },
         {
           element: <TabbedPage group="screens" title="nav.screens" />,
           children: [
@@ -91,7 +91,7 @@ const router = createBrowserRouter(
               handle: h('counters'),
             },
             {
-              path: 'staff-access',
+              path: 'staff-access/*',
               element: guard(<StaffAccessPage />),
               handle: h('staff'),
             },
@@ -101,7 +101,7 @@ const router = createBrowserRouter(
               handle: h('displays'),
             },
             {
-              path: 'posters',
+              path: 'posters/*',
               element: guard(<PostersPage />),
               handle: h('posters'),
             },
@@ -125,20 +125,20 @@ const router = createBrowserRouter(
           element: <TabbedPage group="business" title="nav.groups.business" />,
           children: [
             {
-              path: 'settings',
+              path: 'settings/*',
               element: guard(<SettingsPage />),
               handle: h('settings'),
             },
-            { path: 'team', element: guard(<TeamPage />), handle: h('team') },
+            { path: 'team/*', element: guard(<TeamPage />), handle: h('team') },
             {
-              path: 'billing',
+              path: 'billing/*',
               element: guard(<BillingPage />),
               handle: h('billing'),
             },
           ],
         },
         {
-          path: 'account',
+          path: 'account/*',
           element: guard(<AccountPage />),
           handle: h('account'),
         },

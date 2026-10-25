@@ -275,7 +275,7 @@ export function PaceChart({ pace, todayMedian }: { pace: PaceHour[]; todayMedian
   const median = rows.map((p) => `${f1(x(p.hour))},${f1(y(p.p50!))}`);
   const band = [...rows.map((p) => `${f1(x(p.hour))},${f1(y(p.p90!))}`), ...rows.map((p) => `${f1(x(p.hour))},${f1(y(p.p50!))}`).reverse()].join(' ');
   const grid = [0, 1, 2, 3, 4].map((i) => (maxMin / 4) * i);
-  const hours = Array.from({ length: h1 - h0 + 1 }, (_, i) => h0 + i).filter((h, i, all) => all.length <= 8 || (h - h0) % 2 === 0);
+  const hours = Array.from({ length: h1 - h0 + 1 }, (_, i) => h0 + i).filter((h, _i, all) => all.length <= 8 || (h - h0) % 2 === 0);
   const active = hover === null ? null : rows[hover]!;
   const pointer = (clientX: number, el: SVGSVGElement) => {
     const r = el.getBoundingClientRect();

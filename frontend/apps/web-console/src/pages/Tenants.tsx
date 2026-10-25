@@ -1,10 +1,12 @@
 import { PLAN_CODES, TENANT_STATUSES } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, EmptyState, Field, PageShell, Pill, Select } from '@dop/ui';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { Button, EmptyState, Field, LiveRegion, PageShell, Pill, Select } from '@dop/ui';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
-import { ErrorNote, Initials, PagerControls, primaryLinkClass, StatusBadge, Table, TableSkeleton, Td } from '../components/common';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { MfaCancelled, useFreshMfa } from '../components/FreshMfa';
+import { ErrorNote, Initials, PagerControls, StatusBadge, Table, TableSkeleton, Td } from '../components/common';
+import { CreateTenantForm } from './CreateTenant';
 import { api } from '../lib/api';
 import { fmtDate, fmtDay } from '../lib/format';
 import { useMe } from '../lib/me';
@@ -20,11 +22,6 @@ export interface PlanOption {
   archived: boolean;
 }
 
-/**
- * Plan filter choices from the catalogue (AS10), readable by every role that lists tenants. Built-in plans keep
- * their translated names; custom plans show their catalogue name. Until the catalogue loads (or if it fails) the
- * built-in codes are offered, so the filter always works.
- */
 export function usePlanOptions() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ['plan-options'], queryFn: async () => (await api.get<{ items: PlanOption[] }>('/plan-options')).items, staleTime: 5 * 60_000 });
@@ -35,11 +32,49 @@ export function usePlanOptions() {
   });
 }
 
+/** One-click Activate / Deactivate for a row; a fresh MFA check is still asked when the session needs one. */
+function StatusToggle({ row }: { row: TenantRow }) {
+  const { t } = useTranslation();
+  const run = useFreshMfa();
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [done, setDone] = useState('');
+  const inactive = row.status === 'suspended';
+  if (!inactive && !['trial', 'active', 'past_due'].includes(row.status)) return null;
+  const go = async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      await run(() => (inactive ? api.post(`/tenants/${row.id}/reactivate`) : api.post(`/tenants/${row.id}/suspend`, { reason: t('tenantsUx.toggleReason', { defaultValue: 'Deactivated from the tenants list' }) })));
+      setDone(t(inactive ? 'actions.reactivate.done' : 'actions.suspend.done'));
+      await qc.invalidateQueries({ queryKey: ['tenants'] });
+    } catch (e) {
+      if (!(e instanceof MfaCancelled)) setFailed(true);
+    }
+    setBusy(false);
+  };
+  return (
+    <span className="relative z-10 inline-flex flex-col items-start gap-1">
+      <LiveRegion toast text={done} />
+      <Button variant="secondary" size="md" busy={busy} onClick={() => void go()} className={inactive ? '' : 'text-danger border-danger/30 hover:bg-danger/10'}>
+        {t(inactive ? 'actions.reactivate.button' : 'actions.suspend.button')}
+      </Button>
+      {failed && <span role="alert" className="text-xs text-danger">{t('common:error', { defaultValue: 'Something went wrong.' })}</span>}
+    </span>
+  );
+}
+
 const STATUS_FILTERS = ['', ...TENANT_STATUSES.filter((s) => s !== 'deleted')] as const;
 
 export function TenantsPage() {
   const { t, i18n } = useTranslation();
   const role = useMe().data?.platformUser.role;
+  const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const canCreate = can(role, 'tenants.lifecycle');
+  const creating = canCreate && params.has('new');
+  const setCreating = (on: boolean) => setParams(on ? { new: '1' } : {}, { replace: true });
   const [q, setQ] = useState('');
   const [filters, setFilters] = useState({ q: '', status: '', plan: '' });
   const pager = useCursorPager();
@@ -49,7 +84,7 @@ export function TenantsPage() {
     queryFn: () => api.get<Paged<TenantRow>>('/tenants', { ...filters, limit: 50, cursor: pager.cursor }),
     placeholderData: keepPreviousData,
   });
-  // Status and plan apply at once; the search applies on Enter or the Search button.
+
   const apply = (next: Partial<typeof filters>) => {
     pager.reset();
     setFilters((f) => ({ ...f, ...next }));
@@ -64,6 +99,11 @@ export function TenantsPage() {
     apply({ q: '', status: '', plan: '' });
   };
 
+  const items = list.data?.items ?? [];
+  const activeCount = items.filter((x) => x.status === 'active').length;
+  const trialCount = items.filter((x) => x.status === 'trial').length;
+  const totalTickets = items.reduce((acc, curr) => acc + (curr.ticketsThisMonth || 0), 0);
+
   return (
     <PageShell
       wide
@@ -71,25 +111,87 @@ export function TenantsPage() {
       title={t('tenants.title')}
       description={t('tenants.description')}
       actions={
-        can(role, 'tenants.lifecycle') && (
-          <Link to="/tenants/new" className={primaryLinkClass}>
-            <span aria-hidden="true">+</span>
-            {t('nav.createTenant')}
-          </Link>
+        canCreate && (
+          <Button
+            variant={creating ? 'secondary' : 'primary'}
+            aria-expanded={creating}
+            onClick={() => setCreating(!creating)}
+            className="shadow-button font-bold"
+          >
+            {creating ? t('common:cancel') : `+ ${t('nav.createTenant')}`}
+          </Button>
         )
       }
     >
-      <div className="mb-5 flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-4 shadow-card">
+      {creating && (
+        <section aria-label={t('create.title')} className="mb-8 rounded-2xl bg-surface p-6 shadow-card border border-line">
+          <div className="mb-4 flex items-center justify-between border-b border-line pb-3">
+            <h2 className="font-display text-xl font-bold text-ink">{t('create.title')}</h2>
+            <Button variant="ghost" size="md" onClick={() => setCreating(false)}>
+              {t('common:cancel')}
+            </Button>
+          </div>
+          <CreateTenantForm onCreated={(id) => void nav(`/tenants/${id}`)} />
+        </section>
+      )}
+
+      {/* KPI Overview Strip */}
+      {items.length > 0 && (
+        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-card border border-line">
+            <span className="eyebrow text-xs text-muted">{t('tenants.title')}</span>
+            <span className="num font-display text-2xl sm:text-3xl font-extrabold text-ink">{items.length}</span>
+            <span className="text-xs text-muted">on this page</span>
+          </div>
+          <div className="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-card border border-line">
+            <span className="eyebrow text-xs text-muted">{t('tenantStatus.active')}</span>
+            <span className="num font-display text-2xl sm:text-3xl font-extrabold text-ok">{activeCount}</span>
+            <span className="text-xs text-muted">venues live</span>
+          </div>
+          <div className="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-card border border-line">
+            <span className="eyebrow text-xs text-muted">{t('tenantStatus.trial')}</span>
+            <span className="num font-display text-2xl sm:text-3xl font-extrabold text-info">{trialCount}</span>
+            <span className="text-xs text-muted">in trial period</span>
+          </div>
+          <div className="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-card border border-line">
+            <span className="eyebrow text-xs text-muted">{t('tenants.ticketsMonth')}</span>
+            <span className="num font-display text-2xl sm:text-3xl font-extrabold text-primary">{totalTickets}</span>
+            <span className="text-xs text-muted">orders this month</span>
+          </div>
+        </div>
+      )}
+
+      {/* Command & Filter Bar */}
+      <div className="mb-5 flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-5 shadow-card border border-line">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <form role="search" onSubmit={search} className="flex flex-1 items-end gap-2">
-            <Field label={t('tenants.search')} type="search" className="min-w-0 flex-1" placeholder={t('tenantsUx.searchPlaceholder')} value={q} maxLength={100} onChange={(e) => setQ(e.target.value)} />
-            <Button type="submit" variant="ink">
+            <div className="relative min-w-0 flex-1">
+              <Field
+                label={t('tenants.search')}
+                type="search"
+                className="w-full"
+                placeholder={t('tenantsUx.searchPlaceholder')}
+                value={q}
+                maxLength={100}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="ink" className="min-w-24 shrink-0 font-bold shadow-button">
               {t('tenantsUx.searchButton')}
             </Button>
           </form>
-          <Select label={t('tenants.plan')} className="lg:w-56" value={filters.plan} onChange={(e) => apply({ plan: e.target.value })} options={[{ value: '', label: t('tenantsUx.allPlans') }, ...planOptions]} />
+          <div className="lg:w-64">
+            <Select
+              label={t('tenants.plan')}
+              value={filters.plan}
+              onChange={(e) => apply({ plan: e.target.value })}
+              options={[{ value: '', label: t('tenantsUx.allPlans') }, ...planOptions]}
+            />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('tenants.status')}>
+
+        {/* Status Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-line/50" role="group" aria-label={t('tenants.status')}>
           {STATUS_FILTERS.map((s) => {
             const on = filters.status === s;
             return (
@@ -98,43 +200,63 @@ export function TenantsPage() {
                 type="button"
                 aria-pressed={on}
                 onClick={() => apply({ status: s })}
-                className={`inline-flex min-h-12 items-center lg:min-h-10 rounded-full px-3.5 text-sm font-semibold ring-1 transition-colors ${on ? 'bg-ink text-white ring-ink' : 'bg-surface text-ink-2 ring-line hover:text-ink'}`}
+                className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-xs sm:text-sm font-semibold ring-1 transition-all duration-150 ${
+                  on
+                    ? 'bg-ink text-white ring-ink shadow-sm'
+                    : 'bg-canvas text-ink-2 ring-line hover:bg-surface hover:text-ink'
+                }`}
               >
+                {on && <span className="size-1.5 rounded-full bg-glow" aria-hidden="true" />}
                 {s ? t(`tenantStatus.${s}`) : t('tenantsUx.allStatuses')}
               </button>
             );
           })}
           {filtered && (
-            <Button variant="ghost" className="ms-auto text-sm" onClick={clear}>
-              {t('tenantsUx.clear')}
+            <Button variant="ghost" size="md" className="ms-auto text-xs sm:text-sm font-bold text-muted hover:text-danger" onClick={clear}>
+              ✕ {t('tenantsUx.clear')}
             </Button>
           )}
         </div>
       </div>
+
       <ErrorNote error={list.error} />
       {list.isPending ? (
         <TableSkeleton label={t('common:loading')} />
       ) : (
         list.data &&
         (list.data.items.length === 0 && !pager.canPrev ? (
-          <EmptyState title={t('tenants.empty')} action={filtered ? <Button variant="secondary" onClick={clear}>{t('tenantsUx.clear')}</Button> : undefined}>
+          <EmptyState
+            title={t('tenants.empty')}
+            action={
+              filtered ? (
+                <Button variant="secondary" onClick={clear}>
+                  {t('tenantsUx.clear')}
+                </Button>
+              ) : undefined
+            }
+          >
             {t('tenants.emptyHint')}
           </EmptyState>
         ) : (
           <>
-            {/* Phones get one card per restaurant; the six-column table needs at least a tablet's width. */}
+            {/* Mobile Cards */}
             <ul aria-label={t('tenants.title')} className="flex flex-col gap-3 md:hidden">
-              {list.data.items.length === 0 && <li className="text-muted">{t('tenants.empty')}</li>}
+              {list.data.items.length === 0 && <li className="text-muted p-4 bg-surface rounded-xl text-center">{t('tenants.empty')}</li>}
               {list.data.items.map((r) => (
-                <li key={r.id} className="relative flex flex-col gap-3 rounded-[var(--radius-card)] bg-surface p-4 shadow-card transition-colors has-[a:hover]:bg-primary-wash">
+                <li
+                  key={r.id}
+                  className="relative flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card border border-line transition-all hover:border-primary/40 has-[a:hover]:bg-primary-wash/50"
+                >
                   <div className="flex items-center gap-3">
                     <Initials name={r.name} tone="soft" />
                     <span className="flex min-w-0 flex-1 flex-col">
-                      {/* The link covers the whole card (after:inset-0) so the card is one large tap target. */}
-                      <Link to={`/tenants/${r.id}`} className="truncate font-semibold text-ink after:absolute after:inset-0 after:rounded-[var(--radius-card)]">
+                      <Link
+                        to={`/tenants/${r.id}`}
+                        className="truncate font-bold text-ink text-base after:absolute after:inset-0 after:rounded-2xl"
+                      >
                         {r.name}
                       </Link>
-                      <span dir="ltr" className="max-w-full self-start truncate font-mono text-xs text-muted">
+                      <span dir="ltr" className="console-mono-chip self-start mt-0.5">
                         {r.slug}
                       </span>
                     </span>
@@ -142,13 +264,13 @@ export function TenantsPage() {
                       <StatusBadge status={r.status} />
                     </span>
                   </div>
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line pt-3 text-sm">
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line/60 pt-3 text-sm">
                     <div className="min-w-0">
                       <dt className="text-xs text-muted">{t('tenants.plan')}</dt>
-                      <dd className="font-medium break-words">
+                      <dd className="font-semibold text-ink flex items-center gap-1.5 mt-0.5">
                         {t(`plan.${r.plan}`, { defaultValue: r.plan })}
                         {r.complimentary && (
-                          <Pill tone="ink" className="ms-2">
+                          <Pill tone="ink" className="text-[0.625rem] py-0 px-1.5">
                             {t('tenants.complimentary')}
                           </Pill>
                         )}
@@ -156,39 +278,62 @@ export function TenantsPage() {
                     </div>
                     <div className="min-w-0">
                       <dt className="text-xs text-muted">{t('tenants.ticketsMonth')}</dt>
-                      <dd className="num font-semibold">{r.ticketsThisMonth}</dd>
+                      <dd className="num font-bold text-primary mt-0.5">{r.ticketsThisMonth}</dd>
                     </div>
                     <div className="col-span-2 min-w-0">
                       <dt className="text-xs text-muted">{t('tenants.owner')}</dt>
-                      <dd className="truncate text-ink-2">
+                      <dd className="truncate text-ink-2 font-mono text-xs mt-0.5">
                         <span dir="ltr">{r.ownerEmail ?? '—'}</span>
                       </dd>
                     </div>
                     <div className="col-span-2 min-w-0">
                       <dt className="text-xs text-muted">{t('tenants.lastActivity')}</dt>
-                      <dd className="text-ink-2">
+                      <dd className="text-ink-2 text-xs mt-0.5">
                         {fmtDate(r.lastActivityAt, i18n.language)}
-                        {r.status === 'trial' && r.trialEndsAt && <span className="block text-xs text-muted">{t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}</span>}
+                        {r.status === 'trial' && r.trialEndsAt && (
+                          <span className="block text-[0.6875rem] text-muted">
+                            {t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}
+                          </span>
+                        )}
                       </dd>
                     </div>
                   </dl>
+                  {canCreate && <StatusToggle row={r} />}
                 </li>
               ))}
             </ul>
-            <Table className="hidden md:block" caption={t('tenants.title')} head={[t('tenantsUx.restaurant'), t('tenants.status'), t('tenants.plan'), t('tenants.owner'), t('tenants.ticketsMonth'), t('tenants.lastActivity')]}>
+
+            {/* Desktop Elevated Data Grid */}
+            <Table
+              className="hidden md:block"
+              caption={t('tenants.title')}
+              head={[
+                t('tenantsUx.restaurant'),
+                t('tenants.status'),
+                t('tenants.plan'),
+                t('tenants.owner'),
+                t('tenants.ticketsMonth'),
+                t('tenants.lastActivity'),
+                ...(canCreate ? [t('tenantsUx.action', { defaultValue: 'Action' })] : []),
+              ]}
+            >
               {list.data.items.length === 0 && (
                 <tr>
-                  <Td className="text-muted">{t('tenants.empty')}</Td>
+                  <Td className="text-muted text-center py-8" colSpan={canCreate ? 7 : 6}>
+                    {t('tenants.empty')}
+                  </Td>
                 </tr>
               )}
               {list.data.items.map((r) => (
-                <tr key={r.id}>
+                <tr key={r.id} className="group transition-colors">
                   <Td>
-                    <Link to={`/tenants/${r.id}`} className="group flex min-h-12 items-center gap-3">
+                    <Link to={`/tenants/${r.id}`} className="flex min-h-12 items-center gap-3">
                       <Initials name={r.name} tone="soft" />
                       <span className="flex min-w-0 flex-col">
-                        <span className="font-semibold whitespace-nowrap text-ink underline decoration-transparent underline-offset-4 group-hover:text-primary group-hover:decoration-primary">{r.name}</span>
-                        <span dir="ltr" className="self-start font-mono text-xs whitespace-nowrap text-muted">
+                        <span className="font-bold text-ink group-hover:text-primary transition-colors">
+                          {r.name}
+                        </span>
+                        <span dir="ltr" className="console-mono-chip self-start mt-0.5">
                           {r.slug}
                         </span>
                       </span>
@@ -196,26 +341,43 @@ export function TenantsPage() {
                   </Td>
                   <Td>
                     <StatusBadge status={r.status} />
-                    {r.status === 'trial' && r.trialEndsAt && <span className="mt-1 block text-xs whitespace-nowrap text-muted">{t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}</span>}
+                    {r.status === 'trial' && r.trialEndsAt && (
+                      <span className="mt-1 block text-xs whitespace-nowrap text-muted font-medium">
+                        {t('tenantsUx.trialEnds', { date: fmtDay(r.trialEndsAt, i18n.language) })}
+                      </span>
+                    )}
                   </Td>
                   <Td className="whitespace-nowrap">
-                    {t(`plan.${r.plan}`, { defaultValue: r.plan })}
+                    <span className="font-semibold text-ink">
+                      {t(`plan.${r.plan}`, { defaultValue: r.plan })}
+                    </span>
                     {r.complimentary && (
-                      <Pill tone="ink" className="ms-2">
+                      <Pill tone="ink" className="ms-2 text-[0.625rem] py-0 px-2">
                         {t('tenants.complimentary')}
                       </Pill>
                     )}
                   </Td>
                   <Td>
-                    <span dir="ltr" className="text-ink-2">
+                    <span dir="ltr" className="text-ink-2 font-mono text-xs">
                       {r.ownerEmail ?? '—'}
                     </span>
                   </Td>
-                  <Td className="num font-semibold">{r.ticketsThisMonth}</Td>
-                  <Td className="whitespace-nowrap text-ink-2">
-                    {fmtDate(r.lastActivityAt, i18n.language)}
-                    <span className="block text-xs text-muted">{t('tenantsUx.createdOn', { date: fmtDay(r.createdAt, i18n.language) })}</span>
+                  <Td className="num font-bold text-ink">
+                    <span className="inline-block px-2.5 py-1 rounded-md bg-canvas ring-1 ring-line font-mono text-xs">
+                      {r.ticketsThisMonth}
+                    </span>
                   </Td>
+                  <Td className="whitespace-nowrap text-ink-2 text-xs">
+                    <span className="font-medium">{fmtDate(r.lastActivityAt, i18n.language)}</span>
+                    <span className="block text-[0.6875rem] text-muted">
+                      {t('tenantsUx.createdOn', { date: fmtDay(r.createdAt, i18n.language) })}
+                    </span>
+                  </Td>
+                  {canCreate && (
+                    <Td>
+                      <StatusToggle row={r} />
+                    </Td>
+                  )}
                 </tr>
               ))}
             </Table>

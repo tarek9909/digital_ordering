@@ -1,14 +1,13 @@
-import { planCreateBody, planLimitsSchema, priceCreateBody, type PlanLimits } from '@dop/contracts';
+import { planCreateBody, priceCreateBody } from '@dop/contracts';
 import { formatMoney } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
 import { Button, EmptyState, Field, LiveRegion, Modal, PageShell, Pill, Select, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { ErrorNote, FormButtons, ListField, Segmented, Toggle } from '../components/common';
+import { ErrorNote, FormButtons, Segmented, Toggle } from '../components/common';
 import { api } from '../lib/api';
-import { jsonValue } from '../lib/announcement';
 import { majorToMinor, minorToMajor } from '../lib/money';
-import { DEFAULT_LIMITS, LIMIT_KEYS } from '../lib/planLimits';
+import { DEFAULT_LIMITS } from '../lib/planLimits';
 import { CURRENCIES } from '../lib/settingsForm';
 import type { Plan, PlanPrice } from '../lib/types';
 
@@ -30,8 +29,6 @@ export function PlansPage() {
   };
   const close = () => setDialog(null);
   const plans = q.data?.items ?? [];
-  // Feature keys already used by any plan, offered as one-click suggestions in the plan form.
-  const knownFeatures = [...new Set(plans.flatMap((p) => jsonValue<string[]>(p.features, [])))].sort();
   const active = plans.filter((p) => !p.archived);
   const archived = plans.filter((p) => p.archived);
 
@@ -42,31 +39,33 @@ export function PlansPage() {
       title={t('plans.title')}
       description={t('plans.description')}
       actions={
-        <Button onClick={() => setDialog({ kind: 'create' })}>
-          <span aria-hidden="true">+</span>
+        <Button onClick={() => setDialog({ kind: 'create' })} className="shadow-button font-bold">
+          <span aria-hidden="true" className="text-lg leading-none">+</span>
           {t('plans.create')}
         </Button>
       }
     >
-      <LiveRegion text={announce} />
+      <LiveRegion toast text={announce} />
       <ErrorNote error={q.error} />
       {q.isPending ? (
-        <Spinner label={t('common:loading')} />
+        <div className="p-8 text-center">
+          <Spinner label={t('common:loading')} />
+        </div>
       ) : plans.length === 0 ? (
         <EmptyState title={t('plansUx.emptyTitle')}>{t('plansUx.emptyHint')}</EmptyState>
       ) : (
         <div className="flex flex-col gap-8">
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid gap-6 xl:grid-cols-2">
             {active.map((p) => (
               <PlanCard key={p.id} plan={p} onDialog={setDialog} />
             ))}
           </div>
           {archived.length > 0 && (
-            <section aria-labelledby="archived-h" className="flex flex-col gap-3">
-              <h2 id="archived-h" className="eyebrow">
+            <section aria-labelledby="archived-h" className="flex flex-col gap-4 pt-4 border-t border-line/60">
+              <h2 id="archived-h" className="eyebrow text-xs font-bold text-muted uppercase tracking-wider">
                 {t('plansUx.archivedPlans', { count: archived.length })}
               </h2>
-              <div className="grid gap-5 opacity-80 xl:grid-cols-2">
+              <div className="grid gap-6 opacity-75 xl:grid-cols-2">
                 {archived.map((p) => (
                   <PlanCard key={p.id} plan={p} onDialog={setDialog} />
                 ))}
@@ -77,22 +76,35 @@ export function PlansPage() {
       )}
       {dialog?.kind === 'create' && (
         <Modal open onOpenChange={(o) => !o && close()} title={t('plans.create')} description={t('plansUx.createIntro')}>
-          <PlanForm knownFeatures={knownFeatures} onCancel={close} onDone={() => done(t('plans.created'))} />
+          <div className="pt-2">
+            <PlanForm onCancel={close} onDone={() => done(t('plans.created'))} />
+          </div>
         </Modal>
       )}
       {dialog?.kind === 'edit' && (
         <Modal open onOpenChange={(o) => !o && close()} title={t('plans.editTitle', { code: dialog.plan.name })}>
-          <PlanForm plan={dialog.plan} knownFeatures={knownFeatures} onCancel={close} onDone={() => done(t('plans.updated'))} />
+          <div className="pt-2">
+            <PlanForm plan={dialog.plan} onCancel={close} onDone={() => done(t('plans.updated'))} />
+          </div>
         </Modal>
       )}
       {dialog?.kind === 'price' && (
         <Modal open onOpenChange={(o) => !o && close()} title={t('plans.addPriceTitle', { code: dialog.plan.name })} description={t('plans.addPriceBody')}>
-          <PriceForm plan={dialog.plan} onCancel={close} onDone={() => done(t('plans.priceAdded'))} />
+          <div className="pt-2">
+            <PriceForm plan={dialog.plan} onCancel={close} onDone={() => done(t('plans.priceAdded'))} />
+          </div>
         </Modal>
       )}
       {dialog?.kind === 'deactivate' && (
-        <Modal open onOpenChange={(o) => !o && close()} title={t('plans.deactivateTitle')} description={t('plans.deactivateBody', { price: formatMoney(dialog.price.amountMinor, dialog.price.currency, i18n.language) })}>
-          <DeactivateForm price={dialog.price} onCancel={close} onDone={() => done(t('plans.deactivated'))} />
+        <Modal
+          open
+          onOpenChange={(o) => !o && close()}
+          title={t('plans.deactivateTitle')}
+          description={t('plans.deactivateBody', { price: formatMoney(dialog.price.amountMinor, dialog.price.currency, i18n.language) })}
+        >
+          <div className="pt-2">
+            <DeactivateForm price={dialog.price} onCancel={close} onDone={() => done(t('plans.deactivated'))} />
+          </div>
         </Modal>
       )}
     </PageShell>
@@ -101,83 +113,66 @@ export function PlansPage() {
 
 function PlanCard({ plan, onDialog }: { plan: Plan; onDialog: (d: Dialog) => void }) {
   const { t, i18n } = useTranslation();
-  const limits = jsonValue<Record<string, number>>(plan.limits, {});
-  const features = jsonValue<string[]>(plan.features, []);
   const prices = [...plan.prices].sort((a, b) => Number(b.active) - Number(a.active) || PERIODS.indexOf(a.period) - PERIODS.indexOf(b.period));
+
   return (
-    <article aria-labelledby={`plan-${plan.id}`} className="flex flex-col rounded-[var(--radius-card)] bg-surface shadow-card">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
+    <article aria-labelledby={`plan-${plan.id}`} className="console-card flex flex-col overflow-hidden">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line/80 bg-canvas/40 px-5 py-4">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <h2 id={`plan-${plan.id}`} className="font-display text-xl font-extrabold tracking-tight">
+          <h2 id={`plan-${plan.id}`} className="font-display text-xl font-extrabold tracking-tight text-ink">
             {plan.name}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
-            <span dir="ltr" className="font-mono text-xs break-all text-muted">
+            <span dir="ltr" className="console-mono-chip font-bold">
               {plan.code}
             </span>
-            {plan.isPublic ? <Pill tone="ok">{t('plans.public')}</Pill> : <Pill>{t('plans.hidden')}</Pill>}
+            {plan.isPublic ? <Pill tone="ok">{t('plans.public')}</Pill> : <Pill tone="neutral">{t('plans.hidden')}</Pill>}
             {plan.archived && <Pill tone="warn">{t('plans.archived')}</Pill>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => onDialog({ kind: 'edit', plan })}>
+          <Button variant="secondary" size="md" className="font-bold text-xs" onClick={() => onDialog({ kind: 'edit', plan })}>
             {t('plans.edit')}
           </Button>
-          <Button variant="secondary" onClick={() => onDialog({ kind: 'price', plan })}>
-            {t('plans.addPrice')}
+          <Button variant="secondary" size="md" className="font-bold text-xs" onClick={() => onDialog({ kind: 'price', plan })}>
+            + {t('plans.addPrice')}
           </Button>
         </div>
       </header>
       <div className="grid flex-1 gap-6 p-5 md:grid-cols-2">
-        <div className="flex flex-col gap-5">
-          <div>
-            <h3 className="eyebrow mb-2">{t('plans.limits')}</h3>
-            {/* As many 8rem tiles per row as fit: one on a 320px phone, two or three on wider cards. */}
-            <dl className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
-              {LIMIT_KEYS.map((k) => (
-                <div key={k} className="flex min-w-0 flex-col gap-0.5 rounded-input bg-canvas px-3 py-2">
-                  <dt className="text-xs break-words text-muted">{t(`limits.${k}`)}</dt>
-                  <dd className="num font-display text-lg font-bold">{limits[k] ?? '—'}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <div>
-            <h3 className="eyebrow mb-2">{t('plans.features')}</h3>
-            {features.length ? (
-              <ul className="flex flex-wrap gap-1.5">
-                {features.map((f) => (
-                  <li key={f} dir="ltr" className="rounded-full bg-canvas px-2.5 py-1 font-mono text-xs ring-1 ring-line">
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">{t('plansUx.noFeatures')}</p>
-            )}
-          </div>
-        </div>
+        <p className="text-sm text-ink-2">{plan.description || <span className="text-muted">{t('plansUx.noDescription')}</span>}</p>
         <div>
-          <h3 className="eyebrow mb-2">{t('plans.prices')}</h3>
+          <h3 className="eyebrow text-xs font-bold text-muted uppercase tracking-wider mb-2.5">{t('plans.prices')}</h3>
           {prices.length === 0 ? (
-            <div className="flex flex-col items-start gap-2 rounded-input border border-dashed border-line p-4">
-              <p className="text-sm text-muted">{t('plans.noPrices')}</p>
-              <Button variant="ghost" onClick={() => onDialog({ kind: 'price', plan })}>
-                {t('plans.addPrice')}
+            <div className="flex flex-col items-start gap-2.5 rounded-xl border border-dashed border-line p-4 text-center">
+              <p className="text-xs sm:text-sm text-muted">{t('plans.noPrices')}</p>
+              <Button variant="ghost" size="md" className="font-bold text-primary" onClick={() => onDialog({ kind: 'price', plan })}>
+                + {t('plans.addPrice')}
               </Button>
             </div>
           ) : (
             <ul className="flex flex-col gap-2">
               {prices.map((x) => (
-                <li key={x.id} className={`flex flex-wrap items-center justify-between gap-2 rounded-input border border-line px-3 py-2 ${x.active ? '' : 'opacity-60'}`}>
+                <li
+                  key={x.id}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-canvas/40 px-3.5 py-2.5 transition-all ${
+                    x.active ? 'border-primary/20 bg-surface' : 'opacity-60'
+                  }`}
+                >
                   <span className="flex flex-col">
-                    <span className="num font-display text-lg font-bold">{formatMoney(x.amountMinor, x.currency, i18n.language)}</span>
-                    <span className="text-xs text-muted">{t(`period.${x.period}`)}</span>
+                    <span className="num font-display text-lg font-extrabold text-ink">
+                      {formatMoney(x.amountMinor, x.currency, i18n.language)}
+                    </span>
+                    <span className="text-xs text-muted font-medium">{t(`period.${x.period}`)}</span>
                   </span>
-                  <span className="flex flex-wrap items-center gap-1">
-                    {x.active ? <Pill tone="ok">{t('plans.active')}</Pill> : <Pill>{t('plans.inactive')}</Pill>}
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {x.active ? (
+                      <Pill tone="ok" className="text-xs">{t('plans.active')}</Pill>
+                    ) : (
+                      <Pill tone="neutral" className="text-xs">{t('plans.inactive')}</Pill>
+                    )}
                     {x.active && (
-                      <Button variant="ghost" className="text-sm" onClick={() => onDialog({ kind: 'deactivate', plan, price: x })}>
+                      <Button variant="ghost" size="md" className="text-xs font-bold text-danger hover:bg-danger-bg/40" onClick={() => onDialog({ kind: 'deactivate', plan, price: x })}>
                         {t('plans.deactivate')}
                       </Button>
                     )}
@@ -192,45 +187,34 @@ function PlanCard({ plan, onDialog }: { plan: Plan; onDialog: (d: Dialog) => voi
   );
 }
 
-const LIMIT_MIN: Partial<Record<keyof PlanLimits, number>> = { maxLanguages: 1, trialTicketsPerDay: 1 };
-
-function PlanForm({ plan, knownFeatures, onCancel, onDone }: { plan?: Plan; knownFeatures: string[]; onCancel: () => void; onDone: () => void }) {
+function PlanForm({ plan, onCancel, onDone }: { plan?: Plan; onCancel: () => void; onDone: () => void }) {
   const { t } = useTranslation();
-  const start = plan ? { ...DEFAULT_LIMITS, ...jsonValue<Partial<PlanLimits>>(plan.limits, {}) } : DEFAULT_LIMITS;
-  const [v, setV] = useState(() => ({
-    code: plan?.code ?? '',
-    name: plan?.name ?? '',
-    isPublic: plan?.isPublic ?? true,
-    limits: Object.fromEntries(LIMIT_KEYS.map((k) => [k, String(start[k])])) as Record<keyof PlanLimits, string>,
-    features: plan ? jsonValue<string[]>(plan.features, []) : [],
-  }));
-  const [errs, setErrs] = useState<{ code?: string; name?: string; features?: string; limits?: Set<string> }>({});
+  const [v, setV] = useState(() => ({ code: plan?.code ?? '', name: plan?.name ?? '', description: plan?.description ?? '', isPublic: plan?.isPublic ?? true }));
+  const [errs, setErrs] = useState<{ code?: string; name?: string }>({});
   const m = useMutation({
     mutationFn: (body: Record<string, unknown>) => (plan ? api.patch(`/plans/${plan.id}`, body) : api.post('/plans', body)),
     onSuccess: onDone,
   });
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const next: typeof errs = {};
-    const limits = Object.fromEntries(LIMIT_KEYS.map((k) => [k, v.limits[k].trim() === '' ? NaN : Number(v.limits[k])]));
-    const lr = planLimitsSchema.safeParse(limits);
-    if (!lr.success) next.limits = new Set(lr.error.issues.map((i) => String(i.path[0])));
-    const body = { code: v.code.trim(), name: v.name.trim(), isPublic: v.isPublic, limits: lr.success ? lr.data : DEFAULT_LIMITS, features: v.features };
+    // Limits and features are not edited here: a new plan starts from the defaults, an existing one keeps its own.
+    const body = { code: v.code.trim(), name: v.name.trim(), description: v.description.trim(), isPublic: v.isPublic, limits: DEFAULT_LIMITS, features: [] as string[] };
     const r = planCreateBody.safeParse(body);
     if (!r.success) {
       for (const i of r.error.issues) {
         const k = i.path[0];
         if (k === 'code' && !plan) next.code = t('plans.codeInvalid');
         if (k === 'name') next.name = t('plans.nameInvalid');
-        if (k === 'features') next.features = t('plans.featuresInvalid');
       }
     }
     setErrs(next);
     if (Object.keys(next).length) return;
-    const { code: _code, ...patch } = body;
+    const { code: _code, limits: _l, features: _f, ...patch } = body;
     m.mutate(plan ? patch : body);
   };
-  const suggestions = knownFeatures.filter((f) => !v.features.includes(f));
+
   return (
     <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       <ErrorNote error={m.error} />
@@ -249,48 +233,9 @@ function PlanForm({ plan, knownFeatures, onCancel, onDone }: { plan?: Plan; know
           />
         )}
       </div>
-      <Toggle label={t('plans.isPublic')} hint={t('plansUx.publicHint')} checked={v.isPublic} onChange={(e) => setV({ ...v, isPublic: e.target.checked })} />
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 flex flex-col gap-0.5">
-          <span className="font-semibold">{t('plans.limits')}</span>
-          <span className="text-sm text-muted">{t('plansUx.limitsHint')}</span>
-        </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {LIMIT_KEYS.map((k) => (
-            <Field
-              key={k}
-              label={t(`limits.${k}`)}
-              type="number"
-              inputMode="numeric"
-              dir="ltr"
-              min={LIMIT_MIN[k] ?? 0}
-              value={v.limits[k]}
-              error={errs.limits?.has(k) ? t('plansUx.limitInvalid', { min: LIMIT_MIN[k] ?? 0 }) : undefined}
-              onChange={(e) => setV({ ...v, limits: { ...v.limits, [k]: e.target.value } })}
-            />
-          ))}
-        </div>
-      </fieldset>
-      <div className="flex flex-col gap-2">
-        <ListField<string>
-          label={t('plans.features')}
-          hint={errs.features ?? t('plansUx.featuresHint')}
-          values={v.features}
-          max={50}
-          placeholder="webhooks"
-          parse={(s) => (s.length <= 60 ? { ok: true, value: s } : { ok: false, error: t('plans.featuresInvalid') })}
-          onChange={(features) => setV({ ...v, features })}
-        />
-        {suggestions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-muted">{t('plansUx.suggestions')}</span>
-            {suggestions.map((f) => (
-              <button key={f} type="button" dir="ltr" className="min-h-12 rounded-full px-2.5 font-mono break-all lg:min-h-9 text-xs text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink" onClick={() => setV({ ...v, features: [...v.features, f] })}>
-                + {f}
-              </button>
-            ))}
-          </div>
-        )}
+      <Field label={t('plansUx.descriptionLabel')} maxLength={500} hint={t('plansUx.descriptionHint')} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} />
+      <div className="rounded-xl bg-canvas p-3 border border-line">
+        <Toggle label={t('plans.isPublic')} hint={t('plansUx.publicHint')} checked={v.isPublic} onChange={(e) => setV({ ...v, isPublic: e.target.checked })} />
       </div>
       <FormButtons onCancel={onCancel} busy={m.isPending} label={t('common:save')} />
     </form>
@@ -302,6 +247,7 @@ function PriceForm({ plan, onCancel, onDone }: { plan: Plan; onCancel: () => voi
   const [v, setV] = useState<{ period: (typeof PERIODS)[number]; currency: string; amount: string }>({ period: 'month', currency: 'USD', amount: '' });
   const [errs, setErrs] = useState<{ currency?: boolean; amount?: boolean }>({});
   const m = useMutation({ mutationFn: (body: unknown) => api.post(`/plans/${plan.id}/prices`, body), onSuccess: onDone });
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const amountMinor = majorToMinor(v.amount);
@@ -312,8 +258,9 @@ function PriceForm({ plan, onCancel, onDone }: { plan: Plan; onCancel: () => voi
   };
   const preview = majorToMinor(v.amount);
   const current = plan.prices.find((p) => p.active && p.period === v.period && p.currency === v.currency);
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={m.error} />
       <Segmented label={t('plans.period')} value={v.period} onChange={(period) => setV({ ...v, period })} options={PERIODS.map((p) => ({ value: p, label: t(`period.${p}`) }))} />
       <div className="grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]">
@@ -330,7 +277,11 @@ function PriceForm({ plan, onCancel, onDone }: { plan: Plan; onCancel: () => voi
           onChange={(e) => setV({ ...v, amount: e.target.value })}
         />
       </div>
-      {current && <p className="rounded-input bg-warn-bg px-3 py-2 text-sm font-medium text-warn">{t('plansUx.replaces', { price: formatMoney(current.amountMinor, current.currency, i18n.language) })}</p>}
+      {current && (
+        <div className="rounded-xl bg-warn-bg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-warn border border-warn/30">
+          {t('plansUx.replaces', { price: formatMoney(current.amountMinor, current.currency, i18n.language) })}
+        </div>
+      )}
       <FormButtons onCancel={onCancel} busy={m.isPending} label={t('plans.addPrice')} />
     </form>
   );
@@ -345,7 +296,7 @@ function DeactivateForm({ price, onCancel, onDone }: { price: PlanPrice; onCance
         e.preventDefault();
         m.mutate();
       }}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-4.5"
     >
       <ErrorNote error={m.error} />
       <FormButtons onCancel={onCancel} busy={m.isPending} label={t('plans.deactivate')} danger />

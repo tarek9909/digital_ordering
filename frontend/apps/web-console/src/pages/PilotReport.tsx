@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, EmptyState, Field, PageShell, Stat } from '@dop/ui';
+import { Button, Card, EmptyState, Field, Stat } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -21,7 +21,7 @@ const COLORS: Record<(typeof REACH)[number], string> = {
   none: 'var(--color-muted)',
 };
 
-export function PilotReportPage() {
+export function PilotReportBody() {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<Map<string, string>>(new Map());
   const [range, setRange] = useState(() => ({
@@ -51,8 +51,8 @@ export function PilotReportPage() {
   };
 
   return (
-    <PageShell wide eyebrow={t('layout.groups.insights')} title={t('pilot.title')} description={t('pilot.description')}>
-      <Card className="mb-6">
+    <>
+      <Card className="mb-6 border border-line/80 bg-surface shadow-xs">
         <form onSubmit={run} className="flex flex-col gap-4" noValidate>
           <TenantPicker label={t('pilotUx.restaurants')} selected={selected} onChange={setSelected} />
           <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
@@ -65,16 +65,20 @@ export function PilotReportPage() {
               onChange={(e) => setRange({ ...range, to: e.target.value })}
             />
             <Button type="submit" disabled={selected.size === 0}>
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {t('pilot.run')}
             </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm text-muted">{t('pilotUx.quickRange')}</span>
+          <div className="flex flex-wrap items-center gap-2 border-t border-line/60 pt-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t('pilotUx.quickRange')}</span>
             {[7, 14, 30].map((n) => (
               <button
                 key={n}
                 type="button"
-                className="min-h-12 rounded-full px-3 lg:min-h-10 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-canvas hover:text-ink"
+                className="inline-flex min-h-8 items-center rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 ring-1 ring-line transition-all hover:bg-surface hover:text-ink hover:ring-line-hover"
                 onClick={() => setRange({ from: isoDay(new Date(Date.now() - (n - 1) * 86_400_000)), to: isoDay(new Date()) })}
               >
                 {t('pilotUx.lastDays', { count: n })}
@@ -88,7 +92,7 @@ export function PilotReportPage() {
       {report.data && <Results items={report.data.items} />}
       {query === null && <EmptyState title={t('pilot.pickTenantsTitle')}>{t('pilot.pickTenants')}</EmptyState>}
       <HowToRead />
-    </PageShell>
+    </>
   );
 }
 
@@ -104,50 +108,62 @@ export function Results({ items }: { items: ConsolePilotItem[] }) {
   const reachOk = sum((s) => (s.alertReach.push ?? 0) + (s.alertReach.live ?? 0));
   return (
     <div className="flex flex-col gap-6">
-      {/* Four across only from xl: next to the sidebar a quarter is too narrow for the large figures. */}
-      <section aria-label={t('pilot.summary')} data-motion="stagger" className="grid gap-3 *:min-w-0 *:break-words sm:grid-cols-2 xl:grid-cols-4">
-        <Stat accent label={t('pilot.reachPct')} value={fmtPct(reachAll ? Math.round((reachOk / reachAll) * 1000) / 10 : null)} hint={t('pilot.summary')} />
+      {/* Metric Cards Row */}
+      <section aria-label={t('pilot.summary')} data-motion="stagger" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-primary/40 bg-primary/[0.04] p-4 shadow-xs ring-1 ring-primary/20">
+          <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+            <span className="size-2 rounded-full bg-primary animate-pulse" />
+            {t('pilot.reachPct')}
+          </span>
+          <span className="mt-1 block font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            {fmtPct(reachAll ? Math.round((reachOk / reachAll) * 1000) / 10 : null)}
+          </span>
+        </div>
         <Stat label={t('pilot.tickets')} value={String(sum((s) => s.tickets))} />
         <Stat label={t('pilot.ready')} value={String(sum((s) => s.readyTickets))} />
         <Stat label={t('pilot.uncollected')} value={String(sum((s) => s.uncollected))} />
       </section>
-      <Table
-        caption={t('pilot.title')}
-        head={[
-          t('pilot.tenant'),
-          t('pilot.tickets'),
-          t('pilot.ready'),
-          t('pilot.reachPct'),
-          t('pilot.acknowledgedPct'),
-          t('pilot.prepP50'),
-          t('pilot.prepP90'),
-          t('pilot.pickupP50'),
-          t('pilot.pickupP90'),
-          t('pilot.uncollected'),
-          t('pilot.undoPct'),
-        ]}
-      >
-        {items.map(({ tenant, report: { total: s } }) => (
-          <tr key={tenant.id}>
-            <Td className="font-semibold whitespace-nowrap">{tenant.name}</Td>
-            <Td className="num">{s.tickets}</Td>
-            <Td className="num">{s.readyTickets}</Td>
-            <Td className="num">{fmtPct(s.reachPushOrLivePct)}</Td>
-            <Td className="num">{fmtPct(s.acknowledgedPct)}</Td>
-            <Td className="num">{fmtDuration(s.prepSecondsP50)}</Td>
-            <Td className="num">{fmtDuration(s.prepSecondsP90)}</Td>
-            <Td className="num">{fmtDuration(s.pickupSecondsP50)}</Td>
-            <Td className="num">{fmtDuration(s.pickupSecondsP90)}</Td>
-            <Td className="num">{s.uncollected}</Td>
-            <Td className="num">{fmtPct(s.undoPct)}</Td>
-          </tr>
-        ))}
-      </Table>
-      <p className="text-sm text-muted">{t('pilot.prepNote')}</p>
-      <Card>
-        <h2 className="mb-2 text-lg font-bold">{t('pilot.reachChart')}</h2>
-        <p className="mb-3 text-sm text-muted">{t('pilot.reachChartNote')}</p>
-        <div className="h-72" dir="ltr" role="img" aria-label={t('pilot.reachChart')}>
+      <div className="flex flex-col gap-2">
+        <Table
+          caption={t('pilot.title')}
+          head={[
+            t('pilot.tenant'),
+            t('pilot.tickets'),
+            t('pilot.ready'),
+            t('pilot.reachPct'),
+            t('pilot.acknowledgedPct'),
+            t('pilot.prepP50'),
+            t('pilot.prepP90'),
+            t('pilot.pickupP50'),
+            t('pilot.pickupP90'),
+            t('pilot.uncollected'),
+            t('pilot.undoPct'),
+          ]}
+        >
+          {items.map(({ tenant, report: { total: s } }) => (
+            <tr key={tenant.id} className="hover:bg-canvas/40">
+              <Td className="font-semibold text-ink whitespace-nowrap">{tenant.name}</Td>
+              <Td className="num font-medium">{s.tickets}</Td>
+              <Td className="num font-medium text-ok">{s.readyTickets}</Td>
+              <Td className="num font-semibold text-primary">{fmtPct(s.reachPushOrLivePct)}</Td>
+              <Td className="num font-medium">{fmtPct(s.acknowledgedPct)}</Td>
+              <Td className="num font-mono text-xs">{fmtDuration(s.prepSecondsP50)}</Td>
+              <Td className="num font-mono text-xs">{fmtDuration(s.prepSecondsP90)}</Td>
+              <Td className="num font-mono text-xs">{fmtDuration(s.pickupSecondsP50)}</Td>
+              <Td className="num font-mono text-xs">{fmtDuration(s.pickupSecondsP90)}</Td>
+              <Td className="num font-medium text-warn">{s.uncollected}</Td>
+              <Td className="num font-medium">{fmtPct(s.undoPct)}</Td>
+            </tr>
+          ))}
+        </Table>
+        <p className="px-1 text-xs text-muted">{t('pilot.prepNote')}</p>
+      </div>
+      <Card className="border border-line/80 bg-surface shadow-xs">
+        <div className="mb-2">
+          <h2 className="text-base font-bold text-ink">{t('pilot.reachChart')}</h2>
+          <p className="text-xs text-muted">{t('pilot.reachChartNote')}</p>
+        </div>
+        <div className="h-56" dir="ltr" role="img" aria-label={t('pilot.reachChart')}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-line)" vertical={false} />
@@ -179,7 +195,7 @@ const GUIDE = ['tickets', 'ready', 'reach', 'acknowledged', 'prep', 'pickup', 'u
 function HowToRead() {
   const { t } = useTranslation();
   return (
-    <details className="group mt-6 rounded-[var(--radius-card)] bg-surface shadow-card">
+    <details className="group mt-4rounded-[var(--radius-card)] bg-surface shadow-card">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 font-semibold">
         {t('pilotUx.guide.title')}
         <span aria-hidden="true" className="text-muted transition-transform group-open:rotate-180">

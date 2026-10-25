@@ -1,7 +1,7 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { displayCreateBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Card, EmptyState, Field, LiveRegion, Modal } from '@dop/ui';
+import { Banner, Button, Card, EmptyState, Field, Modal } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';

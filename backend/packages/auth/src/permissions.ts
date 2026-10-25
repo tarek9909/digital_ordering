@@ -21,11 +21,9 @@ export const PERMISSIONS = [
   'tenant.export',
   'tenant.delete',
   'support.decide', // approve, refuse, generate support code
-  'announcements.read',
   'account.self',
   // platform
   'console.notes',
-  'console.announcements',
   'console.tenants.read',
   'console.tenants.lifecycle',
   'console.commercial',
@@ -48,11 +46,11 @@ const g = (...ps: Permission[]): Grant => Object.fromEntries(ps.map((p) => [p, t
 const OWNER = g(
   'tickets.write', 'board.view', 'venue.settings', 'venue.staff_access', 'venue.staff_credentials', 'team.invite_managers',
   'team.manage', 'reports.view', 'ratings.moderate', 'billing.view', 'billing.manage', 'integrations.view',
-  'integrations.manage', 'tenant.export', 'tenant.delete', 'support.decide', 'announcements.read', 'account.self',
+  'integrations.manage', 'tenant.export', 'tenant.delete', 'support.decide', 'account.self',
 );
 const MANAGER = g(
   'tickets.write', 'board.view', 'venue.settings', 'venue.staff_access', 'venue.staff_credentials', 'team.invite_managers',
-  'reports.view', 'support.decide', 'announcements.read', 'account.self',
+  'reports.view', 'support.decide', 'account.self',
 );
 // TR-AUTH-10: support sessions cannot change billing, create API keys, transfer ownership, delete, export
 // or approve support sessions; billing and integrations are view only. They see and can revoke staff devices
@@ -64,7 +62,7 @@ const API_KEY = g('tickets.write');
 
 const PLATFORM: Record<'super_admin' | 'support' | 'finance', Grant> = {
   super_admin: g(
-    'console.notes', 'console.announcements', 'console.tenants.read', 'console.tenants.lifecycle', 'console.commercial',
+    'console.notes', 'console.tenants.read', 'console.tenants.lifecycle', 'console.commercial',
     'console.ownership', 'console.devices', 'console.settings', 'console.support', 'console.support.emergency',
     'console.reports', 'console.billing.read', 'console.audit', 'console.platform_users',
   ),

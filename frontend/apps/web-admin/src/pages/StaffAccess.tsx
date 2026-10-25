@@ -122,7 +122,7 @@ function Devices({ venueId }: { venueId: string }) {
           )
         }
       </QueryView>
-      <LiveRegion text={remove.isSuccess ? t('staff.removed') : ''} />
+      <LiveRegion toast text={remove.isSuccess ? t('staff.removed') : ''} />
     </Section>
   );
 }
@@ -156,6 +156,7 @@ export function StaffAccessPage() {
       <SectionTabs
         label={t('staff.description')}
         idPrefix="staff"
+        base="/staff-access"
         sections={[
           !support && {
             key: 'link',
@@ -197,7 +198,7 @@ export function StaffAccessPage() {
                       </div>
                     </dl>
                     {rotate.error && <Banner tone="danger">{errorText(t, rotate.error)}</Banner>}
-                    <LiveRegion text={rotate.isSuccess ? t('staff.rotated') : ''} />
+                    <LiveRegion toast text={rotate.isSuccess ? t('staff.rotated') : ''} />
                   </div>
                 </div>
               )}

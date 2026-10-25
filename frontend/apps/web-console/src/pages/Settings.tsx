@@ -17,22 +17,85 @@ import type { Chime, Language, SettingRow } from '../lib/types';
 
 type Tab = 'general' | 'languages' | 'chimes';
 
+const GROUP_ICONS: Record<string, React.ReactNode> = {
+  newTenants: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  ),
+  billing: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+  ),
+  maintenance: (
+    <svg aria-hidden="true" className="size-5 text-warn" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  ),
+  delivery: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+  data: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  ),
+  security: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
+  other: (
+    <svg aria-hidden="true" className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+    </svg>
+  ),
+};
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('general');
   const [announce, setAnnounce] = useState('');
   return (
     <PageShell eyebrow={t('layout.groups.platform')} title={t('settings.title')} description={t('settings.description')}>
-      <LiveRegion text={announce} />
+      <LiveRegion toast text={announce} />
       <Tabs
         id="settings"
         label={t('settings.title')}
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: 'general', label: t('settingsForm.tabs.general') },
-          { value: 'languages', label: t('settings.languages') },
-          { value: 'chimes', label: t('settings.chimes') },
+          {
+            value: 'general',
+            label: t('settingsForm.tabs.general'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            ),
+          },
+          {
+            value: 'languages',
+            label: t('settings.languages'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+            ),
+          },
+          {
+            value: 'chimes',
+            label: t('settings.chimes'),
+            icon: (
+              <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            ),
+          },
         ]}
       />
       {/* The general settings stay mounted so unsaved changes survive a look at another tab. */}
@@ -121,12 +184,27 @@ function SettingsGroup({ id, rows, lookups, onSaved }: { id: string; rows: Setti
     return p ? t(p.message, p.values) : undefined;
   };
   const latest = rows.map((r) => r.updatedAt).filter((d): d is string => Boolean(d)).sort().pop();
+  const icon = GROUP_ICONS[id];
 
   return (
     <Section
-      title={t(`settingsForm.groups.${id}.title`, { defaultValue: humanize(id) })}
+      title={
+        <span className="flex items-center gap-2.5">
+          {icon && <span className="grid size-8 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">{icon}</span>}
+          <span>{t(`settingsForm.groups.${id}.title`, { defaultValue: humanize(id) })}</span>
+        </span>
+      }
       description={t(`settingsForm.groups.${id}.hint`, { defaultValue: '' }) || undefined}
-      actions={latest ? <span className="text-xs text-muted">{t('settings.updatedAt', { date: fmtDate(latest, i18n.language) })}</span> : undefined}
+      actions={
+        latest ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-xs font-medium text-muted ring-1 ring-line">
+            <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {t('settings.updatedAt', { date: fmtDate(latest, i18n.language) })}
+          </span>
+        ) : undefined
+      }
     >
       <form
         noValidate
@@ -145,7 +223,12 @@ function SettingsGroup({ id, rows, lookups, onSaved }: { id: string; rows: Setti
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
-          {dirty.length > 0 && <span className="me-auto text-sm font-semibold text-warn">{t('settingsForm.unsaved', { count: dirty.length })}</span>}
+          {dirty.length > 0 && (
+            <span className="me-auto inline-flex items-center gap-2 rounded-full bg-warn/10 px-3 py-1 text-xs font-semibold text-warn ring-1 ring-warn/30">
+              <span className="size-2 rounded-full bg-warn animate-pulse" />
+              {t('settingsForm.unsaved', { count: dirty.length })}
+            </span>
+          )}
           <Button type="button" variant="ghost" disabled={!dirty.length || busy} onClick={discard}>
             {t('settingsForm.discard')}
           </Button>
@@ -351,7 +434,7 @@ function UnitNumber({ label, hint, error, value, unit, min, max, onChange }: { l
       <label htmlFor={id} className="text-sm font-semibold text-ink-2">
         {label}
       </label>
-      <div className={`flex min-h-12 max-w-56 items-center overflow-hidden rounded-input border bg-surface focus-within:border-ink-2/40 ${error ? 'border-danger' : 'border-line'}`}>
+      <div className={`flex min-h-12 max-w-56 items-center overflow-hidden rounded-input border bg-surface transition-all duration-150 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${error ? 'border-danger ring-2 ring-danger/20' : 'border-line'}`}>
         <input
           id={id}
           type="number"
@@ -359,7 +442,7 @@ function UnitNumber({ label, hint, error, value, unit, min, max, onChange }: { l
           dir="ltr"
           min={min}
           max={max}
-          className="num min-w-0 flex-1 bg-transparent px-3.5 text-base outline-none"
+          className="num min-w-0 flex-1 bg-transparent px-3.5 text-base font-medium outline-none"
           value={text}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-e` : help ? `${id}-h` : undefined}
@@ -368,15 +451,15 @@ function UnitNumber({ label, hint, error, value, unit, min, max, onChange }: { l
             onChange(e.target.value === '' ? NaN : Number(e.target.value));
           }}
         />
-        {unit && <span className="shrink-0 border-s border-line bg-canvas px-3 py-3 text-sm text-muted">{t(`settingsForm.unit.${unit}`)}</span>}
+        {unit && <span className="shrink-0 border-s border-line bg-canvas/60 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-muted">{t(`settingsForm.unit.${unit}`)}</span>}
       </div>
       {help && !error && (
-        <p id={`${id}-h`} className="text-sm text-muted">
+        <p id={`${id}-h`} className="text-xs text-muted">
           {help}
         </p>
       )}
       {error && (
-        <p id={`${id}-e`} role="alert" className="text-sm text-danger">
+        <p id={`${id}-e`} role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       )}
@@ -388,30 +471,32 @@ function UnitNumber({ label, hint, error, value, unit, min, max, onChange }: { l
 function LanguagePicker({ label, hint, error, value, languages, onChange }: { label: string; hint?: string; error?: string; value: string[]; languages: Language[]; onChange: (v: unknown) => void }) {
   const codes = [...new Set([...languages.map((l) => l.code), ...value])];
   return (
-    <fieldset className="flex flex-col gap-1.5">
-      <legend className="mb-1.5 text-sm font-semibold text-ink-2">{label}</legend>
-      <div className="flex flex-wrap gap-2">
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-semibold text-ink-2">{label}</legend>
+      <div className="flex flex-wrap gap-2.5">
         {codes.map((c) => {
           const on = value.includes(c);
           const name = languages.find((l) => l.code === c)?.name ?? c;
           return (
             <label
               key={c}
-              className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${on ? 'bg-ink text-white ring-ink' : 'bg-surface text-ink-2 ring-line hover:text-ink'}`}
+              className={`inline-flex min-h-11 cursor-pointer items-center gap-2.5 rounded-full px-4 text-sm font-semibold ring-1 transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${
+                on ? 'bg-ink text-white ring-ink shadow-sm' : 'bg-surface text-ink-2 ring-line hover:border-line-hover hover:bg-canvas/40 hover:text-ink'
+              }`}
             >
               <input type="checkbox" className="sr-only" checked={on} onChange={(e) => onChange(e.target.checked ? codes.filter((x) => x === c || value.includes(x)) : value.filter((x) => x !== c))} />
-              <span aria-hidden="true">{on ? '✓' : '+'}</span>
-              {name}
-              <span dir="ltr" className={`font-mono text-xs ${on ? 'text-white/60' : 'text-muted'}`}>
+              <span aria-hidden="true" className={`inline-flex size-4 items-center justify-center rounded-full text-xs ${on ? 'bg-white/20 text-white' : 'text-muted'}`}>{on ? '✓' : '+'}</span>
+              <span>{name}</span>
+              <span dir="ltr" className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold ${on ? 'bg-white/15 text-white/80' : 'bg-canvas text-muted ring-1 ring-line/50'}`}>
                 {c}
               </span>
             </label>
           );
         })}
       </div>
-      {hint && !error && <p className="text-sm text-muted">{hint}</p>}
+      {hint && !error && <p className="text-xs text-muted">{hint}</p>}
       {error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       )}
@@ -439,23 +524,36 @@ function Languages({ onSaved }: { onSaved: () => void }) {
     }
   };
   return (
-    <Section title={t('settings.languages')} description={t('settingsForm.languagesIntro')}>
+    <Section
+      title={
+        <span className="flex items-center gap-2.5">
+          <span className="grid size-8 place-items-center rounded-lg bg-canvas text-primary ring-1 ring-line">
+            <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+            </svg>
+          </span>
+          <span>{t('settings.languages')}</span>
+        </span>
+      }
+      description={t('settingsForm.languagesIntro')}
+    >
       <ErrorNote error={q.error ?? error} />
       {q.isPending ? (
         <Spinner label={t('common:loading')} />
       ) : (
         <ul className="flex flex-col divide-y divide-line">
           {q.data?.items.map((l) => (
-            // Name and switch side by side from md; the voice field joins them on one row only on xl, where the
-            // switch's hint has room (an auto column would let the hint squeeze the name to nothing).
             <li key={l.code} className="grid gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:items-center xl:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,18rem)]">
               <div className="flex min-w-0 items-center gap-3">
-                <span dir="ltr" className="grid size-10 shrink-0 place-items-center rounded-input bg-canvas font-mono text-sm font-semibold ring-1 ring-line">
+                <span dir="ltr" className="grid size-10 shrink-0 place-items-center rounded-lg bg-canvas font-mono text-sm font-bold ring-1 ring-line text-ink">
                   {l.code}
                 </span>
                 <span className="flex min-w-0 flex-col">
-                  <span className="font-semibold break-words">{l.name}</span>
-                  <span className="text-sm text-muted">{l.direction === 'rtl' ? t('settings.rtl') : t('settings.ltr')}</span>
+                  <span className="font-semibold text-ink break-words">{l.name}</span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+                    <span className={`inline-block size-1.5 rounded-full ${l.direction === 'rtl' ? 'bg-primary' : 'bg-muted'}`} />
+                    {l.direction === 'rtl' ? t('settings.rtl') : t('settings.ltr')}
+                  </span>
                 </span>
               </div>
               <Toggle label={t('settings.enabledFor', { name: l.name })} hint={t('settingsForm.customerPagesHint')} checked={Boolean(l.customer_enabled)} disabled={busy === l.code} onChange={(e) => void patch(l.code, { customerEnabled: e.target.checked })} />

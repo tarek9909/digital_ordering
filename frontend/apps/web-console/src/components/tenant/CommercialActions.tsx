@@ -17,9 +17,7 @@ import { MfaCancelled, useFreshMfa } from '../FreshMfa';
 
 type Tenant = TenantDetail['tenant'];
 type Kind = 'payment' | 'plan' | 'freeMonths' | 'transfer';
-/** Used until the catalogue loads, or when it cannot be read; plan codes are free-form since W02. */
 const FALLBACK_PLANS = ['standard', 'pro', 'multisite'].map((code) => ({ code, name: code }));
-/** Currencies venues pay in; amounts are entered in major units and stored in minor units (× 100). */
 const CURRENCIES = ['USD', 'LBP'] as const;
 const METHODS = ['cash', 'bank_transfer', 'wallet', 'other'] as const;
 
@@ -43,11 +41,16 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
 
   return (
     <Section title={t('commercial.title')} description={t('commercialUx.intro')}>
-      <LiveRegion text={announce} />
-      <ul className="flex flex-col divide-y divide-line">
+      <LiveRegion toast text={announce} />
+      <ul className="flex flex-col divide-y divide-line/60">
         {kinds.map((k) => (
           <ActionRow key={k} hint={t(`commercialUx.hint.${k}`)}>
-            <Button variant={k === 'payment' ? 'ink' : 'secondary'} className={k === 'transfer' ? 'text-danger' : undefined} onClick={() => setOpen(k)}>
+            <Button
+              variant={k === 'payment' ? 'ink' : 'secondary'}
+              size="md"
+              className={`font-semibold text-xs sm:text-sm ${k === 'transfer' ? 'text-danger border-danger/30 hover:bg-danger/10' : ''}`}
+              onClick={() => setOpen(k)}
+            >
               {t(`commercial.${k}.button`)}
             </Button>
           </ActionRow>
@@ -55,10 +58,12 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
       </ul>
       {open && (
         <Modal open onOpenChange={(o) => !o && close()} title={t(`commercial.${open}.title`)} description={t(`commercial.${open}.body`, { slug: tenant.slug })}>
-          {open === 'plan' && <PlanForm tenant={tenant} onCancel={close} onDone={(effective) => done(t(`commercial.plan.done.${effective}`, { defaultValue: t('commercial.plan.done.now') }))} />}
-          {open === 'payment' && <PaymentForm tenant={tenant} onCancel={close} onDone={(paidUntil) => done(t('commercial.payment.done', { date: fmtDate(paidUntil, i18n.language) }))} />}
-          {open === 'freeMonths' && <FreeMonthsForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.freeMonths.done'))} />}
-          {open === 'transfer' && <TransferForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.transfer.done'))} />}
+          <div className="pt-2">
+            {open === 'plan' && <PlanForm tenant={tenant} onCancel={close} onDone={(effective) => done(t(`commercial.plan.done.${effective}`, { defaultValue: t('commercial.plan.done.now') }))} />}
+            {open === 'payment' && <PaymentForm tenant={tenant} onCancel={close} onDone={(paidUntil) => done(t('commercial.payment.done', { date: fmtDate(paidUntil, i18n.language) }))} />}
+            {open === 'freeMonths' && <FreeMonthsForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.freeMonths.done'))} />}
+            {open === 'transfer' && <TransferForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.transfer.done'))} />}
+          </div>
         </Modal>
       )}
     </Section>
@@ -104,21 +109,32 @@ export function PlanForm({ tenant, onCancel, onDone }: FormProps & { onDone: (ef
   };
   const excess = downgradeExcess(error);
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4.5" noValidate>
       {isCode(error, 'PLAN_DOWNGRADE_BLOCKED') ? (
         <Banner tone="danger">
-          <p>{t('commercial.plan.blocked')}</p>
-          <ul className="mt-1 list-disc ps-6">
+          <p className="font-bold">{t('commercial.plan.blocked')}</p>
+          <ul className="mt-1.5 list-disc ps-5 space-y-1 text-xs">
             {excess.map((x) => (
-              <li key={x.limit}>{t('commercial.plan.excess', { limit: t(`limits.${x.limit}`, { defaultValue: x.limit }), current: x.current, allowed: x.allowed })}</li>
+              <li key={x.limit}>
+                {t('commercial.plan.excess', {
+                  limit: t(`limits.${x.limit}`, { defaultValue: x.limit }),
+                  current: x.current,
+                  allowed: x.allowed,
+                })}
+              </li>
             ))}
           </ul>
         </Banner>
       ) : (
         <ErrorNote error={error} />
       )}
-      <Select label={t('commercial.plan.plan')} value={plan} onChange={(e) => setPlan(e.target.value)} options={choices.map((p) => ({ value: p.code, label: t(`plan.${p.code}`, { defaultValue: p.name }) }))} />
-      <p className="text-sm text-muted">{t('commercial.plan.note')}</p>
+      <Select
+        label={t('commercial.plan.plan')}
+        value={plan}
+        onChange={(e) => setPlan(e.target.value)}
+        options={choices.map((p) => ({ value: p.code, label: t(`plan.${p.code}`, { defaultValue: p.name }) }))}
+      />
+      <p className="text-xs sm:text-sm text-muted bg-canvas p-3 rounded-xl border border-line">{t('commercial.plan.note')}</p>
       <FormButtons onCancel={onCancel} busy={busy} label={t('commercial.plan.button')} />
     </form>
   );
@@ -128,12 +144,11 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
   const { t, i18n } = useTranslation();
   const run = useFreshMfa();
   const [v, setV] = useState({ amount: '', currency: 'USD', months: '1', method: 'cash', reference: '', note: '' });
-  // One id per opened form: a repeated or retried submit (double click, MFA prompt, lost response) records the
-  // payment once (BW02).
   const [requestId] = useState(() => crypto.randomUUID());
   const [errs, setErrs] = useState<{ amountMinor?: boolean; months?: boolean }>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const amount = Number(v.amount.replace(',', '.'));
@@ -160,18 +175,61 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
       setBusy(false);
     }
   };
+
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t('commercial.payment.amount')} inputMode="decimal" dir="ltr" autoComplete="off" value={v.amount} error={errs.amountMinor ? t('commercial.payment.amountInvalid') : undefined} onChange={(e) => setV({ ...v, amount: e.target.value })} />
-        <Select label={t('commercial.payment.currency')} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value })} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
-        <Field label={t('commercial.payment.months')} type="number" inputMode="numeric" min={1} max={24} value={v.months} error={errs.months ? t('commercial.payment.monthsInvalid') : undefined} onChange={(e) => setV({ ...v, months: e.target.value })} />
-        <Select label={t('billing.methodLabel')} value={v.method} onChange={(e) => setV({ ...v, method: e.target.value })} options={METHODS.map((m) => ({ value: m, label: t(`billing.method.${m}`) }))} />
+        <Field
+          label={t('commercial.payment.amount')}
+          inputMode="decimal"
+          dir="ltr"
+          autoComplete="off"
+          placeholder="0.00"
+          value={v.amount}
+          error={errs.amountMinor ? t('commercial.payment.amountInvalid') : undefined}
+          onChange={(e) => setV({ ...v, amount: e.target.value })}
+        />
+        <Select
+          label={t('commercial.payment.currency')}
+          value={v.currency}
+          onChange={(e) => setV({ ...v, currency: e.target.value })}
+          options={CURRENCIES.map((c) => ({ value: c, label: c }))}
+        />
+        <Field
+          label={t('commercial.payment.months')}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={24}
+          value={v.months}
+          error={errs.months ? t('commercial.payment.monthsInvalid') : undefined}
+          onChange={(e) => setV({ ...v, months: e.target.value })}
+        />
+        <Select
+          label={t('billing.methodLabel')}
+          value={v.method}
+          onChange={(e) => setV({ ...v, method: e.target.value })}
+          options={METHODS.map((m) => ({ value: m, label: t(`billing.method.${m}`) }))}
+        />
       </div>
-      <Field label={t('billing.reference')} hint={t('commercial.payment.referenceHint')} autoComplete="off" maxLength={120} value={v.reference} onChange={(e) => setV({ ...v, reference: e.target.value })} />
-      <TextArea label={t('commercial.payment.note')} maxLength={500} value={v.note} onChange={(e) => setV({ ...v, note: e.target.value })} />
-      <p className="text-sm text-muted">{t('commercial.payment.extends', { date: fmtDate(tenant.paidUntil, i18n.language) })}</p>
+      <Field
+        label={t('billing.reference')}
+        hint={t('commercial.payment.referenceHint')}
+        autoComplete="off"
+        maxLength={120}
+        value={v.reference}
+        onChange={(e) => setV({ ...v, reference: e.target.value })}
+      />
+      <TextArea
+        label={t('commercial.payment.note')}
+        maxLength={500}
+        value={v.note}
+        onChange={(e) => setV({ ...v, note: e.target.value })}
+      />
+      <p className="text-xs sm:text-sm text-muted bg-canvas p-3 rounded-xl border border-line">
+        {t('commercial.payment.extends', { date: fmtDate(tenant.paidUntil, i18n.language) })}
+      </p>
       <FormButtons onCancel={onCancel} busy={busy} label={t('commercial.payment.button')} />
     </form>
   );
@@ -180,11 +238,12 @@ function PaymentForm({ tenant, onCancel, onDone }: FormProps & { onDone: (paidUn
 function FreeMonthsForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => void }) {
   const { t } = useTranslation();
   const run = useFreshMfa();
-  const [requestId] = useState(() => crypto.randomUUID()); // one grant per opened form (BW02)
+  const [requestId] = useState(() => crypto.randomUUID());
   const [months, setMonths] = useState('1');
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const r = freeMonthsBody.safeParse({ months: Number(months), requestId });
@@ -201,10 +260,20 @@ function FreeMonthsForm({ tenant, onCancel, onDone }: FormProps & { onDone: () =
       setBusy(false);
     }
   };
+
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
-      <Field label={t('commercial.freeMonths.months')} type="number" inputMode="numeric" min={1} max={12} value={months} error={invalid ? t('commercial.freeMonths.invalid') : undefined} onChange={(e) => setMonths(e.target.value)} />
+      <Field
+        label={t('commercial.freeMonths.months')}
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={12}
+        value={months}
+        error={invalid ? t('commercial.freeMonths.invalid') : undefined}
+        onChange={(e) => setMonths(e.target.value)}
+      />
       <FormButtons onCancel={onCancel} busy={busy} label={t('commercial.freeMonths.button')} />
     </form>
   );
@@ -217,6 +286,7 @@ function TransferForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => 
   const [errs, setErrs] = useState<{ email?: boolean; verificationNote?: boolean; confirm?: boolean }>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const r = transferOwnershipPlatformBody.safeParse({ email: v.email.trim(), verificationNote: v.verificationNote });
@@ -235,11 +305,21 @@ function TransferForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => 
       setBusy(false);
     }
   };
+
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4.5" noValidate>
       <Banner tone="warn">{t('commercial.transfer.warning')}</Banner>
       {isCode(error, 'NOT_FOUND') ? <Banner tone="danger">{t('commercial.transfer.noAccount')}</Banner> : <ErrorNote error={error} />}
-      <Field label={t('commercial.transfer.email')} type="email" dir="ltr" autoComplete="off" value={v.email} error={errs.email ? t('commercial.transfer.emailInvalid') : undefined} onChange={(e) => setV({ ...v, email: e.target.value })} />
+      <Field
+        label={t('commercial.transfer.email')}
+        type="email"
+        dir="ltr"
+        autoComplete="off"
+        placeholder="newowner@restaurant.com"
+        value={v.email}
+        error={errs.email ? t('commercial.transfer.emailInvalid') : undefined}
+        onChange={(e) => setV({ ...v, email: e.target.value })}
+      />
       <TextArea
         label={t('commercial.transfer.note')}
         hint={t('commercial.transfer.noteHint')}
@@ -248,7 +328,15 @@ function TransferForm({ tenant, onCancel, onDone }: FormProps & { onDone: () => 
         error={errs.verificationNote ? t('commercial.transfer.noteInvalid') : undefined}
         onChange={(e) => setV({ ...v, verificationNote: e.target.value })}
       />
-      <Field label={t('actions.typeSlug', { slug: tenant.slug })} dir="ltr" autoComplete="off" value={v.confirm} error={errs.confirm ? t('actions.slugMismatch') : undefined} onChange={(e) => setV({ ...v, confirm: e.target.value })} />
+      <Field
+        label={t('actions.typeSlug', { slug: tenant.slug })}
+        dir="ltr"
+        autoComplete="off"
+        placeholder={tenant.slug}
+        value={v.confirm}
+        error={errs.confirm ? t('actions.slugMismatch') : undefined}
+        onChange={(e) => setV({ ...v, confirm: e.target.value })}
+      />
       <FormButtons onCancel={onCancel} busy={busy} label={t('commercial.transfer.button')} danger />
     </form>
   );

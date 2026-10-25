@@ -42,7 +42,7 @@ function TenantForm({ tenant }: { tenant: TenantInfo }) {
           {t('common:save')}
         </Button>
       </div>
-      <LiveRegion text={isSubmitSuccessful && !isDirty ? t('common:saved') : ''} />
+      <LiveRegion toast text={isSubmitSuccessful && !isDirty ? t('common:saved') : ''} />
     </form>
   );
 }
@@ -101,7 +101,7 @@ function Deletion({ tenant }: { tenant: TenantInfo }) {
           {t('settings.deletionRequest')}
         </Button>
       </div>
-      <LiveRegion text={cancel.isSuccess ? t('settings.deletionCancelled') : ''} />
+      <LiveRegion toast text={cancel.isSuccess ? t('settings.deletionCancelled') : ''} />
     </form>
   );
 }
@@ -155,6 +155,7 @@ export function SettingsPage() {
           <SectionTabs
             label={t('settings.description')}
             idPrefix="set"
+            base="/settings"
             sections={[
               !limited && {
                 key: 'tenant',

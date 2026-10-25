@@ -20,6 +20,7 @@ export function PostersPage() {
       <SectionTabs
         label={t('posters.description')}
         idPrefix="post"
+        base="/posters"
         sections={[
           {
             key: 'pdf',

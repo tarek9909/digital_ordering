@@ -12,7 +12,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { CreateTenantPage, planChoices } from './CreateTenant';
 
-// W04 / FR-SA-05: plan and trial length on create tenant.
+// W04 / FR-SA-05: plan on create tenant; a console tenant is active at once, with no trial.
 const get = vi.hoisted(() => vi.fn());
 const post = vi.hoisted(() => vi.fn());
 vi.mock('../lib/api', () => ({ api: { get, post } }));
@@ -59,28 +59,30 @@ function fillRequired() {
   fill('Owner email (an invitation is sent)', 'owner@example.com');
 }
 
-it('planChoices drops archived plans and Trial for complimentary tenants', () => {
-  expect(planChoices(plans, false).map((p) => p.code)).toEqual(['trial', 'standard', 'pro', 'acme-custom']);
+it('planChoices drops archived plans and never offers Trial', () => {
+  expect(planChoices(plans, false).map((p) => p.code)).toEqual(['standard', 'pro', 'acme-custom']);
   expect(planChoices(plans, true).map((p) => p.code)).toEqual(['standard', 'pro', 'acme-custom']);
 });
 
-it('defaults to Trial with the platform trial length and sends the chosen trial days', async () => {
+it('defaults to Standard, has no trial field and creates the tenant without trial days', async () => {
   post.mockResolvedValue({ tenantId: 't1' });
   renderPage();
   await waitFor(() => expect(optionValues()).toContain('acme-custom'));
-  expect(planSelect().value).toBe('trial');
+  expect(planSelect().value).toBe('standard');
+  expect(optionValues()).not.toContain('trial');
   expect(optionValues()).not.toContain('old-plan');
-  await screen.findByText('Leave empty for the platform default (14 days). 1–90.');
+  expect(screen.queryByLabelText('Trial length (days)')).toBeNull();
   fillRequired();
-  fill('Trial length (days)', '30');
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create and invite owner' }));
   });
   await screen.findByText('tenant page');
-  expect(post).toHaveBeenCalledWith('/tenants', expect.objectContaining({ planCode: 'trial', trialDays: 30, complimentary: false, slug: 'burger-house' }));
+  const body = post.mock.calls[0]![1] as Record<string, unknown>;
+  expect(body).toMatchObject({ planCode: 'standard', complimentary: false, slug: 'burger-house' });
+  expect(body.trialDays).toBeUndefined();
 });
 
-it('an empty trial length leaves the platform default to the server', async () => {
+it('sends the chosen plan', async () => {
   post.mockResolvedValue({ tenantId: 't1' });
   renderPage();
   await waitFor(() => expect(optionValues()).toContain('pro'));
@@ -90,40 +92,21 @@ it('an empty trial length leaves the platform default to the server', async () =
     fireEvent.click(screen.getByRole('button', { name: 'Create and invite owner' }));
   });
   await screen.findByText('tenant page');
-  const body = post.mock.calls[0]![1] as Record<string, unknown>;
-  expect(body.planCode).toBe('pro');
-  expect(body.trialDays).toBeUndefined();
+  expect((post.mock.calls[0]![1] as Record<string, unknown>).planCode).toBe('pro');
 });
 
-it('complimentary switches to Standard, hides Trial and the trial length', async () => {
+it('complimentary keeps a paid plan', async () => {
   post.mockResolvedValue({ tenantId: 't1' });
   renderPage();
-  await waitFor(() => expect(optionValues()).toContain('trial'));
-  fill('Trial length (days)', '20');
+  await waitFor(() => expect(optionValues()).toContain('pro'));
   fireEvent.click(screen.getByLabelText('Complimentary'));
   await waitFor(() => expect(planSelect().value).toBe('standard'));
-  expect(optionValues()).not.toContain('trial');
-  expect(screen.queryByLabelText('Trial length (days)')).toBeNull();
   fillRequired();
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create and invite owner' }));
   });
   await screen.findByText('tenant page');
-  const body = post.mock.calls[0]![1] as Record<string, unknown>;
-  expect(body).toMatchObject({ complimentary: true, planCode: 'standard' });
-  expect(body.trialDays).toBeUndefined();
-});
-
-it('rejects an out-of-range trial length on the client', async () => {
-  renderPage();
-  await waitFor(() => expect(optionValues()).toContain('trial'));
-  fillRequired();
-  fill('Trial length (days)', '120');
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Create and invite owner' }));
-  });
-  await screen.findByText('Enter a whole number of days from 1 to 90.');
-  expect(post).not.toHaveBeenCalled();
+  expect(post.mock.calls[0]![1]).toMatchObject({ complimentary: true, planCode: 'standard' });
 });
 
 it('maps a server planCode error onto the plan field', async () => {
@@ -137,7 +120,7 @@ it('maps a server planCode error onto the plan field', async () => {
     }),
   );
   renderPage();
-  await waitFor(() => expect(optionValues()).toContain('trial'));
+  await waitFor(() => expect(optionValues()).toContain('pro'));
   fillRequired();
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create and invite owner' }));

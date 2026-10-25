@@ -224,12 +224,37 @@ export class ErrorBoundary extends Component<{ children: ReactNode; fallback: Re
   }
 }
 
-/** Visually hidden live region for status announcements (TR-A11Y-02). */
-export function LiveRegion({ text, assertive }: { text: string; assertive?: boolean }) {
+/**
+ * Live region for status announcements (TR-A11Y-02). A non-empty text can also be shown as a brief success toast:
+ * an announcement can be made visible with `toast` (the admin and console dashboards use it).
+ */
+export function LiveRegion({ text, assertive, toast }: { text: string; assertive?: boolean; toast?: boolean }) {
+  const [shown, setShown] = useState('');
+  useEffect(() => {
+    if (!toast || !text) {
+      setShown('');
+      return;
+    }
+    setShown(text);
+    const timer = setTimeout(() => setShown(''), 4000);
+    return () => clearTimeout(timer);
+  }, [text, toast]);
   return (
-    <div className="sr-only" aria-live={assertive ? 'assertive' : 'polite'} role={assertive ? 'alert' : 'status'}>
-      {text}
-    </div>
+    <>
+      <div className="sr-only" aria-live={assertive ? 'assertive' : 'polite'} role={assertive ? 'alert' : 'status'}>
+        {text}
+      </div>
+      {shown && (
+        <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-4">
+          <div className="toast-in flex w-full max-w-xl items-center gap-3 rounded-input bg-ok px-4 py-3 text-white shadow-dialog">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0">
+              <path d="M4 10.5l4 4 8-9" />
+            </svg>
+            <span className="min-w-0">{shown}</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

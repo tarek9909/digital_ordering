@@ -37,43 +37,6 @@ export async function addNote(deps: Deps, actor: PlatformActor, tenantId: string
   return { id };
 }
 
-// ---- announcements (FR-SA-13)
-export interface AnnouncementInput {
-  message: Record<string, string>;
-  severity: 'info' | 'warning' | 'critical';
-  target: { all: true } | { tenantIds: string[] } | { plans: string[] };
-  startsAt: string;
-  endsAt: string;
-}
-
-export async function createAnnouncement(deps: Deps, actor: PlatformActor, a: AnnouncementInput) {
-  if (new Date(a.endsAt) <= new Date(a.startsAt)) throw new AppError('VALIDATION_FAILED', 'End must be after start');
-  const id = uuidv7();
-  await sql`INSERT INTO announcements (id, message, severity, target, starts_at, ends_at, created_by) VALUES (${id}, ${json(a.message)}, ${a.severity}, ${json(a.target)}, ${new Date(a.startsAt)}, ${new Date(a.endsAt)}, ${actor.platformUserId})`.execute(deps.db.platform());
-  await writeAudit(deps.db.platform(), { actor, action: 'announcement.created', tenantId: null, entityType: 'announcement', entityId: id, after: a, visibleToTenant: false });
-  return { id };
-}
-
-export async function listAnnouncements(deps: Deps) {
-  const r = await sql<{ id: string; message: unknown; severity: string; target: unknown; starts_at: Date; ends_at: Date }>`SELECT id, message, severity, target, starts_at, ends_at FROM announcements ORDER BY starts_at DESC LIMIT 200`.execute(deps.db.platform());
-  return r.rows.map((x) => ({ ...x, starts_at: x.starts_at.toISOString(), ends_at: x.ends_at.toISOString() }));
-}
-
-export async function deleteAnnouncement(deps: Deps, id: string) {
-  await sql`DELETE FROM announcements WHERE id = ${id}`.execute(deps.db.platform());
-}
-
-/** Banners for one tenant's admin area: active now and targeted at it (all, its ID or its plan). */
-export async function announcementsFor(deps: Deps, tenantId: string) {
-  const now = deps.now();
-  const t = await deps.db.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code']).where('tenants.id', '=', tenantId).executeTakeFirstOrThrow();
-  const r = await sql<{ id: string; message: Record<string, string>; severity: string; target: { all?: boolean; tenantIds?: string[]; plans?: string[] } }>`
-    SELECT id, message, severity, target FROM announcements WHERE starts_at <= ${now} AND ends_at > ${now}`.execute(deps.db.platform());
-  return r.rows
-    .filter((a) => a.target.all || a.target.tenantIds?.includes(tenantId) || a.target.plans?.includes(t.code))
-    .map((a) => ({ id: a.id, message: a.message, severity: a.severity }));
-}
-
 // ---- ownership transfer by the platform (FR-SA-08)
 export async function platformTransferOwnership(deps: Deps, actor: PlatformActor, tenantId: string, email: string, verificationNote: string) {
   const db = deps.db.platform();
@@ -131,7 +94,7 @@ export async function setFlagOverride(deps: Deps, actor: PlatformActor, tenantId
 export async function listPlans(deps: Deps) {
   const db = deps.db.platform();
   const [plans, prices] = await Promise.all([db.selectFrom('plans').selectAll().orderBy('sort_order').execute(), db.selectFrom('plan_prices').selectAll().execute()]);
-  return plans.map((p) => ({ id: p.id, code: p.code, name: p.name, isPublic: Boolean(p.is_public), limits: p.limits, features: p.features, archived: p.archived_at !== null, prices: prices.filter((x) => x.plan_id === p.id).map((x) => ({ id: x.id, period: x.period, currency: x.currency, amountMinor: x.amount_minor, active: Boolean(x.active) })) }));
+  return plans.map((p) => ({ id: p.id, code: p.code, name: p.name, description: p.description ?? '', isPublic: Boolean(p.is_public), limits: p.limits, features: p.features, archived: p.archived_at !== null, prices: prices.filter((x) => x.plan_id === p.id).map((x) => ({ id: x.id, period: x.period, currency: x.currency, amountMinor: x.amount_minor, active: Boolean(x.active) })) }));
 }
 
 /**
@@ -144,10 +107,10 @@ export async function listPlanOptions(deps: Deps) {
   return rows.map((p) => ({ code: p.code, name: p.name, archived: p.archived_at !== null }));
 }
 
-export async function createPlan(deps: Deps, actor: PlatformActor, p: { code: string; name: string; isPublic: boolean; limits: Record<string, number>; features: string[]; sortOrder: number }) {
+export async function createPlan(deps: Deps, actor: PlatformActor, p: { code: string; name: string; description?: string; isPublic: boolean; limits: Record<string, number>; features: string[]; sortOrder: number }) {
   const id = uuidv7();
   try {
-    await deps.db.platform().insertInto('plans').values({ id, code: p.code, name: p.name, is_public: p.isPublic, limits: json(p.limits), features: json(p.features), sort_order: p.sortOrder }).execute();
+    await deps.db.platform().insertInto('plans').values({ id, code: p.code, name: p.name, description: p.description || null, is_public: p.isPublic, limits: json(p.limits), features: json(p.features), sort_order: p.sortOrder }).execute();
   } catch (e) {
     if ((e as { code?: string }).code === 'ER_DUP_ENTRY') throw new AppError('VALIDATION_FAILED', 'Plan code exists', { errors: [{ path: 'code', message: 'taken' }] });
     throw e;
@@ -156,8 +119,8 @@ export async function createPlan(deps: Deps, actor: PlatformActor, p: { code: st
   return { id };
 }
 
-export async function updatePlan(deps: Deps, actor: PlatformActor, id: string, p: { name?: string; isPublic?: boolean; limits?: Record<string, number>; features?: string[]; sortOrder?: number }) {
-  const patch = { ...(p.name && { name: p.name }), ...(p.isPublic !== undefined && { is_public: p.isPublic }), ...(p.limits && { limits: json(p.limits) }), ...(p.features && { features: json(p.features) }), ...(p.sortOrder !== undefined && { sort_order: p.sortOrder }) };
+export async function updatePlan(deps: Deps, actor: PlatformActor, id: string, p: { name?: string; description?: string; isPublic?: boolean; limits?: Record<string, number>; features?: string[]; sortOrder?: number }) {
+  const patch = { ...(p.name && { name: p.name }), ...(p.description !== undefined && { description: p.description || null }), ...(p.isPublic !== undefined && { is_public: p.isPublic }), ...(p.limits && { limits: json(p.limits) }), ...(p.features && { features: json(p.features) }), ...(p.sortOrder !== undefined && { sort_order: p.sortOrder }) };
   // An empty change is a no-op (A10, API01); the plan must still exist.
   if (Object.keys(patch).length === 0) {
     if (!(await deps.db.platform().selectFrom('plans').select('id').where('id', '=', id).executeTakeFirst())) throw new AppError('NOT_FOUND');

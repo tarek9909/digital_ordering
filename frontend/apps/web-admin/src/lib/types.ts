@@ -80,13 +80,6 @@ export interface VenueAdmin {
 export const ADDRESS_FIELDS = ['line1', 'line2', 'city', 'region', 'postcode', 'country'] as const;
 export type VenueAddress = Partial<Record<(typeof ADDRESS_FIELDS)[number], string>>;
 
-export type OnboardingKey = 'verify_email' | 'branding' | 'messages' | 'staff_pin' | 'staff_device' | 'display' | 'posters' | 'test_ticket';
-export interface Onboarding {
-  venueId: string | null;
-  steps: Array<{ key: OnboardingKey; done: boolean }>;
-  complete: boolean;
-}
-
 export type Reach = Record<'push' | 'live' | 'closed' | 'none', number>;
 
 export interface TodayReport {
@@ -236,14 +229,6 @@ export interface BillingPlan {
   prices: Array<{ period: Period; currency: string; amountMinor: number }>;
 }
 
-export interface ExportStatus {
-  id: string;
-  status: string;
-  sizeBytes: number | null;
-  downloadUrl: string | null;
-  expiresAt: string | null;
-}
-
 export interface ActivityItem {
   id: number;
   occurred_at: string;
@@ -293,23 +278,7 @@ export interface SupportSession {
   expiresAt: string | null;
   endedAt: string | null;
 }
-export interface SupportCode {
-  code: string;
-  expiresAt: string;
-}
 
-export type AnnouncementSeverity = 'info' | 'warning' | 'critical';
-export interface Announcement {
-  id: string;
-  message: Record<string, string>;
-  severity: AnnouncementSeverity;
-}
-
-export interface ExcessItem {
-  limit: string;
-  current: number;
-  allowed: number;
-}
 export interface TrendSummary {
   tickets: number;
   collected: number;
@@ -361,35 +330,6 @@ export interface RatingSummary {
 
 // ---- R2
 
-export interface ApiKey {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsedAt: string | null;
-  revoked: boolean;
-}
-export interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  venueId: string | null;
-  status: 'active' | 'disabled';
-  disabledReason: string | null;
-  failureStreak: number;
-}
-export interface WebhookDelivery {
-  id: number;
-  event_id: string;
-  event_type: string;
-  attempt: number;
-  status: string;
-  response_code: number | null;
-  response_ms: number | null;
-  error: string | null;
-  created_at: string;
-  next_attempt_at: string | null;
-}
 export interface Chime {
   id: string;
   code: string;
@@ -400,16 +340,3 @@ export interface Chime {
   durationMs: number;
 }
 
-export interface PosConnection {
-  id: string;
-  venueId: string;
-  provider: string;
-  locationId: string;
-  status: string;
-  lastSyncAt: string | null;
-}
-export interface StaffMember {
-  id: string;
-  name: string;
-  active: boolean;
-}

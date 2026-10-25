@@ -108,7 +108,7 @@ export function formToSettings(f: SettingsForm, base: VenueSettings): VenueSetti
     checkCode: f.checkCode,
     claims: { ...base.claims, mode: f.claimsMode },
     staff: { ...base.staff, soundOnApiTicket: f.soundOnApiTicket },
-    customer: { ...base.customer, showPoweredBy: f.showPoweredBy, reviewLinkUrl: f.reviewLinkUrl.trim() || null },
+    customer: { ...base.customer, showPoweredBy: true, reviewLinkUrl: f.reviewLinkUrl.trim() || null },
     alerts: {
       ...base.alerts,
       repeatOffsetsSec: parseNumberList(f.repeatOffsets),

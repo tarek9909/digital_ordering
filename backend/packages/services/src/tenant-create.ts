@@ -4,6 +4,7 @@ import { checkSlug, isValidTimeZone, uuidv7 } from '@dop/domain';
 import { writeAudit } from './audit.js';
 import type { Deps } from './deps.js';
 import { inviteMember } from './auth.js';
+import { addMonths } from './billing.js';
 import { getSetting } from './platform.js';
 import { createVenueRow } from './venues.js';
 
@@ -28,19 +29,21 @@ async function requireSlug(deps: Deps, slug: string) {
 
 async function createTenantCore(
   deps: Deps,
-  b: { name: string; slug: string; country: string; locale: string; complimentary?: boolean; planCode?: string; trialDays?: number },
+  b: { name: string; slug: string; country: string; locale: string; complimentary?: boolean; planCode?: string; trial?: boolean },
   actor: Actor,
-  owner: { userId: string; create?: { email: string; name: string; passwordHash: string; locale: string } } | null,
+  owner: { userId: string; create?: { email: string; name: string; passwordHash: string; locale: string; verified?: boolean } } | null,
   extra?: { ip?: string; requestId?: string },
 ): Promise<{ tenantId: string; venueId: string; initialPin: string }> {
   await requireSlug(deps, b.slug);
   const defaults = await getSetting(deps, 'tenant.defaults');
-  const trialDays = b.trialDays ?? (await getSetting(deps, 'trial.days'));
+  // Only the seed script and tests start a trial; a tenant created in the console is active at once.
+  const trial = Boolean(b.trial) && !b.complimentary;
+  const trialDays = trial ? await getSetting(deps, 'trial.days') : 0;
   const tz = isValidTimeZone(defaults.timeZone) ? defaults.timeZone : 'Asia/Riyadh';
   const now = deps.now();
   const pdb = deps.db.platform();
-  // FR-SA-05: the console chooses the plan; default Trial, or Standard when complimentary.
-  const planCode = b.planCode ?? (b.complimentary ? 'standard' : 'trial');
+  // FR-SA-05: the console chooses the plan; default Standard.
+  const planCode = b.planCode ?? (trial ? 'trial' : 'standard');
   const trialPlan = await pdb.selectFrom('plans').select('id').where('code', '=', planCode).where('archived_at', 'is', null).executeTakeFirst();
   if (!trialPlan) throw new AppError('VALIDATION_FAILED', 'Unknown plan', { errors: [{ path: 'planCode', message: 'unknown' }] });
   const tenantId = uuidv7();
@@ -58,17 +61,19 @@ async function createTenantCore(
           id: tenantId,
           name: b.name,
           slug: b.slug,
-          status: b.complimentary ? 'active' : 'trial',
+          status: trial ? 'trial' : 'active',
           plan_id: trialPlan.id,
           complimentary: Boolean(b.complimentary),
-          trial_ends_at: b.complimentary ? null : new Date(now.getTime() + trialDays * 86_400_000),
+          trial_ends_at: trial ? new Date(now.getTime() + trialDays * 86_400_000) : null,
+          // The first month is covered; without a paid period the billing sweep would put the tenant past due at once.
+          paid_until: trial || b.complimentary ? null : addMonths(now, 1),
           country: b.country,
           default_locale: b.locale,
         })
         .execute();
       // A directly created owner is inserted in the same transaction, so a failure leaves no partial account (A01).
       if (owner?.create) {
-        await tx.insertInto('users').values({ id: owner.userId, email: owner.create.email, name: owner.create.name, password_hash: owner.create.passwordHash, locale: owner.create.locale }).execute();
+        await tx.insertInto('users').values({ id: owner.userId, email: owner.create.email, name: owner.create.name, password_hash: owner.create.passwordHash, locale: owner.create.locale, ...(owner.create.verified ? { email_verified_at: now } : {}) }).execute();
       }
       if (owner) {
         await tx.insertInto('tenant_memberships').values({ id: uuidv7(), tenant_id: tenantId, user_id: owner.userId, role: 'owner' }).execute();
@@ -113,7 +118,7 @@ export async function createTenantWithOwner(deps: Deps, b: TenantWithOwnerInput,
   const passwordHash = await hashSecret(b.password);
   const r = await createTenantCore(
     deps,
-    { name: b.restaurantName, slug: b.slug, country: b.country, locale: b.locale },
+    { name: b.restaurantName, slug: b.slug, country: b.country, locale: b.locale, trial: true },
     { kind: 'user', userId, tenantId: '', role: 'owner', sessionId: '', mfaVerified: false },
     { userId, create: { email: b.email, name: b.ownerName, passwordHash, locale: b.locale } },
     client,
@@ -125,12 +130,30 @@ export async function createTenantWithOwner(deps: Deps, b: TenantWithOwnerInput,
 export async function createTenantByPlatform(
   deps: Deps,
   actor: Actor & { kind: 'platform' },
-  b: { name: string; slug: string; country: string; locale: string; ownerEmail: string; complimentary: boolean; planCode?: string; trialDays?: number },
+  b: { name: string; slug: string; country: string; locale: string; ownerEmail: string; ownerName?: string; ownerPassword?: string; complimentary: boolean; planCode?: string },
   requestId?: string,
 ) {
+  if (b.ownerPassword) {
+    // The platform team sets the owner's credentials; the address counts as verified since they vouch for it.
+    const problem = checkPassword(b.ownerPassword, [b.ownerEmail, b.name, b.slug]);
+    if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'ownerPassword', message: problem }] });
+    if (await deps.db.platform().selectFrom('users').select('id').where('email', '=', b.ownerEmail).executeTakeFirst()) {
+      throw new AppError('EMAIL_TAKEN', 'An account with this email exists.');
+    }
+    const userId = uuidv7();
+    const passwordHash = await hashSecret(b.ownerPassword);
+    const r = await createTenantCore(
+      deps,
+      { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode },
+      actor,
+      { userId, create: { email: b.ownerEmail, name: b.ownerName ?? b.ownerEmail, passwordHash, locale: b.locale, verified: true } },
+      { requestId },
+    );
+    return r;
+  }
   const r = await createTenantCore(
     deps,
-    { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode, trialDays: b.trialDays },
+    { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode },
     actor,
     null,
     { requestId },

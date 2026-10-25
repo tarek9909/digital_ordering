@@ -69,21 +69,32 @@ function MfaDialog({ open, onDone }: { open: boolean; onDone: (ok: boolean) => v
   });
   return (
     <Modal open={open} onOpenChange={(o) => !o && onDone(false)} title={t('mfa.freshTitle')} description={t('mfa.freshBody')}>
+      <div className="mb-4 flex items-center gap-3 rounded-xl bg-primary-wash p-3 border border-primary/20 text-ink">
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" className="size-5" aria-hidden="true">
+            <rect x="4" y="8" width="12" height="9" rx="1.5" />
+            <path d="M7 8V5.5a3 3 0 016 0V8" />
+          </svg>
+        </span>
+        <span className="text-xs sm:text-sm font-medium">{t('mfa.freshBody')}</span>
+      </div>
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <Field
           label={t('mfa.code')}
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}
+          dir="ltr"
+          className="font-mono text-center tracking-[0.35em] text-lg font-bold"
           autoFocus
           error={form.formState.errors.code ? t('mfa.codeInvalid') : (err ?? undefined)}
           {...form.register('code')}
         />
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2.5 pt-2">
           <Button type="button" variant="secondary" onClick={() => onDone(false)}>
             {t('common:cancel')}
           </Button>
-          <Button type="submit" busy={form.formState.isSubmitting}>
+          <Button type="submit" variant="primary" busy={form.formState.isSubmitting}>
             {t('mfa.verify')}
           </Button>
         </div>

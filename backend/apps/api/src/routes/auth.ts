@@ -162,6 +162,7 @@ export const authRoutes = defineRoutes('/api/auth/v1', [
           mfaVerifiedAt: c.actor.mfaVerifiedAt?.toISOString() ?? null,
           csrfToken: csrfFor(c.deps, c.actor.sessionId),
           environment: c.deps.config.appEnv,
+          mfaRequired: c.deps.config.platformMfa !== 'off',
         };
       }
       const s = c.res.locals.wwwSession as UserSession | undefined;

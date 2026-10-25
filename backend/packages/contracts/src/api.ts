@@ -173,20 +173,22 @@ export const consoleCreateTenantBody = z
     country: z.string().length(2).toUpperCase(),
     locale: localeSchema,
     ownerEmail: emailSchema,
+    /** With a password the owner account is created directly with these credentials; without one the owner is invited by email. */
+    ownerName: z.preprocess((v) => (v === '' ? undefined : v), z.string().trim().min(1).max(120).optional()),
+    ownerPassword: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(1).max(200).optional()),
     complimentary: z.boolean().default(false),
-    /** Plan of the new tenant (FR-SA-05); default: Trial, or Standard when complimentary. */
+    /** Plan of the new tenant (FR-SA-05); default Standard. A tenant created in the console is active at once, without a trial. */
     planCode: z.string().regex(/^[a-z0-9-]{2,40}$/).optional(),
-    /** Trial length in days for a non-complimentary tenant; default: the platform setting. */
-    trialDays: z.coerce.number().int().min(1).max(90).optional(),
   })
   .strict()
-  .refine((b) => !(b.complimentary && b.planCode === 'trial'), { message: 'A complimentary tenant needs a paid plan', path: ['planCode'] })
-  .refine((b) => !(b.complimentary && b.trialDays !== undefined), { message: 'A complimentary tenant has no trial', path: ['trialDays'] });
+  .refine((b) => b.planCode !== 'trial', { message: 'The Trial plan is not offered for new tenants', path: ['planCode'] })
+  .refine((b) => !b.ownerPassword || Boolean(b.ownerName), { message: 'Owner name is required with a password', path: ['ownerName'] });
 export const reasonBody = z.object({ reason: z.string().trim().min(3).max(500), confirm: z.string().max(60).optional() }).strict();
 export const extendTrialBody = z.object({ days: z.number().int().min(1).max(90) }).strict();
 export const complimentaryBody = z.object({ enabled: z.boolean() }).strict();
 export const deleteTenantBody = z.object({ confirmSlug: slugSchema }).strict();
-export const platformUserCreateBody = z.object({ email: emailSchema, name: z.string().trim().min(1).max(120), role: z.enum(PLATFORM_ROLES) }).strict();
+/** Without `password` the user gets an email invitation; with it the account is created active with those credentials. */
+export const platformUserCreateBody = z.object({ email: emailSchema, name: z.string().trim().min(1).max(120), role: z.enum(PLATFORM_ROLES), password: passwordSchema.optional() }).strict();
 export const platformUserPatch = z.object({ role: z.enum(PLATFORM_ROLES).optional(), status: z.enum(['active', 'disabled']).optional() }).strict();
 export const settingPutBody = z.object({ value: z.unknown() }).strict();
 export const auditQuery = z
@@ -210,20 +212,11 @@ export const claimDecisionBody = z.object({ approve: z.boolean() }).strict();
 export const supportRequestBody = z.object({ reason: z.string().trim().min(5).max(500), durationMinutes: z.number().int().min(15).max(480).default(120) }).strict();
 export const supportCodeBody = z.object({ code: z.string().regex(/^\d{8}$/) }).strict();
 export const noteBody = z.object({ body: z.string().trim().min(1).max(5000) }).strict();
-export const announcementBody = z
-  .object({
-    message: z.record(z.string().min(2).max(10), z.string().min(1).max(500)),
-    severity: z.enum(['info', 'warning', 'critical']),
-    target: z.union([z.object({ all: z.literal(true) }).strict(), z.object({ tenantIds: z.array(uuidSchema).min(1).max(1000) }).strict(), z.object({ plans: z.array(z.string()).min(1) }).strict()]),
-    startsAt: z.string().datetime(),
-    endsAt: z.string().datetime(),
-  })
-  .strict();
 export const slugChangeBody = z.object({ slug: slugSchema, password: z.string().min(1).max(128) }).strict();
 export const deleteMeBody = z.object({ password: z.string().min(1).max(128) }).strict();
 export const changePlanBody = z.object({ planCode: planCodeSchema }).strict();
 export const planCreateBody = z
-  .object({ code: z.string().regex(/^[a-z][a-z0-9_]{1,38}$/), name: z.string().min(1).max(80), isPublic: z.boolean().default(true), limits: z.record(z.string(), z.number().int().min(0)), features: z.array(z.string().max(60)).max(50), sortOrder: z.number().int().default(10) })
+  .object({ code: z.string().regex(/^[a-z][a-z0-9_]{1,38}$/), name: z.string().min(1).max(80), description: z.string().max(500).default(''), isPublic: z.boolean().default(true), limits: z.record(z.string(), z.number().int().min(0)), features: z.array(z.string().max(60)).max(50), sortOrder: z.number().int().default(10) })
   .strict();
 export const planPatch = planCreateBody.omit({ code: true }).partial().strict();
 export const priceCreateBody = z.object({ period: z.enum(['month', 'quarter', 'year']), currency: z.string().length(3).toUpperCase(), amountMinor: z.number().int().min(0) }).strict();

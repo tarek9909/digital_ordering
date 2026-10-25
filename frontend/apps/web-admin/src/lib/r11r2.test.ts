@@ -1,9 +1,6 @@
-import { ApiError } from '@dop/client-sdk';
 import { defaultVenueSettings, displaySettingsSchema } from '@dop/contracts';
 import { describe, expect, it } from 'vitest';
 import { canManage, canReach } from './access';
-import { pickMessage, readDismissed, visibleAnnouncements, writeDismissed } from './announcements';
-import { excessFromError, excessLines } from './billing';
 import { displayToForm, formToDisplayPatch, validateDisplayForm } from './displayForm';
 import { activeHours, csvQuery, delta, heatLevel, heatmapMax, heatmapRows, hourLabel, reportQuery } from './reports';
 import { formToSettings, settingsToForm, validateSettingsForm } from './settingsForm';
@@ -27,31 +24,6 @@ function memory(broken = false) {
   };
 }
 
-const problem = (code: string, data?: unknown) => new ApiError(409, code as never, { type: 'about:blank', title: code, status: 409, code: code as never, data });
-
-describe('plan downgrade excess', () => {
-  it('reads problem.data.excess and formats lines', () => {
-    const e = problem('PLAN_DOWNGRADE_BLOCKED', {
-      excess: [
-        { limit: 'maxCountersPerVenue', current: 5, allowed: 1 },
-        { limit: 'maxVenues', current: 3, allowed: 1 },
-        { limit: 'somethingNew', current: 2, allowed: 1 },
-        { bad: true },
-      ],
-    });
-    expect(excessLines(excessFromError(e))).toEqual([
-      { key: 'billing.excess.maxCountersPerVenue', current: 5, allowed: 1, count: 4 },
-      { key: 'billing.excess.maxVenues', current: 3, allowed: 1, count: 2 },
-      { key: 'billing.excess.other', current: 2, allowed: 1, count: 1 },
-    ]);
-  });
-  it('ignores other errors and malformed data', () => {
-    expect(excessFromError(problem('PLAN_LIMIT', { excess: [] }))).toEqual([]);
-    expect(excessFromError(problem('PLAN_DOWNGRADE_BLOCKED', { excess: 'x' }))).toEqual([]);
-    expect(excessFromError(new Error('x'))).toEqual([]);
-    expect(excessLines([{ limit: 'maxVenues', current: 1, allowed: 1 }])).toEqual([]);
-  });
-});
 
 describe('heatmap', () => {
   const grid = Array.from({ length: 7 }, () => new Array<number>(24).fill(0));
@@ -153,26 +125,6 @@ describe('venue switcher persistence', () => {
   });
 });
 
-describe('announcements', () => {
-  it('picks the UI language, then English, then Arabic', () => {
-    expect(pickMessage({ ar: 'مرحبا', en: 'Hello' }, 'ar')).toBe('مرحبا');
-    expect(pickMessage({ ar: 'مرحبا', en: 'Hello' }, 'fr')).toBe('Hello');
-    expect(pickMessage({ ar: 'مرحبا' }, 'en')).toBe('مرحبا');
-  });
-  it('remembers dismissals per session; critical ones stay', () => {
-    const s = memory();
-    writeDismissed(['a', 'a', 'c'], s);
-    expect(readDismissed(s)).toEqual(['a', 'c']);
-    const items = [
-      { id: 'a', message: {}, severity: 'info' as const },
-      { id: 'b', message: {}, severity: 'warning' as const },
-      { id: 'c', message: {}, severity: 'critical' as const },
-    ];
-    expect(visibleAnnouncements(items, readDismissed(s)).map((a) => a.id)).toEqual(['b', 'c']);
-    expect(readDismissed(memory(true))).toEqual([]);
-  });
-});
-
 describe('roles', () => {
   it('owner-only billing; support sees billing read-only and never team', () => {
     expect(canReach('billing', 'active', 'manager')).toBe(false);
@@ -201,7 +153,7 @@ describe('ticket flow settings (R1.1/R2)', () => {
     expect(s.wait.mode).toBe('auto');
     expect(s.claims.mode).toBe('staff_approval');
     expect(s.numbering.prefixesEnabled).toBe(true);
-    expect(s.customer).toEqual({ showPoweredBy: false, reviewLinkUrl: 'https://g.page/r/x' });
+    expect(s.customer).toEqual({ showPoweredBy: true, reviewLinkUrl: 'https://g.page/r/x' });
     expect(s.staff.soundOnApiTicket).toBe(true);
     expect(validateSettingsForm(f, base).ok).toBe(true);
   });

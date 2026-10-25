@@ -503,12 +503,15 @@ describe('W02 commercial plan selection', () => {
 });
 
 describe('W04 console tenant creation', () => {
-  it('creates a tenant with the chosen plan and trial length', async () => {
-    const r = await svc.createTenantByPlatform(api.deps, platform, { name: 'Console Cafe', slug: 'console-cafe', country: 'SA', locale: 'ar', ownerEmail: 'console-owner@x.test', complimentary: false, planCode: 'pro', trialDays: 30 });
-    const t1 = await t.clients.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code', 'tenants.status', 'tenants.trial_ends_at']).where('tenants.id', '=', r.tenantId).executeTakeFirstOrThrow();
+  it('creates a tenant active at once on the chosen plan, with the first month covered and no trial', async () => {
+    const r = await svc.createTenantByPlatform(api.deps, platform, { name: 'Console Cafe', slug: 'console-cafe', country: 'SA', locale: 'ar', ownerEmail: 'console-owner@x.test', complimentary: false, planCode: 'pro' });
+    const t1 = await t.clients.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code', 'tenants.status', 'tenants.trial_ends_at', 'tenants.paid_until']).where('tenants.id', '=', r.tenantId).executeTakeFirstOrThrow();
     expect(t1.code).toBe('pro');
-    expect(t1.status).toBe('trial');
-    expect(Math.round((t1.trial_ends_at!.getTime() - api.deps.now().getTime()) / 86_400_000)).toBe(30);
+    expect(t1.status).toBe('active');
+    expect(t1.trial_ends_at).toBeNull();
+    expect(Math.round((t1.paid_until!.getTime() - api.deps.now().getTime()) / 86_400_000)).toBeGreaterThanOrEqual(28);
+    const report = await svc.subscriptionReport(api.deps);
+    expect(report.running.some((x) => x.id === r.tenantId && x.status === 'active')).toBe(true);
     const c = await svc.createTenantByPlatform(api.deps, platform, { name: 'Comp Cafe', slug: 'comp-cafe', country: 'SA', locale: 'ar', ownerEmail: 'comp-owner@x.test', complimentary: true, planCode: 'multisite' });
     const t2 = await t.clients.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code', 'tenants.status', 'tenants.trial_ends_at']).where('tenants.id', '=', c.tenantId).executeTakeFirstOrThrow();
     expect(t2).toEqual({ code: 'multisite', status: 'active', trial_ends_at: null });

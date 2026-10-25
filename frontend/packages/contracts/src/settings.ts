@@ -75,6 +75,31 @@ export const venueLocaleMessagesSchema = z
 export const venueMessagesSchema = z.record(z.string().min(2).max(10), venueLocaleMessagesSchema);
 export type VenueMessages = z.infer<typeof venueMessagesSchema>;
 
+const DEFAULT_LOCALE_MESSAGES: Record<string, z.infer<typeof venueLocaleMessagesSchema>> = {
+  ar: {
+    welcome: 'أهلاً بك! طلبك قيد التحضير، سنُعلمك فور جاهزيته.',
+    collection: 'طلبك جاهز! تفضّل بالاستلام من المنضدة.',
+    cancelled: 'نأسف، تم إلغاء طلبك. يُرجى مراجعة الكاشير.',
+    afterCollection: 'شكراً لزيارتكم، بالهناء والعافية!',
+  },
+  en: {
+    welcome: "Welcome! Your order is being prepared and we'll let you know as soon as it's ready.",
+    collection: 'Your order is ready! Please collect it from the counter.',
+    cancelled: 'Sorry, your order was cancelled. Please check with the cashier.',
+    afterCollection: 'Thank you for visiting. Enjoy your meal!',
+  },
+};
+
+/** Starter wording a new venue gets for each of its languages; owners edit it in the dashboard. */
+export const defaultVenueMessages = (locales: readonly string[]): VenueMessages => {
+  const out: VenueMessages = {};
+  for (const l of locales) {
+    const m = DEFAULT_LOCALE_MESSAGES[l];
+    if (m) out[l] = { ...m };
+  }
+  return out;
+};
+
 /** Chimes the apps synthesise (no download, works offline); uploaded chimes are MP3 files (FR-SA-12). */
 export const BUILTIN_CHIMES = ['classic', 'bell', 'soft'] as const;
 export const chimeAudioKey = (code: string) => `chimes/${code}.mp3`;

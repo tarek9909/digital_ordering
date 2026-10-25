@@ -35,29 +35,45 @@ export function TenantActions({ tenant }: { tenant: Tenant }) {
   };
 
   const s = tenant.status;
-  const safe: Kind[] = [...(s === 'suspended' ? (['reactivate'] as const) : []), ...(s === 'trial' ? (['extend'] as const) : []), 'complimentary'];
-  const danger: Kind[] = [...(['trial', 'active', 'past_due'].includes(s) ? (['suspend'] as const) : []), ...(s !== 'cancelled' ? (['cancel'] as const) : []), 'delete'];
+  // One Activate / Deactivate toggle leads the list; it maps onto the reactivate and suspend lifecycle calls.
+  const safe: Kind[] = [
+    ...(s === 'suspended' ? (['reactivate'] as const) : []),
+    ...(['trial', 'active', 'past_due'].includes(s) ? (['suspend'] as const) : []),
+    ...(s === 'trial' ? (['extend'] as const) : []),
+    'complimentary',
+  ];
+  const danger: Kind[] = [...(s !== 'cancelled' ? (['cancel'] as const) : []), 'delete'];
   const label = (k: Kind) => (k === 'complimentary' ? t(tenant.complimentary ? 'actions.complimentary.off' : 'actions.complimentary.on') : t(`actions.${k}.button`));
   const hint = (k: Kind) => (k === 'complimentary' ? t(tenant.complimentary ? 'actionsUx.hint.complimentaryOff' : 'actionsUx.hint.complimentaryOn') : t(`actionsUx.hint.${k}`));
 
   return (
     <Section title={t('actions.title')} description={t('actionsUx.intro')}>
-      <LiveRegion text={announce} />
-      <ul className="flex flex-col divide-y divide-line">
+      <LiveRegion toast text={announce} />
+      <ul className="flex flex-col divide-y divide-line/60">
         {safe.map((k) => (
           <ActionRow key={k} hint={hint(k)}>
-            <Button variant="secondary" onClick={() => setOpen(k)}>
+            <Button variant="secondary" size="md" className="font-semibold text-xs sm:text-sm" onClick={() => setOpen(k)}>
               {label(k)}
             </Button>
           </ActionRow>
         ))}
       </ul>
-      <div className="mt-5 rounded-input border border-danger/25 bg-danger-bg/40 p-4">
-        <h3 className="mb-3 text-sm font-bold text-danger">{t('actionsUx.danger')}</h3>
+      <div className="mt-5 rounded-2xl border border-danger/30 bg-danger-bg/25 p-4.5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="grid size-6 place-items-center rounded-md bg-danger text-white text-xs font-bold" aria-hidden="true">
+            !
+          </span>
+          <h3 className="text-xs sm:text-sm font-bold text-danger uppercase tracking-wider">{t('actionsUx.danger')}</h3>
+        </div>
         <ul className="flex flex-col divide-y divide-danger/15">
           {danger.map((k) => (
             <ActionRow key={k} hint={hint(k)}>
-              <Button variant={k === 'delete' ? 'danger' : 'secondary'} className={k === 'delete' ? undefined : 'text-danger'} onClick={() => setOpen(k)}>
+              <Button
+                variant={k === 'delete' ? 'danger' : 'secondary'}
+                size="md"
+                className={`font-bold text-xs sm:text-sm ${k === 'delete' ? 'shadow-button' : 'text-danger hover:bg-danger/10 border-danger/30'}`}
+                onClick={() => setOpen(k)}
+              >
                 {label(k)}
               </Button>
             </ActionRow>
@@ -66,7 +82,9 @@ export function TenantActions({ tenant }: { tenant: Tenant }) {
       </div>
       {open && (
         <Modal open onOpenChange={(o) => !o && setOpen(null)} title={t(`actions.${open}.title`)} description={t(`actions.${open}.body`, { slug: tenant.slug })}>
-          <ActionForm kind={open} tenant={tenant} onDone={() => done(open)} onCancel={() => setOpen(null)} />
+          <div className="pt-2">
+            <ActionForm kind={open} tenant={tenant} onDone={() => done(open)} onCancel={() => setOpen(null)} />
+          </div>
         </Modal>
       )}
     </Section>
@@ -108,11 +126,11 @@ interface FormProps {
 function Actions({ onCancel, busy, label, danger }: { onCancel: () => void; busy: boolean; label: string; danger?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2.5 pt-3 border-t border-line/60">
       <Button type="button" variant="secondary" onClick={onCancel}>
         {t('common:cancel')}
       </Button>
-      <Button type="submit" variant={danger ? 'danger' : 'primary'} busy={busy}>
+      <Button type="submit" variant={danger ? 'danger' : 'primary'} className="font-bold shadow-button" busy={busy}>
         {label}
       </Button>
     </div>
@@ -138,11 +156,18 @@ function ReasonForm({ kind, tenant, onCancel, error, exec, base }: FormProps & {
   });
   const errs = form.formState.errors;
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
       <TextArea label={t('actions.reason')} maxLength={500} error={errs.reason && t('actions.reasonInvalid')} {...form.register('reason')} />
       {kind === 'suspend' && (
-        <Field label={t('actions.typeSlug', { slug: tenant.slug })} dir="ltr" autoComplete="off" error={errs.confirm && t('actions.slugMismatch')} {...form.register('confirm')} />
+        <Field
+          label={t('actions.typeSlug', { slug: tenant.slug })}
+          dir="ltr"
+          autoComplete="off"
+          placeholder={tenant.slug}
+          error={errs.confirm && t('actions.slugMismatch')}
+          {...form.register('confirm')}
+        />
       )}
       <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t(`actions.${kind}.button`)} danger />
     </form>
@@ -154,9 +179,18 @@ function ExtendForm({ onCancel, error, exec, base }: FormProps) {
   const form = useForm({ resolver: zodResolver(extendForm), defaultValues: { days: 7 } });
   const submit = form.handleSubmit((v) => exec(() => api.post(`${base}/extend-trial`, { days: v.days })));
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
-      <Field label={t('actions.extend.days')} type="number" min={1} max={90} inputMode="numeric" error={form.formState.errors.days && t('actions.extend.daysInvalid')} {...form.register('days')} />
+      <Field
+        label={t('actions.extend.days')}
+        type="number"
+        min={1}
+        max={90}
+        inputMode="numeric"
+        dir="ltr"
+        error={form.formState.errors.days && t('actions.extend.daysInvalid')}
+        {...form.register('days')}
+      />
       <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t('actions.extend.button')} />
     </form>
   );
@@ -173,9 +207,19 @@ function DeleteForm({ tenant, onCancel, error, exec, base }: FormProps) {
     await exec(() => api.delete(base, { confirmSlug: v.confirm.trim() }));
   });
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
+      <div className="rounded-xl bg-danger-bg/50 p-3.5 border border-danger/30 text-xs sm:text-sm text-danger font-medium">
+        ⚠️ This action cannot be undone. All data, menus, orders, and venues for this restaurant will be permanently deleted.
+      </div>
       <ErrorNote error={error} />
-      <Field label={t('actions.typeSlug', { slug: tenant.slug })} dir="ltr" autoComplete="off" error={form.formState.errors.confirm && t('actions.slugMismatch')} {...form.register('confirm')} />
+      <Field
+        label={t('actions.typeSlug', { slug: tenant.slug })}
+        dir="ltr"
+        autoComplete="off"
+        placeholder={tenant.slug}
+        error={form.formState.errors.confirm && t('actions.slugMismatch')}
+        {...form.register('confirm')}
+      />
       <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t('actions.delete.button')} danger />
     </form>
   );
@@ -195,7 +239,7 @@ function SimpleConfirm({ kind, tenant, onCancel, error, exec, base }: FormProps 
         e.preventDefault();
         void go();
       }}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-4.5"
     >
       <ErrorNote error={error} />
       <Actions
