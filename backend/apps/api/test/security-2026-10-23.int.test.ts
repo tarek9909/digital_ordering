@@ -98,13 +98,12 @@ describe('commercial console actions need a recent second factor', () => {
     const x = await tenant();
     for (const [path, body] of [
       [`/api/console/v1/tenants/${x.tenantId}/complimentary`, { enabled: true }],
-      [`/api/console/v1/tenants/${x.tenantId}/extend-trial`, { days: 30 }],
+      [`/api/console/v1/tenants/${x.tenantId}/plan-dates`, { planStartsAt: '2026-11-01', planEndsAt: '2026-12-01' }],
       [`/api/console/v1/tenants/${x.tenantId}/plan`, { planCode: 'pro' }],
     ] as const) {
       const r = await c.post(path, body);
       expect(r.body.code, path).toBe('MFA_REQUIRED');
     }
-    expect((await c.put('/api/console/v1/email-templates/password_reset/en', { subject: 'Reset', blocks: ['Click {{link}}'] })).body.code).toBe('MFA_REQUIRED');
     const row = await t.clients.platform().selectFrom('tenants').select(['complimentary']).where('id', '=', x.tenantId).executeTakeFirstOrThrow();
     expect(row.complimentary).toBe(false);
   });

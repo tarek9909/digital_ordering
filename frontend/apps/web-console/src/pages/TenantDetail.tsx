@@ -9,6 +9,7 @@ import { AuditTable } from '../components/AuditTable';
 import { ErrorNote, FormButtons, InfoRow, Initials, StatusBadge, Table, tabPanelProps, Tabs, Td } from '../components/common';
 import { PurposeGate } from '../components/PurposeGate';
 import { TenantActions } from '../components/TenantActions';
+import { TenantLogoSection } from '../components/TenantLogo';
 import { CommercialActions } from '../components/tenant/CommercialActions';
 import { FlagsTab } from '../components/tenant/FlagsTab';
 import { NotesTab } from '../components/tenant/NotesTab';
@@ -122,11 +123,9 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
   const l = i18n.language;
   const billingLine = x.complimentary
     ? t('tenantUx.complimentaryLine')
-    : x.status === 'trial'
-      ? t('tenantUx.trialLine', { date: fmtDay(x.trialEndsAt, l) })
-      : x.paidUntil
-        ? t('tenantUx.paidLine', { date: fmtDay(x.paidUntil, l) })
-        : t('tenantUx.noPaidPeriod');
+    : x.paidUntil
+      ? t('tenantUx.paidLine', { date: fmtDay(x.paidUntil, l) })
+      : t('tenantUx.noPaidPeriod');
 
   return (
     <PageShell
@@ -211,6 +210,7 @@ function TenantView({ id, purpose }: { id: string; purpose: AuditPurpose }) {
             <div className="grid items-start gap-6 xl:grid-cols-2">
               {can(role, 'tenants.lifecycle') && <TenantActions tenant={d.tenant} />}
               <CommercialActions tenant={d.tenant} />
+              {can(role, 'tenants.lifecycle') && <TenantLogoSection tenantId={d.tenant.id} logoUrl={d.tenant.logoUrl} />}
             </div>
           </div>
         )}
@@ -266,8 +266,8 @@ function Overview({ d }: { d: TenantDetail }) {
             </span>{' '}
             {x.complimentary && <Pill tone="ink" className="text-xs ms-1.5">{t('tenants.complimentary')}</Pill>}
           </InfoRow>
-          {x.trialEndsAt && <InfoRow label={t('tenant.trialEnds')}>{fmtDate(x.trialEndsAt, l)}</InfoRow>}
-          {x.paidUntil && <InfoRow label={t('tenant.paidUntil')}>{fmtDate(x.paidUntil, l)}</InfoRow>}
+          {x.planStartsAt && <InfoRow label={t('tenant.planStarts')}>{fmtDate(x.planStartsAt, l)}</InfoRow>}
+          {x.planEndsAt && <InfoRow label={t('tenant.planEnds')}>{fmtDate(x.planEndsAt, l)}</InfoRow>}
           {x.graceEndsAt && <InfoRow label={t('tenant.graceEnds')}>{fmtDate(x.graceEndsAt, l)}</InfoRow>}
           {x.deletionRequestedAt && (
             <InfoRow label={t('tenant.deletionRequested')}>
@@ -469,7 +469,6 @@ function Billing({ id, purpose }: { id: string; purpose: AuditPurpose }) {
           <InfoRow label={t('tenant.paidUntil')}>
             <span className="font-bold text-ink">{b.complimentary ? t('tenants.complimentary') : fmtDate(b.paidUntil, l)}</span>
           </InfoRow>
-          <InfoRow label={t('tenant.trialEnds')}>{fmtDate(b.trialEndsAt, l)}</InfoRow>
           <InfoRow label={t('tenant.graceEnds')}>{fmtDate(b.graceEndsAt, l)}</InfoRow>
         </dl>
       </Card>

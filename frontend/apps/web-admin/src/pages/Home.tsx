@@ -43,13 +43,24 @@ function TrialNotice() {
     <NoticeDialog label={t('banners.trialButton', { count })} title={t('banners.trialTitle')}>
       <div className="flex flex-col gap-4">
         <p>{t('banners.trial', { count, date: formatDateTime(tenant.trial_ends_at, i18n.language) })}</p>
-        {isOwner && (
-          <div>
-            <Link className={linkClass('primary')} to="/billing">
-              {t('banners.goToBilling')}
-            </Link>
-          </div>
-        )}
+      </div>
+    </NoticeDialog>
+  );
+}
+
+/** The paid plan's end date: days left in a pop-up, with the way to billing for owners. Hidden for trial and complimentary accounts. */
+function PlanEndNotice() {
+  const { t, i18n } = useTranslation();
+  const tenant = useTenant().data;
+  const isOwner = useMe().data?.currentRole === 'owner';
+  if (!tenant || tenant.complimentary || tenant.status === 'trial' || !tenant.paid_until) return null;
+  const count = daysUntil(tenant.paid_until);
+  const ended = new Date(tenant.paid_until).getTime() <= Date.now();
+  const date = formatDateTime(tenant.paid_until, i18n.language);
+  return (
+    <NoticeDialog label={ended ? t('banners.planEndedButton') : t('banners.planEndsButton', { count })} title={t('banners.planTitle')}>
+      <div className="flex flex-col gap-4">
+        <p>{ended ? t('banners.planEnded', { date }) : t('banners.planEnds', { count, date })}</p>
       </div>
     </NoticeDialog>
   );
@@ -60,6 +71,7 @@ function Notices() {
   return (
     <div className="mb-6 flex flex-wrap gap-3 empty:hidden">
       <TrialNotice />
+      <PlanEndNotice />
     </div>
   );
 }

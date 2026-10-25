@@ -1,5 +1,5 @@
 import { loadEnv, trustedProxiesOf } from '@dop/config';
-import { createFoodicsConnector, createGoogleProvider, createRuntime } from '@dop/services';
+import { createFoodicsConnector, createGoogleProvider, createRuntime, seedDemoOnStartup } from '@dop/services';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import { createApp } from './app.js';
 import { makeRateLimit } from './http/rate-limit.js';
@@ -23,6 +23,9 @@ const app = createApp(
   },
   { trustProxy: trustedProxiesOf(env), consoleIpPolicy: env.CONSOLE_IP_POLICY },
 );
+
+// Demo accounts for the super admin and admin dashboards: only with SEED_DEMO_DATA=yes, and idempotent.
+await seedDemoOnStartup(deps, process.env);
 
 const server = app.listen(env.PORT, () => deps.log.info({ port: env.PORT }, 'api listening'));
 

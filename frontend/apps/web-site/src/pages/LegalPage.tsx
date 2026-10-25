@@ -27,7 +27,7 @@ const LEGAL_TYPOGRAPHY = [
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * `/legal/{terms|privacy|dpa}` from GET /api/public/v1/legal/{kind}?locale= (TRD §16.7). With `?document=<id>` it
+ * `/legal/{terms|privacy|dpa|customer_privacy}` from GET /api/public/v1/legal/{kind}?locale= (TRD §16.7). With `?document=<id>` it
  * shows that exact published version, as linked from the admin acceptance gate (AS04), whatever the site language.
  */
 export function LegalPage() {

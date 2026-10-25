@@ -79,7 +79,7 @@ describe('A01 job identifiers and durable enqueue', () => {
   it('completes tenant creation, ticket events and export while the queue is down, and enqueues later', async () => {
     const jobs = api.deps.jobs as MemoryJobs;
     jobs.failNext(50);
-    await svc.createTenantByPlatform(api.deps, platform, { name: 'Down Cafe', slug: 'queue-down', country: 'SA', locale: 'en', ownerEmail: 'down@x.test', complimentary: false });
+    await svc.createTenantByPlatform(api.deps, platform, { name: 'Down Cafe', slug: 'queue-down', country: 'SA', locale: 'en', ownerEmail: 'down@x.test', ownerPassword: 'Quiet-Harbor-5521-xq', complimentary: false });
     const x = await t.clients.platform().selectFrom('tenants').select('id').where('slug', '=', 'queue-down').executeTakeFirstOrThrow();
     const venueId = (await t.clients.forTenant(x.id).selectFrom('venues').select('id').executeTakeFirstOrThrow()).id;
     const device = { kind: 'staff_device' as const, deviceId: 'd', tenantId: x.id, venueId, deviceName: 'iPad' };
@@ -94,7 +94,7 @@ describe('A01 job identifiers and durable enqueue', () => {
     expect(pending.length).toBeGreaterThan(0);
     await svc.flushOutbox(api.deps, pending.map((p) => p.id));
     const names = jobs.take().map((j) => j.name);
-    expect(names).toEqual(expect.arrayContaining(['email.send', 'push.send', 'alert.repeat', 'alert.overdue-flag']));
+    expect(names).toEqual(expect.arrayContaining(['push.send', 'alert.repeat', 'alert.overdue-flag']));
     expect(await t.clients.platform().selectFrom('outbox').select('id').where('published_at', 'is', null).execute()).toEqual([]);
   });
 });
@@ -113,11 +113,11 @@ describe('A02, A05 entitlements', () => {
     const x = await tenant('pro');
     const key = await svc.createApiKey(api.deps, x.owner, x.tenantId, x.venueId, 'Integration');
     expect((await svc.usageOf(api.deps, x.tenantId)).maxApiKeysInAVenue).toBe(1);
-    await expect(svc.changePlan(api.deps, platform, x.tenantId, 'standard')).rejects.toMatchObject({ code: 'PLAN_DOWNGRADE_BLOCKED' });
+    await expect(svc.changePlan(api.deps, platform, x.tenantId, 'trial')).rejects.toMatchObject({ code: 'PLAN_DOWNGRADE_BLOCKED' });
     const v1 = () => request(api.app).post('/v1/tickets').set('Host', 'api.dop.test').set('Authorization', `Bearer ${key.key}`).send({ externalRef: 'after-change' });
     expect((await v1()).status).toBe(201);
     // A plan change made outside the downgrade check (e.g. by the platform's database tools) still takes effect.
-    const std = await t.clients.platform().selectFrom('plans').select('id').where('code', '=', 'standard').executeTakeFirstOrThrow();
+    const std = await t.clients.platform().selectFrom('plans').select('id').where('code', '=', 'trial').executeTakeFirstOrThrow();
     await t.clients.platform().updateTable('tenants').set({ plan_id: std.id }).where('id', '=', x.tenantId).execute();
     await api.deps.kv.del(`t:${x.tenantId}:flags`);
     const after = await v1();
@@ -504,17 +504,17 @@ describe('W02 commercial plan selection', () => {
 
 describe('W04 console tenant creation', () => {
   it('creates a tenant active at once on the chosen plan, with the first month covered and no trial', async () => {
-    const r = await svc.createTenantByPlatform(api.deps, platform, { name: 'Console Cafe', slug: 'console-cafe', country: 'SA', locale: 'ar', ownerEmail: 'console-owner@x.test', complimentary: false, planCode: 'pro' });
+    const r = await svc.createTenantByPlatform(api.deps, platform, { name: 'Console Cafe', slug: 'console-cafe', country: 'SA', locale: 'ar', ownerEmail: 'console-owner@x.test', ownerPassword: 'Quiet-Harbor-5521-xq', complimentary: false, planCode: 'standard' });
     const t1 = await t.clients.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code', 'tenants.status', 'tenants.trial_ends_at', 'tenants.paid_until']).where('tenants.id', '=', r.tenantId).executeTakeFirstOrThrow();
-    expect(t1.code).toBe('pro');
+    expect(t1.code).toBe('standard');
     expect(t1.status).toBe('active');
     expect(t1.trial_ends_at).toBeNull();
     expect(Math.round((t1.paid_until!.getTime() - api.deps.now().getTime()) / 86_400_000)).toBeGreaterThanOrEqual(28);
     const report = await svc.subscriptionReport(api.deps);
     expect(report.running.some((x) => x.id === r.tenantId && x.status === 'active')).toBe(true);
-    const c = await svc.createTenantByPlatform(api.deps, platform, { name: 'Comp Cafe', slug: 'comp-cafe', country: 'SA', locale: 'ar', ownerEmail: 'comp-owner@x.test', complimentary: true, planCode: 'multisite' });
+    const c = await svc.createTenantByPlatform(api.deps, platform, { name: 'Comp Cafe', slug: 'comp-cafe', country: 'SA', locale: 'ar', ownerEmail: 'comp-owner@x.test', ownerPassword: 'Quiet-Harbor-5521-xq', complimentary: true, planCode: 'standard' });
     const t2 = await t.clients.platform().selectFrom('tenants').innerJoin('plans', 'plans.id', 'tenants.plan_id').select(['plans.code', 'tenants.status', 'tenants.trial_ends_at']).where('tenants.id', '=', c.tenantId).executeTakeFirstOrThrow();
-    expect(t2).toEqual({ code: 'multisite', status: 'active', trial_ends_at: null });
+    expect(t2).toEqual({ code: 'standard', status: 'active', trial_ends_at: null });
   });
 });
 

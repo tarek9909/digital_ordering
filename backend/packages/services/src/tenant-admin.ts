@@ -1,6 +1,6 @@
 import type { Actor } from '@dop/auth';
 import { writeAudit } from './audit.js';
-import type { Deps } from './deps.js';
+import { urls, type Deps } from './deps.js';
 
 // Tenant settings and the signed-in user's own profile (§12.7 Tenant, Account).
 
@@ -8,10 +8,12 @@ export async function getTenantSettings(deps: Deps, tenantId: string) {
   const t = await deps.db
     .platform()
     .selectFrom('tenants')
-    .select(['id', 'name', 'slug', 'status', 'country', 'default_locale', 'billing_email', 'tax_id', 'trial_ends_at', 'grace_ends_at', 'deletion_requested_at', 'complimentary'])
+    .select(['id', 'name', 'slug', 'status', 'country', 'default_locale', 'billing_email', 'tax_id', 'trial_ends_at', 'paid_until', 'grace_ends_at', 'deletion_requested_at', 'complimentary'])
     .where('id', '=', tenantId)
     .executeTakeFirstOrThrow();
-  return { ...t, complimentary: Boolean(t.complimentary) };
+  // The restaurant's logo is the first venue's; the admin sidebar shows it.
+  const venue = await deps.db.forTenant(tenantId).selectFrom('venues').select('logo_key').where('status', '=', 'active').orderBy('created_at').executeTakeFirst();
+  return { ...t, complimentary: Boolean(t.complimentary), logoUrl: urls(deps.config).logo(venue?.logo_key ?? null) };
 }
 
 export async function patchTenant(

@@ -79,10 +79,9 @@ describe('messages form', () => {
 });
 
 describe('access rules', () => {
-  it('limits suspended tenants to billing, team, settings and account', () => {
+  it('limits suspended tenants to team, settings and account', () => {
     expect(canReach('reports', 'suspended', 'owner')).toBe(false);
-    expect(canReach('billing', 'suspended', 'owner')).toBe(true);
-    expect(canReach('billing', 'active', 'manager')).toBe(false);
+    expect(canReach('team', 'suspended', 'owner')).toBe(true);
     expect(homeSection('trial_expired', 'manager')).toBe('team');
     expect(homeSection('active', 'manager')).toBe('home');
   });

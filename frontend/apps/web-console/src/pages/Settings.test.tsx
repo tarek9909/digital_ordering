@@ -45,7 +45,7 @@ const renderPage = () =>
 
 it('groups settings, leaves the website settings out and puts unknown ones under Other', () => {
   const groups = groupSettings([...rows, { key: 'new.flag', value: true, updatedAt: null }]);
-  expect(groups.map((g) => g.id)).toEqual(['newTenants', 'billing', 'maintenance', 'delivery', 'data', 'security', 'other']);
+  expect(groups.map((g) => g.id)).toEqual(['maintenance', 'delivery', 'data', 'other']);
   expect(groups.flatMap((g) => g.rows.map((r) => r.key)).some((k) => k.startsWith('site.'))).toBe(false);
 });
 
@@ -58,29 +58,28 @@ it('checks numbers, times and languages before saving', () => {
 
 it('shows forms instead of JSON and saves only the changed setting', async () => {
   renderPage();
-  const trial = (await screen.findByLabelText('Trial length')) as HTMLInputElement;
-  expect(trial.value).toBe('14');
+  const trial = (await screen.findByLabelText('Keep tickets for')) as HTMLInputElement;
+  expect(trial.value).toBe('90');
   expect(document.body.textContent).not.toContain('{"');
   expect(screen.getByRole('switch', { name: 'Maintenance mode is on' })).toBeTruthy();
-  expect(screen.getByLabelText('Allowed networks')).toBeTruthy();
   fireEvent.change(trial, { target: { value: '30' } });
-  const section = screen.getByRole('region', { name: 'New restaurants' });
+  const section = screen.getByRole('region', { name: 'Support and data' });
   expect(within(section).getByText('1 unsaved change')).toBeTruthy();
   await act(async () => {
     fireEvent.click(within(section).getByRole('button', { name: 'Save changes' }));
   });
   expect(api.put).toHaveBeenCalledTimes(1);
-  expect(api.put).toHaveBeenCalledWith('/settings/trial.days', { value: 30 });
+  expect(api.put).toHaveBeenCalledWith('/settings/retention.ticketDays', { value: 30 });
 }, 20_000); // renders every settings section; slow when the full suite runs in parallel
 
 it('blocks an out-of-range value with a message on the field', async () => {
   renderPage();
-  const trial = (await screen.findByLabelText('Trial length')) as HTMLInputElement;
-  fireEvent.change(trial, { target: { value: '500' } });
-  const section = screen.getByRole('region', { name: 'New restaurants' });
+  const trial = (await screen.findByLabelText('Keep tickets for')) as HTMLInputElement;
+  fireEvent.change(trial, { target: { value: '0' } });
+  const section = screen.getByRole('region', { name: 'Support and data' });
   await act(async () => {
     fireEvent.click(within(section).getByRole('button', { name: 'Save changes' }));
   });
-  expect(within(section).getByText('Enter a whole number from 1 to 90.')).toBeTruthy();
+  expect(within(section).getByText('Enter a whole number of 1 or more.')).toBeTruthy();
   expect(api.put).not.toHaveBeenCalled();
 }, 20_000);

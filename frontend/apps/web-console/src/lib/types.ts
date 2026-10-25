@@ -27,7 +27,8 @@ export interface TenantRow {
   complimentary: boolean;
   createdAt: string;
   lastActivityAt: string | null;
-  trialEndsAt: string | null;
+  planStartsAt: string | null;
+  planEndsAt: string | null;
   ticketsThisMonth: number;
   ownerEmail: string | null;
 }
@@ -42,7 +43,9 @@ export interface TenantDetail {
     suspendedBy: string | null;
     plan: string;
     complimentary: boolean;
-    trialEndsAt: string | null;
+    logoUrl: string | null;
+    planStartsAt: string | null;
+    planEndsAt: string | null;
     paidUntil: string | null;
     graceEndsAt: string | null;
     deletionRequestedAt: string | null;
@@ -74,7 +77,6 @@ export interface Payment {
 
 export interface BillingView {
   paidUntil: string | null;
-  trialEndsAt: string | null;
   graceEndsAt: string | null;
   complimentary: boolean;
   payments: Payment[];
@@ -204,9 +206,10 @@ export interface PlatformCohort {
   /** YYYY-MM of sign-up. */
   month: string;
   signups: number;
-  converted: number;
+  /** Paying tenants of the month still active or past due today. */
+  active: number;
   complimentary: number;
-  conversionPct: number | null;
+  retentionPct: number | null;
 }
 
 export interface DeliveryHealth {
@@ -225,7 +228,6 @@ export interface PlatformReportResponse {
   deliveryHealth: DeliveryHealth;
   /** Alert level at Ready per phone type (operating system/browser family) over the range (BRD §12.2). */
   reachByUa?: Record<string, Record<string, number>>;
-  trialDays: unknown;
 }
 
 export interface DowngradeExcess {

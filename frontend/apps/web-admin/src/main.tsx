@@ -16,7 +16,6 @@ import { BASENAME, createQueryClient } from './lib/api';
 import { storedLang } from './lib/lang';
 import './lib/theme';
 import { AccountPage } from './pages/Account';
-import { BillingPage } from './pages/Billing';
 import { CountersPage } from './pages/Counters';
 import { DisplaysPage } from './pages/Displays';
 import { HandoffPage } from './pages/Handoff';
@@ -130,11 +129,6 @@ const router = createBrowserRouter(
               handle: h('settings'),
             },
             { path: 'team/*', element: guard(<TeamPage />), handle: h('team') },
-            {
-              path: 'billing/*',
-              element: guard(<BillingPage />),
-              handle: h('billing'),
-            },
           ],
         },
         {

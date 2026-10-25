@@ -187,6 +187,7 @@ export interface TenantsTable {
   complimentary: Generated<boolean>;
   trial_ends_at: TsNull;
   paid_until: TsNull;
+  plan_starts_at: TsNull;
   past_due_since: TsNull;
   grace_ends_at: TsNull;
   suspended_at: TsNull;

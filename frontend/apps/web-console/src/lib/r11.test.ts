@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { jsonValue } from './format';
-import { blocksToText, placeholdersIn, textToBlocks } from './emailTemplates';
 import { majorToMinor, minorToMajor } from './money';
 import { DEFAULT_LIMITS, parseFeatures, parsePlanLimits } from './planLimits';
 import { keysOf, normalizeDay } from './platformReport';
@@ -56,17 +55,9 @@ describe('plan limits JSON', () => {
 
 describe('platform report rows', () => {
   it('normalises JSON text and numbers', () => {
-    const d = normalizeDay({ metric_date: '2026-10-01T00:00:00.000Z', tenants_by_status: '{"active":3,"trial":"2"}', tenants_by_plan: { pro: 1 }, signups: '4', conversions: 1, cancellations: null, mrr_minor: { SAR: 19900 }, tickets: 50 });
-    expect(d).toEqual({ date: '2026-10-01', byStatus: { active: 3, trial: 2 }, byPlan: { pro: 1 }, signups: 4, conversions: 1, cancellations: 0, mrr: { SAR: 19900 }, tickets: 50 });
+    const d = normalizeDay({ metric_date: '2026-10-01T00:00:00.000Z', tenants_by_status: '{"active":3,"trial":"2"}', tenants_by_plan: { pro: 1 }, signups: '4', cancellations: null, mrr_minor: { SAR: 19900 }, tickets: 50 });
+    expect(d).toEqual({ date: '2026-10-01', byStatus: { active: 3, trial: 2 }, byPlan: { pro: 1 }, signups: 4, cancellations: 0, mrr: { SAR: 19900 }, tickets: 50 });
     expect(keysOf([d, { ...d, mrr: { AED: 1 } }], 'mrr')).toEqual(['AED', 'SAR']);
-  });
-});
-
-describe('email template blocks', () => {
-  it('splits paragraphs and finds placeholders', () => {
-    expect(textToBlocks('Hello {{name}},\n\n\nWelcome to {{ tenantName }}.\n \nBye')).toEqual(['Hello {{name}},', 'Welcome to {{ tenantName }}.', 'Bye']);
-    expect(blocksToText(['a', 'b'])).toBe('a\n\nb');
-    expect(placeholdersIn('{{name}} {{ tenantName }} {{name}}')).toEqual(['name', 'tenantName']);
   });
 });
 

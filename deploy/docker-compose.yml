@@ -97,6 +97,10 @@ services:
       <<: *app-env
       SERVICE_ROLE: api
       PORT: '4000'
+      # Demo tenants and users, created once on start (idempotent). Needs SEED_DEMO_DATA=yes and a private
+      # SEED_DEMO_PASSWORD in .env; leave both unset on a real production server.
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
     healthcheck:
       test: ['CMD', '/nodejs/bin/node', '-e', "fetch('http://127.0.0.1:4000/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s

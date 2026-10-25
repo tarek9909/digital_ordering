@@ -12,9 +12,8 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generalValues } from '../components/venue/GeneralForm';
 import { formToSettings, settingsToForm } from '../lib/settingsForm';
-import type { Billing, Me, VenueAdmin } from '../lib/types';
+import type { Me, VenueAdmin } from '../lib/types';
 import { AccountPage } from './Account';
-import { BillingPage } from './Billing';
 
 // Admin workflows repaired after the 2026-10-22 audit: plans and offline billing (W02), POS lifecycle (W01), email change (W05),
 // weekly-summary opt-out (W06), venue address (W10) and chime choice (W11).
@@ -63,44 +62,6 @@ const plan = (code: string, name: string, amountMinor: number, maxVenues = 1) =>
   limits: { maxVenues, maxCountersPerVenue: 10, maxLanguages: 10, maxApiKeysPerVenue: 5 },
   features: [],
   prices: [{ period: 'month' as const, currency: 'SAR', amountMinor }],
-});
-
-describe('W02 plans and offline billing', () => {
-  const billing = (over: Partial<Billing>): Billing => ({
-    status: 'trial',
-    plan: { code: 'trial', name: 'Trial' },
-    complimentary: false,
-    trialEndsAt: null,
-    paidUntil: null,
-    graceEndsAt: null,
-    payments: [],
-    prices: [],
-    plans: [plan('standard', 'Standard', 9900), plan('pro', 'Pro', 17900), plan('multisite', 'Multi-site', 15900, 100)],
-    ...over,
-  });
-
-  it('has no plans and prices tab and offers no online checkout', async () => {
-    routes({ '/billing': billing({}), '/me': ME });
-    renderAt(<BillingPage />);
-    expect(await screen.findByRole('tab', { name: 'Plan' })).toBeTruthy();
-    expect(screen.queryByRole('tab', { name: 'Plans and prices' })).toBeNull();
-    expect(await screen.findByText(/Contact us to choose a plan/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Payment history' }));
-    expect(await screen.findByText('No payments recorded yet.')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(api.post).not.toHaveBeenCalled();
-  });
-
-  it('shows the paid-until date and the recorded payments', async () => {
-    const payment = { id: 'p1', amountMinor: 9000, currency: 'USD', months: 3, method: 'bank_transfer' as const, reference: 'TR-77', note: null, coversFrom: '2026-10-01T00:00:00.000Z', coversUntil: '2027-01-01T00:00:00.000Z', recordedAt: '2026-10-01T09:00:00.000Z' };
-    routes({ '/billing': billing({ status: 'active', plan: { code: 'pro', name: 'Pro' }, paidUntil: '2027-01-01T00:00:00.000Z', payments: [payment] }), '/me': ME });
-    renderAt(<BillingPage />);
-    expect(await screen.findByText(/^Paid until/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Payment history' }));
-    expect(await screen.findByText('Bank transfer')).toBeTruthy();
-    expect(screen.getByText('TR-77')).toBeTruthy();
-    expect(screen.getByText(/\(3 months\)/)).toBeTruthy();
-  });
 });
 
 describe('W05, W06 account', () => {

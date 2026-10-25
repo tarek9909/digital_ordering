@@ -31,6 +31,7 @@ function LogoUpload({ venue }: { venue: VenueAdmin }) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: venueKey(venue.id) });
       void qc.invalidateQueries({ queryKey: ['onboarding'] });
+      void qc.invalidateQueries({ queryKey: ['tenant'] });
     },
   });
   return (

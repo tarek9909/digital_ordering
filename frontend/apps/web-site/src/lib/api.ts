@@ -41,6 +41,7 @@ export interface LegalDocument {
 export interface PublicPlan {
   code: string;
   name: string;
+  description?: string;
   limits: Record<string, unknown> | null;
   features: string[];
   prices: Array<{ period: 'month' | 'quarter' | 'year'; currency: string; amountMinor: number }>;
@@ -51,6 +52,6 @@ export interface PublicPlansResponse {
   trialDays: unknown;
 }
 
-export const LEGAL_KINDS = ['terms', 'privacy', 'dpa'] as const;
+export const LEGAL_KINDS = ['terms', 'privacy', 'dpa', 'customer_privacy'] as const;
 export type LegalKind = (typeof LEGAL_KINDS)[number];
 export const isLegalKind = (k: string | undefined): k is LegalKind => (LEGAL_KINDS as readonly string[]).includes(k ?? '');

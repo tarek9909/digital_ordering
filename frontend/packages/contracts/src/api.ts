@@ -167,21 +167,32 @@ export const purposeHeader = z.enum(['support', 'security', 'billing', 'legal', 
 export const consoleTenantsQuery = z
   .object({ q: z.string().max(100).optional(), status: z.string().max(20).optional(), plan: z.string().max(40).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), cursor: z.string().max(100).optional() })
   .strict();
+const planDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)), 'Invalid date');
 export const consoleCreateTenantBody = z
   .object({
     name: z.string().trim().min(1).max(120),
     slug: slugSchema,
-    country: z.string().length(2).toUpperCase(),
-    locale: localeSchema,
+    country: z.string().length(2).toUpperCase().default('LB'),
+    locale: localeSchema.default('ar'),
     ownerEmail: emailSchema,
+    /** The platform team sets the owner's credentials; there is no invitation. */
+    ownerName: z.preprocess((v) => (v === '' ? undefined : v), z.string().trim().min(1).max(120).optional()),
+    ownerPassword: z.string().min(1).max(200),
     complimentary: z.boolean().default(false),
     /** Plan of the new tenant (FR-SA-05); default Standard. A tenant created in the console is active at once, without a trial. */
     planCode: z.string().regex(/^[a-z0-9-]{2,40}$/).optional(),
+    /** When the plan starts and ends (dates, YYYY-MM-DD). Default: today, and one month later. */
+    planStartsAt: z.preprocess((v) => (v === '' ? undefined : v), planDate.optional()),
+    planEndsAt: z.preprocess((v) => (v === '' ? undefined : v), planDate.optional()),
   })
   .strict()
-  .refine((b) => b.planCode !== 'trial', { message: 'The Trial plan is not offered for new tenants', path: ['planCode'] });
+  .refine((b) => b.planCode !== 'trial', { message: 'The Trial plan is not offered for new tenants', path: ['planCode'] })
+  .refine((b) => !b.planStartsAt || !b.planEndsAt || b.planEndsAt > b.planStartsAt, { message: 'The plan must end after it starts', path: ['planEndsAt'] });
 export const reasonBody = z.object({ reason: z.string().trim().min(3).max(500), confirm: z.string().max(60).optional() }).strict();
-export const extendTrialBody = z.object({ days: z.number().int().min(1).max(90) }).strict();
+export const planDatesBody = z
+  .object({ planStartsAt: planDate, planEndsAt: planDate })
+  .strict()
+  .refine((b) => b.planEndsAt > b.planStartsAt, { message: 'The plan must end after it starts', path: ['planEndsAt'] });
 export const complimentaryBody = z.object({ enabled: z.boolean() }).strict();
 export const deleteTenantBody = z.object({ confirmSlug: slugSchema }).strict();
 /** Without `password` the user gets an email invitation; with it the account is created active with those credentials. */
@@ -238,4 +249,3 @@ export const legalDocumentBody = z.object({ kind: z.enum(['terms', 'privacy', 'd
 /** Acceptance gate (FR-ADM-16, AS04): the exact document ids shown, in the locale they were shown for. */
 export const legalPendingQuery = z.object({ locale: localeSchema.optional() }).strict();
 export const legalAcceptBody = z.object({ documentIds: z.array(uuidSchema).min(1).max(5), locale: localeSchema.optional() }).strict();
-export const emailTemplateBody = z.object({ subject: z.string().min(1).max(200), blocks: z.array(z.string().max(2000)).min(1).max(10) }).strict();

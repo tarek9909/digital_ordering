@@ -75,7 +75,22 @@
     "trialButton_few": "الفترة التجريبية: بقي {{count}} أيام",
     "trialButton_many": "الفترة التجريبية: بقي {{count}} يومًا",
     "trialButton_other": "الفترة التجريبية: بقي {{count}} يوم",
-    "trialTitle": "فترتك التجريبية المجانية"
+    "trialTitle": "فترتك التجريبية المجانية",
+    "planTitle": "باقتك",
+    "planEndsButton_zero": "تنتهي الباقة بعد {{count}} يوم",
+    "planEndsButton_one": "تنتهي الباقة بعد يوم واحد",
+    "planEndsButton_two": "تنتهي الباقة بعد يومين",
+    "planEndsButton_few": "تنتهي الباقة بعد {{count}} أيام",
+    "planEndsButton_many": "تنتهي الباقة بعد {{count}} يومًا",
+    "planEndsButton_other": "تنتهي الباقة بعد {{count}} يوم",
+    "planEndedButton": "انتهت الباقة: جدّد",
+    "planEnds_zero": "تنتهي باقتك في {{date}}. تواصل مع فريق تنبيه للتجديد.",
+    "planEnds_one": "تنتهي باقتك في {{date}}، بعد يوم واحد. تواصل مع فريق تنبيه للتجديد.",
+    "planEnds_two": "تنتهي باقتك في {{date}}، بعد يومين. تواصل مع فريق تنبيه للتجديد.",
+    "planEnds_few": "تنتهي باقتك في {{date}}، بعد {{count}} أيام. تواصل مع فريق تنبيه للتجديد.",
+    "planEnds_many": "تنتهي باقتك في {{date}}، بعد {{count}} يومًا. تواصل مع فريق تنبيه للتجديد.",
+    "planEnds_other": "تنتهي باقتك في {{date}}، بعد {{count}} يوم. تواصل مع فريق تنبيه للتجديد.",
+    "planEnded": "انتهت باقتك في {{date}}. تواصل مع فريق تنبيه للتجديد."
   },
   "form": {
     "required": "هذا الحقل مطلوب.",
@@ -200,6 +215,9 @@
   },
   "reports": {
     "quickRange": "نطاق سريع",
+    "last7": "آخر 7 أيام",
+    "last14": "آخر 14 يومًا",
+    "last30": "آخر 30 يومًا",
     "secondaryTitle": "الوقت والجودة",
     "notesTitle": "ملاحظات حول هذه الأرقام",
     "title": "التقارير",

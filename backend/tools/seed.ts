@@ -26,6 +26,6 @@ if (env.APP_ENV !== 'local' && env.APP_ENV !== 'test' && !(env.APP_ENV !== 'prod
   });
   console.log(`\nPassword for every seeded account: ${SEED_PASSWORD}   Staff PIN: ${SEED_PIN}`);
   for (const u of r.platformUsers) console.log(`console  ${u.role.padEnd(12)} ${u.email}  TOTP secret ${u.totpSecret}`);
-  for (const t of r.tenants) console.log(`tenant   ${t.status.padEnd(12)} ${t.ownerEmail}  staff link ${t.staffLink}`);
+  for (const t of r.tenants) console.log(`tenant   ${t.status.padEnd(12)} ${t.ownerEmail}${t.managerEmail ? `  manager ${t.managerEmail}` : ''}  staff link ${t.staffLink}`);
 }
 await db.destroy();

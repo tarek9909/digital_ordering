@@ -126,11 +126,7 @@ describe('venue switcher persistence', () => {
 });
 
 describe('roles', () => {
-  it('owner-only billing; support sees billing read-only and never team', () => {
-    expect(canReach('billing', 'active', 'manager')).toBe(false);
-    expect(canReach('billing', 'active', 'owner')).toBe(true);
-    expect(canReach('billing', 'active', 'support')).toBe(true);
-    expect(canManage('billing', 'support')).toBe(false);
+  it('support can manage the venue and never reaches team', () => {
     expect(canManage('venue', 'support')).toBe(true);
     expect(canReach('team', 'active', 'support')).toBe(false);
     expect(canReach('team', 'suspended', 'manager')).toBe(true);

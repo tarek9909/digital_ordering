@@ -166,7 +166,8 @@ describe('rules', () => {
   it('detects trial limit and downgrade excess', () => {
     expect(trialLimitExceeded('trial', 201, 200)).toBe(true);
     expect(trialLimitExceeded('active', 5000, 200)).toBe(false);
-    const standard = SEED_PLANS.find((p) => p.code === 'standard')!;
+    // A tighter plan than the single Standard plan, to exercise the check.
+    const standard = { limits: { ...SEED_PLANS.find((p) => p.code === 'standard')!.limits, maxCountersPerVenue: 1 } };
     const excess = downgradeExcess(
       { venues: 1, maxCountersInAVenue: 3, maxLanguagesInAVenue: 2, maxDisplaysInAVenue: 1, maxStaffDevicesInAVenue: 2, maxApiKeysInAVenue: 0 },
       standard.limits,
@@ -175,8 +176,8 @@ describe('rules', () => {
   });
   it('seeds OI-02 prices', () => {
     const p = (plan: string, period: string) => SEED_PRICES.find((x) => x.plan === plan && x.period === period)!.amountMinor;
-    expect(p('standard', 'month')).toBe(9900);
-    expect(p('standard', 'quarter')).toBe(26730);
+    expect(p('standard', 'month')).toBe(2700);
+    expect(p('standard', 'quarter')).toBe(7290);
     expect(p('pro', 'year')).toBe(171840);
   });
   it('chooses locales and falls back for messages (TR-L10N-02/03)', () => {

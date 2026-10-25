@@ -63,7 +63,7 @@ it('pickPrice prefers a monthly USD price, then the first monthly price', () => 
   expect(pickPrice([])).toBeNull();
 });
 
-it('renders one card per plan with price, limits, translated features and the trial length', async () => {
+it('renders the single plan card with price, limits, translated features and the trial length', async () => {
   get.mockResolvedValue(catalogue);
   renderPricing();
   const std = (await screen.findByRole('heading', { name: 'Standard' })).parentElement!;
@@ -79,11 +79,8 @@ it('renders one card per plan with price, limits, translated features and the tr
   // No checkout or self-signup: the card leads to the contact page (venues are set up by the platform team).
   expect(within(std).getByRole('link', { name: 'Get started' }).getAttribute('href')).toBe('/contact');
 
-  const pro = screen.getByRole('heading', { name: 'Pro' }).parentElement!;
-  expect(within(pro).getByText(/\$49/)).toBeTruthy();
-  expect(within(pro).getByText('Pickup counters per venue: up to 4')).toBeTruthy();
-  expect(within(pro).getByText('API keys per venue: up to 3')).toBeTruthy();
-  expect(within(pro).getByText('Webhooks')).toBeTruthy();
+  // One plan only: further catalogue entries are not shown.
+  expect(screen.queryByRole('heading', { name: 'Pro' })).toBeNull();
   expect(screen.queryByText(/coming soon/i)).toBeNull();
 });
 
@@ -96,5 +93,5 @@ it('shows an error with a retry', async () => {
   });
   renderPricing();
   fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
-  await screen.findByRole('heading', { name: 'Pro' });
+  await screen.findByRole('heading', { name: 'Standard' });
 });

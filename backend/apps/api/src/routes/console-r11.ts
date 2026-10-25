@@ -2,7 +2,6 @@ import { requireFreshMfa } from '@dop/auth';
 import {
   AppError,
   changePlanBody,
-  emailTemplateBody,
   flagOverrideBody,
   freeMonthsBody,
   legalDocumentBody,
@@ -22,12 +21,12 @@ import {
   addPrice,
   changePlan,
   createLegalDocument,
+  currentLegalDocument,
   createPlan,
   deactivatePrice,
   emergencySupport,
   endSupport,
   enterSupport,
-  getEmailTemplate,
   grantFreeMonths,
   listFlags,
   listLegalDocuments,
@@ -39,7 +38,6 @@ import {
   platformTransferOwnership,
   publishLegalDocument,
   pushKeyStatus,
-  putEmailTemplate,
   recordPayment,
   requestSupport,
   setFlagOverride,
@@ -223,6 +221,28 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
 
   // Legal documents, email texts, push key status (FR-SA-12)
   route({ method: 'get', path: '/legal-documents', surfaces: ['console'], permission: 'console.settings', handler: async (c) => ({ items: await listLegalDocuments(c.deps) }) }),
+  // The text currently published for every document and language, so the console can edit them in place.
+  route({
+    method: 'get',
+    path: '/legal-documents/current',
+    surfaces: ['console'],
+    permission: 'console.settings',
+    handler: async (c) => {
+      const items: { kind: string; locale: string; html: string; version: string | null }[] = [];
+      for (const kind of legalDocumentBody.shape.kind.options) {
+        for (const locale of ['ar', 'en'] as const) {
+          const doc = await currentLegalDocument(c.deps, kind, locale);
+          if (!doc || doc.locale !== locale) {
+            items.push({ kind, locale, html: '', version: null });
+            continue;
+          }
+          const body = await c.deps.storage.get('assets', doc.content_key).catch(() => null);
+          items.push({ kind, locale, html: body ? body.toString('utf8') : '', version: doc.version });
+        }
+      }
+      return { items };
+    },
+  }),
   route({ method: 'post', path: '/legal-documents', surfaces: ['console'], permission: 'console.settings', body: legalDocumentBody, status: 201, handler: async (c) => createLegalDocument(c.deps, c.deps.storage, pa(c), c.body) }),
   route({
     method: 'post',
@@ -233,26 +253,6 @@ export const consoleR11Routes = defineRoutes('/api/console/v1', [
     handler: async (c) => {
       requireFreshMfa(pa(c), c.deps.now()); // every tenant user must accept it (L-6)
       await publishLegalDocument(c.deps, pa(c), c.params.id);
-    },
-  }),
-  route({
-    method: 'get',
-    path: '/email-templates/:key/:locale',
-    surfaces: ['console'],
-    permission: 'console.settings',
-    params: z.object({ key: z.string().max(60), locale: z.string().max(10) }).strict(),
-    handler: async (c) => (await getEmailTemplate(c.deps, c.params.key, c.params.locale)) ?? { subject: null, blocks: [] },
-  }),
-  route({
-    method: 'put',
-    path: '/email-templates/:key/:locale',
-    surfaces: ['console'],
-    permission: 'console.settings',
-    params: z.object({ key: z.string().max(60), locale: z.string().max(10) }).strict(),
-    body: emailTemplateBody,
-    handler: async (c) => {
-      requireFreshMfa(pa(c), c.deps.now()); // text of every platform email, password resets included (L-6)
-      await putEmailTemplate(c.deps, pa(c), c.params.key, c.params.locale, c.body);
     },
   }),
   route({ method: 'get', path: '/push-keys/status', surfaces: ['console'], permission: 'console.settings', handler: async (c) => pushKeyStatus(c.deps) }),

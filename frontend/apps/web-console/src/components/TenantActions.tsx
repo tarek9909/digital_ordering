@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { extendTrialBody } from '@dop/contracts';
+import { planDatesBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
 import { Button, Field, LiveRegion, Modal } from '@dop/ui';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import { MfaCancelled, useFreshMfa } from './FreshMfa';
 // Lifecycle actions (FR-SA-06 – FR-SA-08, TR-FE-23). Suspend and delete need the tenant slug typed and a fresh
 // MFA check; the server decides when MFA is stale (MFA_REQUIRED) and FreshMfa retries.
 
-type Kind = 'suspend' | 'reactivate' | 'extend' | 'complimentary' | 'cancel' | 'delete';
+type Kind = 'rename' | 'suspend' | 'reactivate' | 'planDates' | 'complimentary' | 'cancel' | 'delete';
 type Tenant = TenantDetail['tenant'];
 
 export function TenantActions({ tenant }: { tenant: Tenant }) {
@@ -38,8 +38,9 @@ export function TenantActions({ tenant }: { tenant: Tenant }) {
   // One Activate / Deactivate toggle leads the list; it maps onto the reactivate and suspend lifecycle calls.
   const safe: Kind[] = [
     ...(s === 'suspended' ? (['reactivate'] as const) : []),
-    ...(['trial', 'active', 'past_due'].includes(s) ? (['suspend'] as const) : []),
-    ...(s === 'trial' ? (['extend'] as const) : []),
+    ...(['active', 'past_due'].includes(s) ? (['suspend'] as const) : []),
+    'rename',
+    'planDates',
     'complimentary',
   ];
   const danger: Kind[] = [...(s !== 'cancelled' ? (['cancel'] as const) : []), 'delete'];
@@ -92,7 +93,6 @@ export function TenantActions({ tenant }: { tenant: Tenant }) {
 }
 
 const reasonForm = z.object({ reason: z.string().trim().min(3).max(500), confirm: z.string().max(60) });
-const extendForm = z.object({ days: z.coerce.number().pipe(extendTrialBody.shape.days) });
 const confirmForm = z.object({ confirm: z.string().max(60) });
 
 function ActionForm({ kind, tenant, onDone, onCancel }: { kind: Kind; tenant: Tenant; onDone: () => void; onCancel: () => void }) {
@@ -110,7 +110,8 @@ function ActionForm({ kind, tenant, onDone, onCancel }: { kind: Kind; tenant: Te
   const base = `/tenants/${tenant.id}`;
   const props = { tenant, onCancel, error, exec, base };
   if (kind === 'suspend' || kind === 'cancel') return <ReasonForm kind={kind} {...props} />;
-  if (kind === 'extend') return <ExtendForm {...props} />;
+  if (kind === 'rename') return <RenameForm {...props} />;
+  if (kind === 'planDates') return <PlanDatesForm {...props} />;
   if (kind === 'delete') return <DeleteForm {...props} />;
   return <SimpleConfirm kind={kind} {...props} />;
 }
@@ -174,24 +175,41 @@ function ReasonForm({ kind, tenant, onCancel, error, exec, base }: FormProps & {
   );
 }
 
-function ExtendForm({ onCancel, error, exec, base }: FormProps) {
+const renameForm = z.object({ name: z.string().trim().min(1).max(120) });
+
+function RenameForm({ tenant, onCancel, error, exec, base }: FormProps) {
   const { t } = useTranslation();
-  const form = useForm({ resolver: zodResolver(extendForm), defaultValues: { days: 7 } });
-  const submit = form.handleSubmit((v) => exec(() => api.post(`${base}/extend-trial`, { days: v.days })));
+  const form = useForm({ resolver: zodResolver(renameForm), defaultValues: { name: tenant.name } });
+  const submit = form.handleSubmit((v) => exec(() => api.patch(base, { name: v.name })));
   return (
     <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
       <ErrorNote error={error} />
+      <Field label={t('actions.rename.name')} maxLength={120} error={form.formState.errors.name && t('actions.rename.invalid')} {...form.register('name')} />
+      <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t('common:save')} />
+    </form>
+  );
+}
+
+function PlanDatesForm({ tenant, onCancel, error, exec, base }: FormProps) {
+  const { t } = useTranslation();
+  const form = useForm({
+    resolver: zodResolver(planDatesBody),
+    defaultValues: { planStartsAt: tenant.planStartsAt?.slice(0, 10) ?? '', planEndsAt: tenant.planEndsAt?.slice(0, 10) ?? '' },
+  });
+  const submit = form.handleSubmit((v) => exec(() => api.post(`${base}/plan-dates`, v)));
+  const errs = form.formState.errors;
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-4.5" noValidate>
+      <ErrorNote error={error} />
+      <Field label={t('actions.planDates.start')} type="date" dir="ltr" {...form.register('planStartsAt')} />
       <Field
-        label={t('actions.extend.days')}
-        type="number"
-        min={1}
-        max={90}
-        inputMode="numeric"
+        label={t('actions.planDates.end')}
+        type="date"
         dir="ltr"
-        error={form.formState.errors.days && t('actions.extend.daysInvalid')}
-        {...form.register('days')}
+        error={errs.planStartsAt || errs.planEndsAt ? t('actions.planDates.invalid') : undefined}
+        {...form.register('planEndsAt')}
       />
-      <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t('actions.extend.button')} />
+      <Actions onCancel={onCancel} busy={form.formState.isSubmitting} label={t('actions.planDates.button')} />
     </form>
   );
 }

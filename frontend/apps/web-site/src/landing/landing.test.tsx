@@ -104,6 +104,7 @@ describe('packages section', () => {
   const plan = (code: string, name: string, usd: number) => ({
     code,
     name,
+    description: 'For busy counters',
     limits: { maxVenues: 1 },
     features: [],
     prices: [
@@ -116,20 +117,18 @@ describe('packages section', () => {
     included: { ar: ['تنبيهات'], en: ['Unlimited alerts'] },
     note: { ar: '', en: '' },
     periods: ['month', 'year'],
-    plans: { pro: { name: { ar: '', en: 'Pro Kitchen' }, tagline: { ar: '', en: 'For busy counters' }, featured: true } },
+    plans: {},
   };
   const routes = (site: unknown) =>
-    get.mockImplementation(async (path: string) => (path === '/site' ? site : { items: [plan('standard', 'Standard', 1900), plan('pro', 'Pro', 2900)], trialDays: 14 }));
+    get.mockImplementation(async (path: string) => (path === '/site' ? site : { items: [plan('standard', 'Standard', 2900)], trialDays: 14 }));
 
-  it('shows the wording, periods and highlighted plan set in the console', async () => {
+  it('shows the wording and periods set in the console, and the plan from the Plans page', async () => {
     routes({ contact: { email: null, whatsapp: null, whatsappUrl: null }, pricing });
     renderAt(<PricingSection />);
     expect(await screen.findByRole('heading', { name: 'Our packages' })).toBeTruthy();
     expect(screen.getByText('Unlimited alerts')).toBeTruthy();
-    expect(await screen.findByRole('heading', { name: 'Pro Kitchen' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Standard' })).toBeTruthy();
     expect(screen.getByText('For busy counters')).toBeTruthy();
-    expect(screen.getByText('Most popular')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Standard' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Every 3 months' })).toBeNull();
     expect(screen.queryByText(/chain/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Yearly' }));

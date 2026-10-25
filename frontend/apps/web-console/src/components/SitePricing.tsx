@@ -2,18 +2,15 @@ import { ApiError } from '@dop/client-sdk';
 import { SITE_PRICING_PERIODS, sitePricingSchema, type SitePricing as Pricing } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
 import { Button, Card, Field } from '@dop/ui';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../lib/api';
 import { errorText } from '../lib/errors';
-import type { Plan } from '../lib/types';
 import { Checkbox, ErrorNote, TextArea } from './common';
 import { MfaCancelled, useFreshMfa } from './FreshMfa';
 
 const LANGS = ['ar', 'en'] as const;
 type Lang = (typeof LANGS)[number];
-type Look = Pricing['plans'][string];
-const emptyLook = (): Look => ({ name: { ar: '', en: '' }, tagline: { ar: '', en: '' }, featured: false });
 const lines = (s: string) =>
   s
     .split('\n')
@@ -29,24 +26,11 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
   const { t } = useTranslation();
   const qc = useQueryClient();
   const run = useFreshMfa();
-  const plans = useQuery({ queryKey: ['plans'], queryFn: () => api.get<{ items: Plan[] }>('/plans') });
   const [title, setTitle] = useState(value.title);
   const [included, setIncluded] = useState({ ar: value.included.ar.join('\n'), en: value.included.en.join('\n') });
   const [note, setNote] = useState(value.note);
   const [periods, setPeriods] = useState(value.periods);
-  const [looks, setLooks] = useState(value.plans);
   const [error, setError] = useState('');
-  const shown = (plans.data?.items ?? []).filter((p) => p.isPublic && !p.archived && p.code !== 'trial');
-  const featured = Object.entries(looks).find(([, l]) => l.featured)?.[0] ?? '';
-
-  const look = (code: string) => looks[code] ?? emptyLook();
-  const setLook = (code: string, field: 'name' | 'tagline', lang: Lang, v: string) => setLooks((all) => ({ ...all, [code]: { ...look(code), [field]: { ...look(code)[field], [lang]: v } } }));
-  const setFeatured = (code: string) =>
-    setLooks((all) => {
-      const next: Pricing['plans'] = {};
-      for (const c of new Set([...Object.keys(all), ...(code ? [code] : [])])) next[c] = { ...(all[c] ?? emptyLook()), featured: c === code };
-      return next;
-    });
   const togglePeriod = (p: (typeof SITE_PRICING_PERIODS)[number], on: boolean) => setPeriods((cur) => SITE_PRICING_PERIODS.filter((x) => (x === p ? on : cur.includes(x))));
 
   const save = useMutation({
@@ -58,9 +42,7 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
   });
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    // Plans left blank and not highlighted are dropped, so the site uses their catalogue names.
-    const kept = Object.fromEntries(Object.entries(looks).filter(([, l]) => l.featured || [l.name.ar, l.name.en, l.tagline.ar, l.tagline.en].some((x) => x.trim())));
-    const r = sitePricingSchema.safeParse({ title, included: { ar: lines(included.ar), en: lines(included.en) }, note, periods, plans: kept });
+    const r = sitePricingSchema.safeParse({ title, included: { ar: lines(included.ar), en: lines(included.en) }, note, periods, plans: {} });
     if (!r.success) {
       setError(t(`sitePricing.invalid.${String(r.error.issues[0]?.path[0] ?? 'title')}`));
       return;
@@ -109,50 +91,6 @@ export function SitePricing({ value, onSaved }: { value: Pricing; onSaved: () =>
                 <Checkbox key={p} label={t(`sitePricing.period.${p}`)} checked={periods.includes(p)} onChange={(e) => togglePeriod(p, e.target.checked)} />
               ))}
             </div>
-          </fieldset>
-          <fieldset className="flex flex-col gap-3 border-t border-line/70 pt-5">
-            <legend className="mb-0.5 text-sm font-bold text-ink">{t('sitePricing.plans')}</legend>
-            <p className="text-xs text-muted">{t('sitePricing.plansHint')}</p>
-            <ErrorNote error={plans.error} />
-            {plans.isSuccess && shown.length === 0 && <p className="text-muted">{t('sitePricing.noPlans')}</p>}
-            {shown.map((p) => {
-              const isFeat = featured === p.code;
-              return (
-                <div key={p.code} className={`flex flex-col gap-4 rounded-xl border p-4 transition-all duration-150 ${isFeat ? 'border-primary/50 bg-primary/[0.02] shadow-xs ring-1 ring-primary/20' : 'border-line bg-canvas/20'}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-bold text-ink break-words">{p.name}</span>
-                      <span className="rounded-md bg-canvas px-2.5 py-0.5 font-mono text-xs font-semibold text-muted ring-1 ring-line">
-                        {p.code}
-                      </span>
-                      {isFeat && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                          ★ {t('sitePricing.featured')}
-                        </span>
-                      )}
-                    </div>
-                    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-line hover:bg-canvas">
-                      <input type="radio" name="sp-featured" className="size-4 text-primary" checked={isFeat} onChange={() => setFeatured(p.code)} />
-                      {t('sitePricing.featured')}
-                    </label>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {LANGS.map((l) => (
-                      <div key={l} lang={l} dir={l === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col gap-3">
-                        <Field label={t('sitePricing.planName', { lang: l.toUpperCase() })} placeholder={p.name} value={look(p.code).name[l]} onChange={(e) => setLook(p.code, 'name', l, e.target.value)} maxLength={40} />
-                        <Field label={t('sitePricing.tagline', { lang: l.toUpperCase() })} value={look(p.code).tagline[l]} onChange={(e) => setLook(p.code, 'tagline', l, e.target.value)} maxLength={140} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-            {shown.length > 0 && (
-              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-xs font-semibold text-muted ring-1 ring-line hover:text-ink">
-                <input type="radio" name="sp-featured" className="size-4" checked={featured === ''} onChange={() => setFeatured('')} />
-                {t('sitePricing.noFeatured')}
-              </label>
-            )}
           </fieldset>
           <div className="flex flex-wrap items-center gap-3 border-t border-line/70 pt-4">
             <Button type="submit" busy={save.isPending}>

@@ -38,22 +38,6 @@ const mount = (ui: React.ReactElement) =>
     </QueryClientProvider>,
   );
 
-describe('AS10 tenant plan filter', () => {
-  it.each(['support', 'finance', 'super_admin'])('offers catalogue plans, including custom ones, to %s', async (role) => {
-    api.get.mockImplementation(async (path: string) => {
-      if (path === '/me') return { platformUser: { id: 'p1', role, name: 'Platform' }, csrfToken: 'c', environment: 'test' };
-      if (path === '/tenants') return { items: [], nextCursor: null };
-      if (path === '/plan-options') return { items: [{ code: 'trial', name: 'Trial', archived: false }, { code: 'standard', name: 'Standard', archived: false }, { code: 'enterprise', name: 'Enterprise', archived: false }, { code: 'legacy', name: 'Legacy', archived: true }] };
-      throw new Error(`unexpected GET ${path}`);
-    });
-    mount(<TenantsPage />);
-    const select = (await screen.findByLabelText('Plan')) as HTMLSelectElement;
-    await waitFor(() => expect([...select.options].map((o) => o.value)).toEqual(['', 'trial', 'standard', 'enterprise', 'legacy']));
-    expect([...select.options].map((o) => o.textContent)).toEqual(expect.arrayContaining(['Enterprise', 'Legacy (archived)']));
-    expect(api.get.mock.calls.some(([p]) => p === '/plans')).toBe(false);
-  });
-});
-
 describe('AS08 console report outputs', () => {
   it('pilot report shows pickup p90 next to prep p90', () => {
     const total = { tickets: 4, readyTickets: 4, alertReach: { push: 4, live: 0, closed: 0, none: 0 }, reachPushOrLivePct: 100, acknowledgedPct: 50, prepSecondsP50: 300, prepSecondsP90: 540, pickupSecondsP50: 120, pickupSecondsP90: 780, uncollected: 0, undoPct: 0 };

@@ -39,16 +39,7 @@ export function ErrorNote({ error }: { error: unknown }) {
   const plan = isCode(error, 'FEATURE_NOT_IN_PLAN') ? 'feature' : isCode(error, 'PLAN_LIMIT') ? 'limit' : null;
   if (plan)
     return (
-      <Banner
-        tone="warn"
-        action={
-          role === 'owner' ? (
-            <Link to="/billing" className={linkClass('quiet')}>
-              {t('upsell.seePlans')}
-            </Link>
-          ) : undefined
-        }
-      >
+      <Banner tone="warn">
         {t(`upsell.${plan}`)} {role !== 'owner' && t('upsell.askOwner')}
       </Banner>
     );

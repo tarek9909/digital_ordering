@@ -1,22 +1,20 @@
 import type { MemberRole, TenantStatus } from '@dop/contracts';
 
-// Which admin sections a user can reach (TRD §14.2). A suspended, expired or cancelled tenant keeps only billing,
-// team, settings (export, deletion) and account (EX-13, EX-14; the API's limitedAccessOk routes).
-// A platform support agent inside a support session ("support") gets the venue, reports and view-only billing;
+// Which admin sections a user can reach (TRD §14.2). A suspended, expired or cancelled tenant keeps only team, settings (export, deletion) and account (EX-13, EX-14; the API's limitedAccessOk routes).
+// A platform support agent inside a support session ("support") gets the venue and reports;
 // never team, account or settings (TR-AUTH-10). Integrations and support access are run by the platform team in the
 // console, not here.
 
-export type Section = 'home' | 'venues' | 'venue' | 'counters' | 'staff' | 'displays' | 'posters' | 'reports' | 'ratings' | 'team' | 'billing' | 'settings' | 'account';
+export type Section = 'home' | 'venues' | 'venue' | 'counters' | 'staff' | 'displays' | 'posters' | 'reports' | 'ratings' | 'team' | 'settings' | 'account';
 
 /** Role of whoever uses the admin app: a member role, or a support agent. */
 export type ViewerRole = MemberRole | 'support';
 
 export const LIMITED_STATUSES: readonly TenantStatus[] = ['suspended', 'trial_expired', 'cancelled'];
-const LIMITED_SECTIONS: readonly Section[] = ['billing', 'team', 'settings', 'account'];
-const OWNER_ONLY: readonly Section[] = ['billing'];
+const LIMITED_SECTIONS: readonly Section[] = ['team', 'settings', 'account'];
+const OWNER_ONLY: readonly Section[] = [];
 const SUPPORT_HIDDEN: readonly Section[] = ['team', 'account', 'settings'];
-/** Read-only for a support agent (billing view). */
-const SUPPORT_VIEW: readonly Section[] = ['billing'];
+const SUPPORT_VIEW: readonly Section[] = [];
 
 export const isLimited = (status: TenantStatus | undefined) => status !== undefined && LIMITED_STATUSES.includes(status);
 
@@ -38,7 +36,7 @@ export function canManage(section: Section, role: ViewerRole | null): boolean {
 /** First section the user may open. */
 export function homeSection(status: TenantStatus | undefined, role: ViewerRole | null): Section {
   if (!isLimited(status)) return 'home';
-  return role === 'owner' ? 'billing' : 'team';
+  return 'team';
 }
 
 /** Whole days until `iso` (rounded up, never negative). */

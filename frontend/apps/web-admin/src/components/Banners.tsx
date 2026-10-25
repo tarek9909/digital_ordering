@@ -71,11 +71,7 @@ export function Banners() {
   const date = (iso: string) => formatDateTime(iso, i18n.language);
   if (!me) return null;
 
-  const billingLink = isOwner ? (
-    <Link to="/billing" className={linkClass('quiet')}>
-      {t('banners.goToBilling')}
-    </Link>
-  ) : undefined;
+  const billingLink = undefined;
 
   return (
     // Padded only when a banner shows (live regions are visually hidden).

@@ -8,7 +8,6 @@ import { revokeOtherSessions } from './auth.js';
 import type { Deps } from './deps.js';
 import { sendEmail } from './email.js';
 import { addOutbox, flushOutbox } from './outbox.js';
-import { getSetting } from './platform.js';
 import { currentLegalDocument } from './public.js';
 import { uaReachKey } from './reports.js';
 import { sanitizeLegalHtml } from './sanitize.js';
@@ -369,12 +368,6 @@ export async function getEmailTemplate(deps: Deps, key: string, locale: string) 
   return r.rows[0] ?? null;
 }
 
-export async function putEmailTemplate(deps: Deps, actor: PlatformActor, key: string, locale: string, b: { subject: string; blocks: string[] }) {
-  await sql`INSERT INTO email_template_texts (template_key, locale, subject, blocks, updated_by) VALUES (${key}, ${locale}, ${b.subject}, ${json(b.blocks)}, ${actor.platformUserId})
-            ON DUPLICATE KEY UPDATE subject = VALUES(subject), blocks = VALUES(blocks), updated_by = VALUES(updated_by)`.execute(deps.db.platform());
-  await writeAudit(deps.db.platform(), { actor, action: 'setting.changed', tenantId: null, entityType: 'email_template', entityId: `${key}:${locale}`, after: b, visibleToTenant: false });
-}
-
 // ---- push key status (FR-SA-12): view only
 export async function pushKeyStatus(deps: Deps) {
   const key = deps.config.vapidPublicKey;
@@ -397,7 +390,6 @@ export async function platformDailyRollup(deps: Deps, date: string) {
     .where('occurred_at', '<', next)
     .where('action', 'in', ['tenant.status_changed', 'tenant.cancelled'])
     .execute();
-  const conversions = statusChanges.filter((c) => (c.before_data as { status?: string } | null)?.status === 'trial' && (c.after_data as { status?: string } | null)?.status === 'active').length;
   const cancellations = statusChanges.filter((c) => (c.after_data as { status?: string } | null)?.status === 'cancelled').length;
   // MRR = Σ recorded payments covering the day (amount paid ÷ months covered), per currency. The amount is what the
   // tenant actually paid, so a catalogue change never reprices existing customers (A17, FR-RPT-07).
@@ -442,16 +434,16 @@ export async function platformDailyRollup(deps: Deps, date: string) {
       for (const [l, n] of Object.entries(levels)) (reachByUa[ua] ??= {})[l] = (reachByUa[ua][l] ?? 0) + n;
     }
   await sql`INSERT INTO platform_metrics_daily (metric_date, tenants_by_status, tenants_by_plan, signups, conversions, cancellations, mrr_minor, tickets, alerts_sent, push_failures, webhook_failures, reach_by_ua)
-    VALUES (${date}, ${json(Object.fromEntries(byStatus.map((s) => [s.status, Number(s.n)])))}, ${json(Object.fromEntries(byPlan.map((p) => [p.code, Number(p.n)])))}, ${Number(signups.n)}, ${conversions}, ${cancellations}, ${json(mrr)}, ${Number(reports.tickets ?? 0)}, ${pushSent}, ${pushFailed}, ${Number(webhookFailures.n)}, ${json(reachByUa)})
+    VALUES (${date}, ${json(Object.fromEntries(byStatus.map((s) => [s.status, Number(s.n)])))}, ${json(Object.fromEntries(byPlan.map((p) => [p.code, Number(p.n)])))}, ${Number(signups.n)}, 0, ${cancellations}, ${json(mrr)}, ${Number(reports.tickets ?? 0)}, ${pushSent}, ${pushFailed}, ${Number(webhookFailures.n)}, ${json(reachByUa)})
     ON DUPLICATE KEY UPDATE tenants_by_status = VALUES(tenants_by_status), tenants_by_plan = VALUES(tenants_by_plan), signups = VALUES(signups), conversions = VALUES(conversions),
       cancellations = VALUES(cancellations), mrr_minor = VALUES(mrr_minor), tickets = VALUES(tickets), alerts_sent = VALUES(alerts_sent),
       push_failures = VALUES(push_failures), webhook_failures = VALUES(webhook_failures), reach_by_ua = VALUES(reach_by_ua)`.execute(db);
-  return { date, mrr, signups: Number(signups.n), conversions, cancellations };
+  return { date, mrr, signups: Number(signups.n), cancellations };
 }
 
 /**
  * Platform report (FR-RPT-07, BRD §12.2): daily metrics, churn against the tenants active when the range started
- * (the snapshot taken at the end of the day before `from`), trial conversion by sign-up cohort (month), and
+ * (the snapshot taken at the end of the day before `from`), retention by sign-up cohort (month), and
  * delivery health (W09).
  */
 export async function platformReport(deps: Deps, from: string, to: string) {
@@ -464,31 +456,23 @@ export async function platformReport(deps: Deps, from: string, to: string) {
   const activeAtStart = startSnapshot ? Number(startSnapshot.active ?? 0) + Number(startSnapshot.past_due ?? 0) : 0;
   const cancellations = days.reduce((a, d) => a + Number(d.cancellations ?? 0), 0);
 
-  // Cohorts: tenants that signed up in each month of the range, and how many of them left the trial by paying
-  // at any time since.
+  // Cohorts: tenants that signed up in each month of the range, and how many of them are still on a plan today
+  // (there is no trial: a tenant is active from creation until its plan ends or it cancels).
   const fromDate = new Date(`${from}T00:00:00Z`);
   const toNext = new Date(Date.parse(`${to}T00:00:00Z`) + 86_400_000);
-  const signedUp = await db.selectFrom('tenants').select(['id', 'created_at', 'complimentary']).where('created_at', '>=', fromDate).where('created_at', '<', toNext).execute();
-  const converted = new Set<string>();
-  if (signedUp.length) {
-    const ids = signedUp.map((t) => t.id);
-    const changes = await db.selectFrom('audit_log').select(['tenant_id', 'before_data', 'after_data']).where('action', '=', 'tenant.status_changed').where('tenant_id', 'in', ids).execute();
-    for (const c of changes) {
-      if ((c.before_data as { status?: string } | null)?.status === 'trial' && (c.after_data as { status?: string } | null)?.status === 'active' && c.tenant_id) converted.add(c.tenant_id);
-    }
-  }
-  const byMonth = new Map<string, { signups: number; converted: number; complimentary: number }>();
+  const signedUp = await db.selectFrom('tenants').select(['created_at', 'complimentary', 'status']).where('created_at', '>=', fromDate).where('created_at', '<', toNext).execute();
+  const byMonth = new Map<string, { signups: number; active: number; complimentary: number }>();
   for (const t of signedUp) {
     const m = t.created_at.toISOString().slice(0, 7);
-    const c = byMonth.get(m) ?? { signups: 0, converted: 0, complimentary: 0 };
+    const c = byMonth.get(m) ?? { signups: 0, active: 0, complimentary: 0 };
     c.signups++;
     if (t.complimentary) c.complimentary++;
-    else if (converted.has(t.id)) c.converted++;
+    else if (t.status === 'active' || t.status === 'past_due') c.active++;
     byMonth.set(m, c);
   }
   const cohorts = [...byMonth.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, c]) => ({ month, ...c, conversionPct: c.signups - c.complimentary > 0 ? Math.round((c.converted / (c.signups - c.complimentary)) * 1000) / 10 : null }));
+    .map(([month, c]) => ({ month, ...c, retentionPct: c.signups - c.complimentary > 0 ? Math.round((c.active / (c.signups - c.complimentary)) * 1000) / 10 : null }));
 
   const pushSent = days.reduce((a, d) => a + Number(d.alerts_sent ?? 0), 0);
   const pushFailures = days.reduce((a, d) => a + Number(d.push_failures ?? 0), 0);
@@ -508,5 +492,5 @@ export async function platformReport(deps: Deps, from: string, to: string) {
       for (const [level, n] of Object.entries(levels ?? {})) (reachByUa[ua] ??= {})[level] = (reachByUa[ua][level] ?? 0) + Number(n);
     }
   }
-  return { days, activeAtStart, churnPct: activeAtStart ? Math.round((cancellations / activeAtStart) * 1000) / 10 : null, cohorts, deliveryHealth, reachByUa, trialDays: await getSetting(deps, 'trial.days') };
+  return { days, activeAtStart, churnPct: activeAtStart ? Math.round((cancellations / activeAtStart) * 1000) / 10 : null, cohorts, deliveryHealth, reachByUa };
 }

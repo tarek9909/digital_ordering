@@ -16,16 +16,16 @@ beforeAll(async () => {
 });
 afterEach(cleanup);
 
-it('renders one cohort row per sign-up month, with a caption and — for no conversion base', () => {
+it('renders one cohort row per sign-up month, with a caption and — for no retention base', () => {
   render(
     <Cohorts
       cohorts={[
-        { month: '2026-09', signups: 10, converted: 3, complimentary: 2, conversionPct: 37.5 },
-        { month: '2026-10', signups: 1, converted: 0, complimentary: 1, conversionPct: null },
+        { month: '2026-09', signups: 10, active: 3, complimentary: 2, retentionPct: 37.5 },
+        { month: '2026-10', signups: 1, active: 0, complimentary: 1, retentionPct: null },
       ]}
     />,
   );
-  const table = screen.getByRole('table', { name: 'Sign-ups per month and how many converted to a paid plan' });
+  const table = screen.getByRole('table', { name: 'Sign-ups per month and how many are still active' });
   const rows = within(table).getAllByRole('row');
   expect(rows).toHaveLength(3);
   expect(within(rows[1]!).getByText('2026-09')).toBeTruthy();

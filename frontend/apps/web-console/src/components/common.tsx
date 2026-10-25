@@ -445,11 +445,11 @@ export const Td = ({ children, className, colSpan }: { children?: ReactNode; cla
   <td colSpan={colSpan} className={`px-4 py-3 text-start align-middle ${className ?? ''}`}>{children}</td>
 );
 
-/** Tenant status as text plus a marker shape and pulsing live dot for active/trial. */
+/** Tenant status as text plus a marker shape and pulsing live dot for active. */
 export function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
-  const tone = status === 'active' ? 'ok' : status === 'trial' ? 'info' : status === 'past_due' ? 'warn' : 'danger';
-  const isLive = status === 'active' || status === 'trial';
+  const tone = status === 'active' ? 'ok' : status === 'past_due' ? 'warn' : 'danger';
+  const isLive = status === 'active';
   return (
     <Pill tone={tone} className="gap-1.5 shadow-sm">
       {isLive && <span className="nova-live-dot size-1.5 bg-current" aria-hidden="true" />}
@@ -472,14 +472,14 @@ export function TableSkeleton({ label, rows = 6 }: { label: string; rows?: numbe
 }
 
 /** Cancel + submit row used by dialogs. */
-export function FormButtons({ onCancel, busy, label, danger }: { onCancel: () => void; busy: boolean; label: string; danger?: boolean }) {
+export function FormButtons({ onCancel, busy, label, danger, disabled }: { onCancel: () => void; busy: boolean; label: string; danger?: boolean; disabled?: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-wrap justify-end gap-2.5 pt-2">
       <Button type="button" variant="secondary" onClick={onCancel}>
         {t('common:cancel')}
       </Button>
-      <Button type="submit" variant={danger ? 'danger' : 'primary'} busy={busy}>
+      <Button type="submit" variant={danger ? 'danger' : 'primary'} busy={busy} disabled={disabled}>
         {label}
       </Button>
     </div>

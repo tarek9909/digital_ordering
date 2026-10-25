@@ -7,6 +7,7 @@ export const AUDIT_ACTIONS = [
   'tenant.suspended',
   'tenant.reactivated',
   'tenant.trial_extended',
+  'tenant.plan_dates_set',
   'tenant.complimentary_set',
   'tenant.plan_changed',
   'tenant.coupon_applied', // historical: Stripe coupons

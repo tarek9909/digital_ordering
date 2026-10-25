@@ -26,8 +26,8 @@ export const SEED_PLANS: SeedPlan[] = [
     code: 'standard',
     name: 'Standard',
     isPublic: true,
-    limits: { ...base, maxVenues: 1, maxCountersPerVenue: 1, maxLanguages: 2, maxApiKeysPerVenue: 0 },
-    features: ['display_speech', 'ratings', 'reports_trends'],
+    limits: { ...base, maxVenues: 1, maxCountersPerVenue: 10, maxLanguages: 10, maxApiKeysPerVenue: 5 },
+    features: ['display_speech', 'ratings', 'reports_trends', 'counters', 'remove_powered_by', 'api_access', 'webhooks', 'pos_connectors', 'named_staff', 'csv_export'],
     sortOrder: 1,
   },
   {
@@ -64,18 +64,23 @@ export const FEATURE_FLAGS: Array<{ key: string; description: string }> = [
 ];
 
 /** Monthly launch price per venue (BRD OI-02): Standard SAR 99, Pro SAR 179; quarterly −10%, yearly −20%; VAT added on invoices. */
-const MONTHLY_SAR_MINOR: Partial<Record<PlanCode, number>> = { standard: 9900, pro: 17900 };
+const MONTHLY_SAR_MINOR: Partial<Record<PlanCode, number>> = { pro: 17900 };
+/** Standard is the single plan, priced in US dollars (launch placeholder, set in the console). */
+const STANDARD_USD_MINOR = { month: 2700, quarter: 7290, year: 25920 } as const;
 const PERIODS = [
   { period: 'month', months: 1, discount: 0 },
   { period: 'quarter', months: 3, discount: 0.1 },
   { period: 'year', months: 12, discount: 0.2 },
 ] as const;
 
-export const SEED_PRICES = (Object.entries(MONTHLY_SAR_MINOR) as Array<[PlanCode, number]>).flatMap(([plan, monthly]) =>
+export const SEED_PRICES = [
+  ...(['month', 'quarter', 'year'] as const).map((period) => ({ plan: 'standard' as PlanCode, period, currency: 'USD', amountMinor: STANDARD_USD_MINOR[period] })),
+  ...(Object.entries(MONTHLY_SAR_MINOR) as Array<[PlanCode, number]>).flatMap(([plan, monthly]) =>
   PERIODS.map((p) => ({
     plan,
     period: p.period,
     currency: 'SAR',
     amountMinor: Math.round(monthly * p.months * (1 - p.discount)),
   })),
-);
+),
+];

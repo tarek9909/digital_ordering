@@ -150,6 +150,9 @@ export function Layout() {
               <Link to="/legal/dpa" className="w-fit hover:text-white">
                 {t('legal.kinds.dpa')}
               </Link>
+              <Link to="/legal/customer_privacy" className="w-fit hover:text-white">
+                {t('legal.kinds.customer_privacy')}
+              </Link>
             </nav>
             <div className="flex flex-col gap-2">
               <p className="mb-1 font-semibold text-white">{t('landing.footer.contact')}</p>

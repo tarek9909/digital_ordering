@@ -6,7 +6,7 @@ import { uuidv7 } from '@dop/domain';
 import { writeAudit } from './audit.js';
 import { issuePlatformInvitation } from './auth.js';
 import { listPayments } from './billing.js';
-import type { Deps } from './deps.js';
+import { urls, type Deps } from './deps.js';
 import { sendEmail } from './email.js';
 import { clearSettingCache, getSetting } from './platform.js';
 import { markDeleted } from './privacy.js';
@@ -26,7 +26,7 @@ export async function listTenants(deps: Deps, q: { q?: string; status?: string; 
   let query = db
     .selectFrom('tenants')
     .innerJoin('plans', 'plans.id', 'tenants.plan_id')
-    .select(['tenants.id', 'tenants.name', 'tenants.slug', 'tenants.status', 'tenants.complimentary', 'tenants.created_at', 'tenants.last_activity_at', 'tenants.trial_ends_at', 'plans.code as plan'])
+    .select(['tenants.id', 'tenants.name', 'tenants.slug', 'tenants.status', 'tenants.complimentary', 'tenants.created_at', 'tenants.last_activity_at', 'tenants.plan_starts_at', 'tenants.paid_until', 'plans.code as plan'])
     .where('tenants.status', '!=', 'deleted');
   if (q.q) {
     const term = `%${q.q.replace(/[%_]/g, '')}%`;
@@ -85,7 +85,8 @@ export async function listTenants(deps: Deps, q: { q?: string; status?: string; 
       complimentary: Boolean(r.complimentary),
       createdAt: r.created_at.toISOString(),
       lastActivityAt: r.last_activity_at?.toISOString() ?? null,
-      trialEndsAt: r.trial_ends_at?.toISOString() ?? null,
+      planStartsAt: r.plan_starts_at?.toISOString() ?? null,
+      planEndsAt: r.paid_until?.toISOString() ?? null,
       ticketsThisMonth: Number(counts.find((c) => c.tenant_id === r.id)?.n ?? 0),
       ownerEmail: owners.find((o) => o.tenant_id === r.id)?.email ?? null,
     })),
@@ -100,7 +101,7 @@ export async function tenantDetail(deps: Deps, actor: PlatformActor, tenantId: s
   if (!t) throw new AppError('NOT_FOUND');
   const tdb = deps.db.forTenant(tenantId);
   const [venues, devices, displays, members, payments] = await Promise.all([
-    tdb.selectFrom('venues').select(['id', 'name', 'venue_code', 'status', 'time_zone']).execute(),
+    tdb.selectFrom('venues').select(['id', 'name', 'venue_code', 'status', 'time_zone', 'logo_key']).orderBy('created_at').execute(),
     tdb.selectFrom('staff_devices').select(['id', 'venue_id', 'name', 'last_seen_at']).where('revoked_at', 'is', null).execute(),
     tdb.selectFrom('displays').select(['id', 'venue_id', 'name', 'last_seen_at', 'sound_enabled', 'paired_at']).where('revoked_at', 'is', null).execute(),
     tdb
@@ -122,7 +123,9 @@ export async function tenantDetail(deps: Deps, actor: PlatformActor, tenantId: s
       suspendedBy: t.suspended_by,
       plan: t.plan,
       complimentary: Boolean(t.complimentary),
-      trialEndsAt: t.trial_ends_at?.toISOString() ?? null,
+      logoUrl: urls(deps.config).logo(venues[0]?.logo_key ?? null),
+      planStartsAt: t.plan_starts_at?.toISOString() ?? null,
+      planEndsAt: t.paid_until?.toISOString() ?? null,
       paidUntil: t.paid_until?.toISOString() ?? null,
       graceEndsAt: t.grace_ends_at?.toISOString() ?? null,
       deletionRequestedAt: t.deletion_requested_at?.toISOString() ?? null,
@@ -131,7 +134,7 @@ export async function tenantDetail(deps: Deps, actor: PlatformActor, tenantId: s
       createdAt: t.created_at.toISOString(),
       lastActivityAt: t.last_activity_at?.toISOString() ?? null,
     },
-    venues,
+    venues: venues.map(({ logo_key: _k, ...v }) => v),
     devices: devices.map((d) => ({ ...d, last_seen_at: d.last_seen_at.toISOString() })),
     displays,
     members: members.map((m) => ({ id: m.id, role: m.role, name: m.name, email: m.email, verified: m.email_verified_at !== null })),
@@ -139,17 +142,25 @@ export async function tenantDetail(deps: Deps, actor: PlatformActor, tenantId: s
   };
 }
 
-export async function extendTrial(deps: Deps, actor: PlatformActor, tenantId: string, days: number) {
+/** Sets the plan's start and end dates (the end is the paid-until date the billing sweep checks). */
+export async function setPlanDates(deps: Deps, actor: PlatformActor, tenantId: string, startsAt: string, endsAt: string) {
   const db = deps.db.platform();
+  const from = new Date(`${startsAt}T00:00:00Z`);
+  const until = new Date(`${endsAt}T23:59:59.999Z`);
   await db.transaction().execute(async (tx) => {
-    const t = await tx.selectFrom('tenants').select(['status', 'trial_ends_at']).where('id', '=', tenantId).forUpdate().executeTakeFirst();
+    const t = await tx.selectFrom('tenants').select(['status', 'plan_starts_at', 'paid_until']).where('id', '=', tenantId).forUpdate().executeTakeFirst();
     if (!t) throw new AppError('NOT_FOUND');
-    // §8.2 has no arrow from trial_expired back to trial: an expired trial pays (record a payment) or is made complimentary.
-    if (t.status !== 'trial') throw new AppError('INVALID_TRANSITION', 'Only running trials can be extended');
-    const base = t.trial_ends_at && t.trial_ends_at > deps.now() ? t.trial_ends_at : deps.now();
-    const until = new Date(base.getTime() + days * 86_400_000);
-    await tx.updateTable('tenants').set({ trial_ends_at: until }).where('id', '=', tenantId).execute();
-    await writeAudit(tx, { actor, action: 'tenant.trial_extended', tenantId, entityType: 'tenant', entityId: tenantId, after: { days, until: until.toISOString() } });
+    if (t.status === 'deleted') throw new AppError('INVALID_TRANSITION', 'A deleted tenant has no plan');
+    await tx.updateTable('tenants').set({ plan_starts_at: from, paid_until: until }).where('id', '=', tenantId).execute();
+    await writeAudit(tx, {
+      actor,
+      action: 'tenant.plan_dates_set',
+      tenantId,
+      entityType: 'tenant',
+      entityId: tenantId,
+      before: { planStartsAt: t.plan_starts_at?.toISOString() ?? null, planEndsAt: t.paid_until?.toISOString() ?? null },
+      after: { planStartsAt: from.toISOString(), planEndsAt: until.toISOString() },
+    });
   });
 }
 

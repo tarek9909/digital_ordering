@@ -16,7 +16,7 @@ import { MfaCancelled, useFreshMfa } from '../FreshMfa';
 // Commercial actions (FR-SA-07) and ownership transfer (FR-SA-08, TR-FE-23), super admin only.
 
 type Tenant = TenantDetail['tenant'];
-type Kind = 'payment' | 'plan' | 'freeMonths' | 'transfer';
+type Kind = 'payment' | 'freeMonths' | 'transfer';
 const FALLBACK_PLANS = ['standard', 'pro', 'multisite'].map((code) => ({ code, name: code }));
 const CURRENCIES = ['USD', 'LBP'] as const;
 const METHODS = ['cash', 'bank_transfer', 'wallet', 'other'] as const;
@@ -27,7 +27,7 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState<Kind | null>(null);
   const [announce, setAnnounce] = useState('');
-  const kinds: Kind[] = [...(can(role, 'commercial') ? (['payment', 'plan', 'freeMonths'] as const) : []), ...(can(role, 'ownership') ? (['transfer'] as const) : [])];
+  const kinds: Kind[] = [...(can(role, 'commercial') ? (['payment', 'freeMonths'] as const) : []), ...(can(role, 'ownership') ? (['transfer'] as const) : [])];
   if (kinds.length === 0) return null;
 
   const done = (msg: string) => {
@@ -59,7 +59,6 @@ export function CommercialActions({ tenant }: { tenant: Tenant }) {
       {open && (
         <Modal open onOpenChange={(o) => !o && close()} title={t(`commercial.${open}.title`)} description={t(`commercial.${open}.body`, { slug: tenant.slug })}>
           <div className="pt-2">
-            {open === 'plan' && <PlanForm tenant={tenant} onCancel={close} onDone={(effective) => done(t(`commercial.plan.done.${effective}`, { defaultValue: t('commercial.plan.done.now') }))} />}
             {open === 'payment' && <PaymentForm tenant={tenant} onCancel={close} onDone={(paidUntil) => done(t('commercial.payment.done', { date: fmtDate(paidUntil, i18n.language) }))} />}
             {open === 'freeMonths' && <FreeMonthsForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.freeMonths.done'))} />}
             {open === 'transfer' && <TransferForm tenant={tenant} onCancel={close} onDone={() => done(t('commercial.transfer.done'))} />}

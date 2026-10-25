@@ -182,7 +182,7 @@ export async function billingOverview(deps: Deps, tenantId: string) {
 /** Public, unarchived, paid plans with their active prices, in catalogue order (site pricing and the billing page). */
 export async function publicCatalogue(deps: Pick<Deps, 'db'>) {
   const pdb = deps.db.platform();
-  const plans = await pdb.selectFrom('plans').select(['id', 'code', 'name', 'limits', 'features', 'sort_order']).where('is_public', '=', true).where('archived_at', 'is', null).where('code', '!=', 'trial').orderBy('sort_order').execute();
+  const plans = await pdb.selectFrom('plans').select(['id', 'code', 'name', 'description', 'limits', 'features', 'sort_order']).where('is_public', '=', true).where('archived_at', 'is', null).where('code', '!=', 'trial').orderBy('sort_order').execute();
   const prices = plans.length
     ? await pdb.selectFrom('plan_prices').select(['plan_id', 'period', 'currency', 'amount_minor']).where('active', '=', true).where('plan_id', 'in', plans.map((p) => p.id)).execute()
     : [];
@@ -190,6 +190,7 @@ export async function publicCatalogue(deps: Pick<Deps, 'db'>) {
     .map((p) => ({
       code: p.code,
       name: p.name,
+      description: p.description ?? '',
       limits: p.limits as unknown as PlanLimits,
       features: p.features as unknown as string[],
       prices: prices.filter((x) => x.plan_id === p.id).map((x) => ({ period: x.period, currency: x.currency, amountMinor: x.amount_minor })),

@@ -6,7 +6,7 @@ import {
   consoleCreateTenantBody,
   consoleTenantsQuery,
   deleteTenantBody,
-  extendTrialBody,
+  planDatesBody,
   platformUserCreateBody,
   platformUserPatch,
   purposeHeader,
@@ -21,7 +21,8 @@ import {
   consolePilotReport,
   createTenantByPlatform,
   deleteTenantByPlatform,
-  extendTrial,
+  setPlanDates,
+  uploadTenantLogo,
   invitePlatformUser,
   listChimes,
   updateChime,
@@ -131,14 +132,32 @@ export const consoleRoutes = defineRoutes('/api/console/v1', [
   }),
   route({
     method: 'post',
-    path: '/tenants/:id/extend-trial',
+    path: '/tenants/:id/plan-dates',
     surfaces: ['console'],
     permission: 'console.tenants.lifecycle',
     params: idP,
-    body: extendTrialBody,
+    body: planDatesBody,
     handler: async (c) => {
-      requireFreshMfa(pa(c), c.deps.now()); // free access time, like free months (L-6)
-      await extendTrial(c.deps, pa(c), c.params.id, c.body.days);
+      requireFreshMfa(pa(c), c.deps.now()); // moving the end date grants or removes access time, like free months (L-6)
+      await setPlanDates(c.deps, pa(c), c.params.id, c.body.planStartsAt, c.body.planEndsAt);
+    },
+  }),
+  route({
+    method: 'post',
+    path: '/tenants/:id/logo',
+    surfaces: ['console'],
+    permission: 'console.tenants.lifecycle',
+    params: idP,
+    rateLimit: { name: 'logo', points: 10, durationSec: 600, key: 'actor' },
+    handler: async (c) => {
+      // The image is the raw request body (Content-Type image/png | image/jpeg | image/webp, ≤ 2 MB).
+      const body: unknown = await new Promise((resolve, reject) =>
+        express.raw({ type: ['image/png', 'image/jpeg', 'image/webp'], limit: '2mb' })(c.req, c.res, (err?: unknown) => (err ? reject(err) : resolve(c.req.body))),
+      ).catch(() => {
+        throw new AppError('UPLOAD_INVALID', 'Logo must be a PNG, JPEG or WebP image of 2 MB or less');
+      });
+      if (!Buffer.isBuffer(body) || body.length === 0) throw new AppError('UPLOAD_INVALID', 'Send the image as the request body');
+      return uploadTenantLogo(c.deps, c.deps.storage, pa(c), c.params.id, body);
     },
   }),
   route({

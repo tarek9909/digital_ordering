@@ -179,11 +179,13 @@ describe('tenant rules', () => {
 });
 
 describe('seed (TR-TST-01)', () => {
-  it('creates platform users and three tenants with tickets in every status', async () => {
+  it('creates platform users and seven tenants with tickets in every status', async () => {
     const { seedDemo } = await import('../src/seed.js');
     const r = await seedDemo(deps);
     expect(r.platformUsers.map((u) => u.role).sort()).toEqual(['finance', 'super_admin', 'support']);
-    expect(r.tenants.map((x) => x.status)).toEqual(['trial', 'active', 'suspended']);
+    expect(r.tenants.map((x) => x.status)).toEqual(['trial', 'active', 'suspended', 'active', 'past_due', 'cancelled', 'trial_expired']);
+    const stored = await t.clients.platform().selectFrom('tenants').select(['slug', 'status']).execute();
+    expect(Object.fromEntries(stored.map((x) => [x.slug, x.status]))).toMatchObject({ 'sweet-tooth': 'past_due', 'green-bowl': 'cancelled', 'fresh-juice': 'trial_expired', 'shawarma-king': 'active' });
     const statuses = await t.clients.platform().selectFrom('tickets').innerJoin('tenants', 'tenants.id', 'tickets.tenant_id').select('tickets.status').where('tenants.slug', '=', 'burger-house').execute();
     expect(new Set(statuses.map((s) => s.status))).toEqual(new Set(['preparing', 'ready', 'collected', 'cancelled', 'expired']));
     const again = await seedDemo(deps); // idempotent

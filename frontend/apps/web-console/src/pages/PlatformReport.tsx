@@ -10,7 +10,7 @@ import { minorToMajor } from '../lib/money';
 import { keysOf, normalizeDay, type PlatformDay } from '../lib/platformReport';
 import type { DeliveryHealth, PlatformCohort, PlatformReportResponse } from '../lib/types';
 
-// Platform report (FR-RPT-07, TR-RPT-06): daily rollups of tenants by status and plan, signups, conversions,
+// Platform report (FR-RPT-07, TR-RPT-06): daily rollups of tenants by status and plan, signups,
 // cancellations, MRR per currency and tickets. Lazy-loaded with recharts (TR-FE-05).
 
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -76,7 +76,7 @@ function Results({ data }: { data: PlatformReportResponse }) {
   const statuses = keysOf(days, 'byStatus');
   const plans = keysOf(days, 'byPlan');
   const currencies = keysOf(days, 'mrr');
-  const sum = (f: 'signups' | 'conversions' | 'cancellations' | 'tickets') => days.reduce((a, d) => a + d[f], 0);
+  const sum = (f: 'signups' | 'cancellations' | 'tickets') => days.reduce((a, d) => a + d[f], 0);
 
   if (days.length === 0) return <EmptyState title={t('platformReport.empty')}>{t('platformReport.emptyHint')}</EmptyState>;
   // The one ember tile: revenue on the last day of the range, in the first currency.
@@ -85,7 +85,7 @@ function Results({ data }: { data: PlatformReportResponse }) {
   return (
     <div className="flex flex-col gap-6">
       {/* KPI Overview Tiles */}
-      <div data-motion="stagger" className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+      <div data-motion="stagger" className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-6">
         {mrrCurrency && (
           <div className="col-span-2 rounded-xl border border-primary/40 bg-primary/[0.04] p-4 shadow-xs ring-1 ring-primary/20 xl:col-span-2">
             <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
@@ -100,7 +100,6 @@ function Results({ data }: { data: PlatformReportResponse }) {
         <Stat label={t('platformReport.churn')} value={pct(data.churnPct)} />
         <Stat label={t('platformReport.activeAtStart')} value={String(data.activeAtStart ?? 0)} />
         <Stat label={t('platformReport.signups')} value={String(sum('signups'))} />
-        <Stat label={t('platformReport.conversions')} value={String(sum('conversions'))} />
         <Stat label={t('platformReport.cancellations')} value={String(sum('cancellations'))} />
         <Stat label={t('platformReport.tickets')} value={String(sum('tickets'))} />
       </div>
@@ -114,7 +113,6 @@ function Results({ data }: { data: PlatformReportResponse }) {
               ...statuses.map((s) => t(`tenantStatus.${s}`, { defaultValue: s })),
               ...plans.map((p) => t(`plan.${p}`, { defaultValue: p })),
               t('platformReport.signups'),
-              t('platformReport.conversions'),
               t('platformReport.cancellations'),
               ...currencies.map((c) => t('platformReport.mrrIn', { currency: c })),
               t('platformReport.tickets'),
@@ -138,7 +136,6 @@ function Results({ data }: { data: PlatformReportResponse }) {
                   </Td>
                 ))}
                 <Td className="num font-medium text-ok">{d.signups}</Td>
-                <Td className="num font-medium text-primary">{d.conversions}</Td>
                 <Td className="num font-medium text-danger">{d.cancellations}</Td>
                 {currencies.map((c) => (
                   <Td key={`m-${c}`} className="num font-mono font-medium">
@@ -167,7 +164,7 @@ const COMPACT = '*:min-w-0 *:break-words [&>div]:!gap-1 [&>div]:!p-3 [&>div>span
 
 const pct = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${v}%`);
 
-/** Sign-up cohorts by month: how many of each month's trial sign-ups converted to paid (FR-RPT-07, W09). */
+/** Sign-up cohorts by month: how many of each month's paying sign-ups are still active (FR-RPT-07, W09). */
 export function Cohorts({ cohorts }: { cohorts: PlatformCohort[] }) {
   const { t } = useTranslation();
   return (
@@ -180,7 +177,7 @@ export function Cohorts({ cohorts }: { cohorts: PlatformCohort[] }) {
       ) : (
         <Table
           caption={t('platformReport.cohortsCaption')}
-          head={[t('platformReport.cohortMonth'), t('platformReport.signups'), t('platformReport.converted'), t('platformReport.complimentary'), t('platformReport.conversionPct')]}
+          head={[t('platformReport.cohortMonth'), t('platformReport.signups'), t('platformReport.complimentary'), t('platformReport.stillActive'), t('platformReport.retentionPct')]}
         >
           {cohorts.map((c) => (
             <tr key={c.month}>
@@ -188,9 +185,9 @@ export function Cohorts({ cohorts }: { cohorts: PlatformCohort[] }) {
                 <span dir="ltr">{c.month}</span>
               </Td>
               <Td className="num">{c.signups}</Td>
-              <Td className="num">{c.converted}</Td>
               <Td className="num">{c.complimentary}</Td>
-              <Td className="num">{pct(c.conversionPct)}</Td>
+              <Td className="num">{c.active}</Td>
+              <Td className="num">{pct(c.retentionPct)}</Td>
             </tr>
           ))}
         </Table>

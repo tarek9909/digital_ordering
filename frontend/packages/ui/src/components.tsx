@@ -144,13 +144,13 @@ export function OfflineBar({ text }: { text: string }) {
   );
 }
 
-export function Modal({ open, onOpenChange, title, children, description }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; children: ReactNode }) {
+export function Modal({ open, onOpenChange, title, children, description, size = 'md' }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; children: ReactNode; size?: 'md' | 'lg' | 'xl' }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-panel/45 backdrop-blur-[2px]" />
         {/* Phones: a sheet anchored to the bottom, within thumb reach and clear of the home indicator. */}
-        <Dialog.Content className="dialog-content fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-h-[calc(100dvh-1.5rem)] max-w-lg overflow-auto overscroll-contain rounded-dialog bg-surface p-5 shadow-dialog sm:inset-x-4 sm:top-[10dvh] sm:bottom-auto sm:max-h-[80dvh] sm:p-6">
+        <Dialog.Content className={`dialog-content fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-h-[calc(100dvh-1.5rem)] ${size === 'xl' ? 'max-w-4xl' : size === 'lg' ? 'max-w-2xl' : 'max-w-lg'} overflow-auto overscroll-contain rounded-dialog bg-surface p-5 shadow-dialog sm:inset-x-4 sm:top-[10dvh] sm:bottom-auto sm:max-h-[80dvh] sm:p-6`}>
           <Dialog.Title className="mb-2 font-display text-xl font-bold tracking-tight">{title}</Dialog.Title>
           {description ? <Dialog.Description className="mb-4 text-muted">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
           {children}

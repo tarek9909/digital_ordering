@@ -334,6 +334,7 @@ export function CollapseButton({ collapsed, onClick, label }: { collapsed: boole
 export function Frame({
   title,
   subtitle,
+  logoUrl,
   venue,
   action,
   nav,
@@ -350,6 +351,7 @@ export function Frame({
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
+  logoUrl?: string | null;
   venue?: ReactNode;
   action?: ReactNode;
   nav: ReactNode;
@@ -376,7 +378,7 @@ export function Frame({
         <div className={cx('flex items-center justify-between gap-3 px-4 py-3 lg:pt-5 lg:pb-3', collapsed && 'lg:flex-col lg:px-2')}>
           <span className="flex min-w-0 items-center gap-3">
             <span data-motion="draw" className="contents">
-              <BrandMark />
+              {logoUrl ? <img src={logoUrl} alt="" className="size-10 shrink-0 rounded-lg object-contain" /> : <BrandMark />}
             </span>
             <span className={cx('flex min-w-0 flex-col leading-tight', collapsed && 'lg:sr-only')}>
               <span className="truncate font-display text-lg font-bold">{title}</span>
@@ -413,7 +415,7 @@ export function Frame({
       </aside>
       <div className="min-w-0 flex-1">
         {top}
-        {children}
+        <div className="lg:mx-auto lg:w-[90%]">{children}</div>
       </div>
     </div>
   );

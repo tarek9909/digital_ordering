@@ -1,10 +1,8 @@
 import { formatMoney } from '@dop/client-sdk';
 import { useTranslation } from '@dop/i18n';
-import type { SitePricing } from '@dop/contracts';
 import { Spinner } from '@dop/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { useSiteInfo } from '../landing/lib';
 import { publicApi, type PublicPlan, type PublicPlansResponse } from '../lib/api';
 import { errorText } from '../lib/errors';
 import { FormError } from './FormCard';
@@ -34,7 +32,6 @@ export const KNOWN_FEATURES = [
 const SHOWN_LIMITS = ['maxVenues', 'maxCountersPerVenue', 'maxLanguages', 'maxApiKeysPerVenue'] as const;
 
 export type BillingPeriod = 'month' | 'quarter' | 'year';
-type PlanLook = SitePricing['plans'][string];
 
 /** The price for the period in US dollars (the Lebanese market) when offered, else the first; else any period. */
 export function pickPrice(prices: PublicPlan['prices'], preferred = 'USD', period: BillingPeriod = 'month') {
@@ -46,8 +43,6 @@ export function pickPrice(prices: PublicPlan['prices'], preferred = 'USD', perio
 /** `stagger`: the plan cards arrive in order (the pricing page's entrance; the landing has its own motion). */
 export function Pricing({ period = 'month', stagger }: { period?: BillingPeriod; stagger?: boolean } = {}) {
   const { t } = useTranslation();
-  const site = useSiteInfo();
-  const looks = site.data?.pricing?.plans ?? {};
   const q = useQuery({
     queryKey: ['public-plans'],
     queryFn: () => publicApi.get<PublicPlansResponse>('/plans'),
@@ -64,12 +59,14 @@ export function Pricing({ period = 'month', stagger }: { period?: BillingPeriod;
       </div>
     );
   const days = typeof q.data.trialDays === 'number' ? q.data.trialDays : null;
-  if (q.data.items.length === 0) return <p className="text-muted">{t('pricing.none')}</p>;
+  // One plan only: show the first public plan.
+  const plans = q.data.items.slice(0, 1);
+  if (plans.length === 0) return <p className="text-muted">{t('pricing.none')}</p>;
   return (
     <div className="flex flex-col gap-4">
-      <div data-motion={stagger ? 'stagger' : undefined} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {q.data.items.map((p) => (
-          <PlanCard key={p.code} plan={p} look={looks[p.code]} trialDays={days} period={period} />
+      <div data-motion={stagger ? 'stagger' : undefined} className="mx-auto grid w-full max-w-md gap-4">
+        {plans.map((p) => (
+          <PlanCard key={p.code} plan={p} trialDays={days} period={period} />
         ))}
       </div>
       <p className="text-sm text-muted">{t('pricing.vatNote')}</p>
@@ -77,12 +74,12 @@ export function Pricing({ period = 'month', stagger }: { period?: BillingPeriod;
   );
 }
 
-function PlanCard({ plan, look, trialDays, period }: { plan: PublicPlan; look?: PlanLook; trialDays: number | null; period: BillingPeriod }) {
+function PlanCard({ plan, trialDays, period }: { plan: PublicPlan; trialDays: number | null; period: BillingPeriod }) {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
-  const name = look?.name[lang] || t(`pricing.planNames.${plan.code}`, { defaultValue: plan.name });
-  const tagline = look?.tagline[lang];
-  const featured = look?.featured === true;
+  // Name and description come from the console's Plans page.
+  const name = plan.name;
+  const tagline = plan.description;
+  const featured = false;
   const locale = i18n.language === 'ar' ? 'ar-SA-u-nu-latn' : 'en-SA';
   const price = pickPrice(plan.prices, 'USD', period);
   const limits = (plan.limits ?? {}) as Record<string, unknown>;

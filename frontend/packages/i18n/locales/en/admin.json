@@ -67,7 +67,14 @@
     "supportEnded": "Support session ended",
     "trialButton_one": "Free trial: {{count}} day left",
     "trialButton_other": "Free trial: {{count}} days left",
-    "trialTitle": "Your free trial"
+    "trialTitle": "Your free trial",
+    "planTitle": "Your plan",
+    "planEndsButton_one": "Plan ends in {{count}} day",
+    "planEndsButton_other": "Plan ends in {{count}} days",
+    "planEndedButton": "Plan ended: renew",
+    "planEnds_one": "Your plan ends on {{date}}, {{count}} day from now. Contact the Tanbeeh team to renew.",
+    "planEnds_other": "Your plan ends on {{date}}, {{count}} days from now. Contact the Tanbeeh team to renew.",
+    "planEnded": "Your plan ended on {{date}}. Contact the Tanbeeh team to renew."
   },
   "form": {
     "required": "This field is required.",
@@ -184,6 +191,9 @@
   },
   "reports": {
     "quickRange": "Quick range",
+    "last7": "Last 7 days",
+    "last14": "Last 14 days",
+    "last30": "Last 30 days",
     "secondaryTitle": "Timing and quality",
     "notesTitle": "Notes on these figures",
     "title": "Reports",

@@ -115,7 +115,7 @@ export function SidebarShell({
       </aside>
       <div className="min-w-0 flex-1">
         {top}
-        <div className="lg:px-4 lg:py-2 2xl:px-8">{children}</div>
+        <div className="lg:mx-auto lg:w-[90%] lg:py-2">{children}</div>
       </div>
     </div>
   );

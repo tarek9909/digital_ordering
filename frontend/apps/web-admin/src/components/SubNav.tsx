@@ -19,17 +19,16 @@ export const SUBNAV = {
     { to: '/reports', label: 'nav.reports' },
     { to: '/ratings', label: 'nav.ratings' },
   ],
-  // Settings, team and billing read as one page; each tab keeps its own address so links and access rules still apply.
+  // Settings and team read as one page; each tab keeps its own address so links and access rules still apply.
   business: [
     { to: '/settings', label: 'nav.general', section: 'settings' },
     { to: '/team', label: 'nav.team', section: 'team' },
-    { to: '/billing', label: 'nav.billing', section: 'billing' },
   ],
 } as const satisfies Record<string, ReadonlyArray<{ to: string; label: string; section?: Section }>>;
 
 type Tab = { to: string; label: string; section?: Section };
 
-/** Tabs of a group this viewer may open (billing is owner-only, a support agent sees billing alone). */
+/** Tabs of a group this viewer may open (a support agent sees neither settings nor team). */
 export function reachableTabs(group: keyof typeof SUBNAV, status: TenantStatus | undefined, role: ViewerRole | null): Tab[] {
   return (SUBNAV[group] as readonly Tab[]).filter((i) => !i.section || canReach(i.section, status, role));
 }

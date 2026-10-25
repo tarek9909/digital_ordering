@@ -47,16 +47,18 @@ export const FIELD_KINDS: Record<string, FieldKind> = {
 
 /** Sections of the Settings page; settings not listed land in "Other". `site.*` is edited on the Website page. */
 export const SETTING_GROUPS = [
-  { id: 'newTenants', keys: ['tenant.defaults', 'trial.days'] },
+  { id: 'newTenants', keys: ['tenant.defaults'] },
   { id: 'billing', keys: ['billing.retryDays', 'billing.graceDays', 'billing.suspendedToCancelDays'] },
   { id: 'maintenance', keys: ['maintenance'] },
   { id: 'delivery', keys: ['push.ttlSeconds', 'fairness.perTenantPerSecond', 'customer.supportedLanguages'] },
   { id: 'data', keys: ['support.defaultMinutes', 'retention.ticketDays', 'retention.closedTenantDays'] },
-  { id: 'security', keys: ['console.ipAllowList'] },
 ] as const;
 
+/** Trial, new-tenant defaults, overdue-billing timings and the console network allow-list: tenants are set up by hand and the platform has no self-serve billing, so they are not edited here. */
+const HIDDEN_PREFIXES = ['site.', 'tenant.defaults', 'trial.days', 'billing.', 'console.ipAllowList'];
+
 export function groupSettings<T extends { key: string }>(rows: T[]) {
-  const visible = rows.filter((r) => !r.key.startsWith('site.'));
+  const visible = rows.filter((r) => !HIDDEN_PREFIXES.some((p) => r.key.startsWith(p)));
   const known = new Set<string>(SETTING_GROUPS.flatMap((g) => g.keys));
   const groups = SETTING_GROUPS.map((g) => ({ id: g.id as string, rows: g.keys.map((k) => visible.find((r) => r.key === k)).filter((r): r is T => Boolean(r)) }));
   const other = visible.filter((r) => !known.has(r.key));

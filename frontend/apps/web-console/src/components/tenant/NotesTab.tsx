@@ -1,7 +1,7 @@
 import type { AuditPurpose } from '@dop/contracts';
 import { noteBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Button, Card, LiveRegion, Spinner } from '@dop/ui';
+import { Button, Card, LiveRegion, Modal, Spinner } from '@dop/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { api } from '../../lib/api';
@@ -18,6 +18,12 @@ export function NotesTab({ tenantId, purpose }: { tenantId: string; purpose: Aud
   const [body, setBody] = useState('');
   const [invalid, setInvalid] = useState(false);
   const [announce, setAnnounce] = useState('');
+  const [open, setOpen] = useState(false);
+  const close = () => {
+    setOpen(false);
+    setBody('');
+    setInvalid(false);
+  };
   const key = ['tenant-notes', tenantId];
   const q = useQuery({
     queryKey: key,
@@ -26,7 +32,7 @@ export function NotesTab({ tenantId, purpose }: { tenantId: string; purpose: Aud
   const add = useMutation({
     mutationFn: (text: string) => api.post(`/tenants/${tenantId}/notes`, { body: text }, purposeHeaders(purpose)),
     onSuccess: () => {
-      setBody('');
+      close();
       setAnnounce(t('notes.added'));
       void qc.invalidateQueries({ queryKey: key });
     },
@@ -46,27 +52,37 @@ export function NotesTab({ tenantId, purpose }: { tenantId: string; purpose: Aud
         <span>{t('notes.privacy')}</span>
       </div>
 
-      {/* Note Composer */}
-      <Card className="rounded-2xl border border-line shadow-card p-5">
-        <form onSubmit={submit} className="flex flex-col gap-3.5" noValidate>
-          <ErrorNote error={add.error} />
-          <TextArea
-            label={t('notes.new')}
-            maxLength={5000}
-            value={body}
-            placeholder="Write internal team notes, support context, special contract arrangements..."
-            error={invalid ? t('notes.invalid') : undefined}
-            onChange={(e) => setBody(e.target.value)}
-            className="min-h-24 rounded-xl border border-line bg-surface p-3.5 text-sm sm:text-base focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-          <div className="flex items-center justify-between pt-1">
+      <div className="flex justify-end">
+        <Button aria-haspopup="dialog" className="font-bold shadow-button" onClick={() => setOpen(true)}>
+          <span aria-hidden="true">+</span>
+          {t('notes.add')}
+        </Button>
+      </div>
+      {open && (
+        <Modal open onOpenChange={(o) => !o && close()} title={t('notes.new')}>
+          <form onSubmit={submit} className="flex flex-col gap-3.5 pt-2" noValidate>
+            <ErrorNote error={add.error} />
+            <TextArea
+              label={t('notes.new')}
+              maxLength={5000}
+              value={body}
+              placeholder="Write internal team notes, support context, special contract arrangements..."
+              error={invalid ? t('notes.invalid') : undefined}
+              onChange={(e) => setBody(e.target.value)}
+              className="min-h-24 rounded-xl border border-line bg-surface p-3.5 text-sm sm:text-base focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
             <span className="text-xs text-muted font-mono">{body.length} / 5000</span>
-            <Button type="submit" size="md" className="font-bold shadow-button px-5" busy={add.isPending}>
-              {t('notes.add')}
-            </Button>
-          </div>
-        </form>
-      </Card>
+            <div className="flex flex-wrap justify-end gap-2.5 border-t border-line/60 pt-3">
+              <Button type="button" variant="secondary" onClick={close}>
+                {t('common:cancel')}
+              </Button>
+              <Button type="submit" className="font-bold shadow-button" busy={add.isPending}>
+                {t('notes.add')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       <ErrorNote error={q.error} />
       {q.isPending ? (

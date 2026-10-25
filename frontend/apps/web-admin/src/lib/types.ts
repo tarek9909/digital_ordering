@@ -42,9 +42,11 @@ export interface TenantInfo {
   billing_email: string | null;
   tax_id: string | null;
   trial_ends_at: string | null;
+  paid_until?: string | null;
   grace_ends_at: string | null;
   deletion_requested_at: string | null;
   complimentary: boolean;
+  logoUrl: string | null;
 }
 
 export interface VenueListItem {

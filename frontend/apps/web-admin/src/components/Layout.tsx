@@ -38,8 +38,8 @@ const NAV: Array<{
   {
     group: 'business',
     items: [
-      // One entry for the tabbed Settings, Team and Billing page; it opens the first tab this viewer may reach.
-      { section: 'settings', to: '/settings', also: ['/team', '/billing'] },
+      // One entry for the tabbed Settings and Team page; it opens the first tab this viewer may reach.
+      { section: 'settings', to: '/settings', also: ['/team'] },
     ],
   },
 ];
@@ -158,6 +158,7 @@ export function Layout() {
       <Frame
         title={tenant.data?.name ?? t('common:appName')}
         subtitle={tenant.data ? t('common:appName') : undefined}
+        logoUrl={tenant.data?.logoUrl}
         venue={pickVenue ? <VenueSwitch enabled={pickVenue} /> : undefined}
         action={<StaffBoardButton venueEnabled={pickVenue} live={live} href={live && venueId ? staffBoardUrl(venueId) : null} collapsed={collapsed} />}
         nav={nav}

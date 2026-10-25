@@ -7,7 +7,6 @@ export interface PlatformDay {
   byStatus: Record<string, number>;
   byPlan: Record<string, number>;
   signups: number;
-  conversions: number;
   cancellations: number;
   /** Minor units per currency. */
   mrr: Record<string, number>;
@@ -25,7 +24,6 @@ export function normalizeDay(row: Record<string, unknown>): PlatformDay {
     byStatus: numMap(row.tenants_by_status),
     byPlan: numMap(row.tenants_by_plan),
     signups: num(row.signups),
-    conversions: num(row.conversions),
     cancellations: num(row.cancellations),
     mrr: numMap(row.mrr_minor),
     tickets: num(row.tickets),

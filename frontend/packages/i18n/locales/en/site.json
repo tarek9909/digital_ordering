@@ -177,7 +177,8 @@
     "kinds": {
       "terms": "Terms of service",
       "privacy": "Privacy policy",
-      "dpa": "Data processing agreement"
+      "dpa": "Data processing agreement",
+      "customer_privacy": "Customer privacy notice"
     },
     "notPublished": "This document is not yet published.",
     "version": "Version {{version}}",

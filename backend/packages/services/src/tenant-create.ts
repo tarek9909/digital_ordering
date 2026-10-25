@@ -3,7 +3,6 @@ import { AppError, defaultVenueSettings } from '@dop/contracts';
 import { checkSlug, isValidTimeZone, uuidv7 } from '@dop/domain';
 import { writeAudit } from './audit.js';
 import type { Deps } from './deps.js';
-import { inviteMember } from './auth.js';
 import { addMonths } from './billing.js';
 import { getSetting } from './platform.js';
 import { createVenueRow } from './venues.js';
@@ -29,7 +28,7 @@ async function requireSlug(deps: Deps, slug: string) {
 
 async function createTenantCore(
   deps: Deps,
-  b: { name: string; slug: string; country: string; locale: string; complimentary?: boolean; planCode?: string; trial?: boolean },
+  b: { name: string; slug: string; country: string; locale: string; complimentary?: boolean; planCode?: string; trial?: boolean; planStartsAt?: string; planEndsAt?: string },
   actor: Actor,
   owner: { userId: string; create?: { email: string; name: string; passwordHash: string; locale: string; verified?: boolean } } | null,
   extra?: { ip?: string; requestId?: string },
@@ -65,8 +64,9 @@ async function createTenantCore(
           plan_id: trialPlan.id,
           complimentary: Boolean(b.complimentary),
           trial_ends_at: trial ? new Date(now.getTime() + trialDays * 86_400_000) : null,
-          // The first month is covered; without a paid period the billing sweep would put the tenant past due at once.
-          paid_until: trial || b.complimentary ? null : addMonths(now, 1),
+          plan_starts_at: b.planStartsAt ? new Date(`${b.planStartsAt}T00:00:00Z`) : now,
+          // Without a paid period the billing sweep would put the tenant past due at once; default is one month.
+          paid_until: trial || b.complimentary ? null : b.planEndsAt ? new Date(`${b.planEndsAt}T23:59:59.999Z`) : addMonths(now, 1),
           country: b.country,
           default_locale: b.locale,
         })
@@ -126,38 +126,26 @@ export async function createTenantWithOwner(deps: Deps, b: TenantWithOwnerInput,
   return { ...r, userId, slug: b.slug };
 }
 
-/** Console "create tenant and invite owner" (FR-SA-05). */
+/** Console "create tenant" (FR-SA-05): the platform team sets the owner's credentials; no invitation is sent. */
 export async function createTenantByPlatform(
   deps: Deps,
   actor: Actor & { kind: 'platform' },
-  b: { name: string; slug: string; country: string; locale: string; ownerEmail: string; ownerName?: string; ownerPassword?: string; complimentary: boolean; planCode?: string },
+  b: { name: string; slug: string; country: string; locale: string; ownerEmail: string; ownerName?: string; ownerPassword: string; complimentary: boolean; planCode?: string; planStartsAt?: string; planEndsAt?: string },
   requestId?: string,
 ) {
-  if (b.ownerPassword) {
-    // The platform team sets the owner's credentials; the address counts as verified since they vouch for it.
-    const problem = checkPassword(b.ownerPassword, [b.ownerEmail, b.name, b.slug]);
-    if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'ownerPassword', message: problem }] });
-    if (await deps.db.platform().selectFrom('users').select('id').where('email', '=', b.ownerEmail).executeTakeFirst()) {
-      throw new AppError('EMAIL_TAKEN', 'An account with this email exists.');
-    }
-    const userId = uuidv7();
-    const passwordHash = await hashSecret(b.ownerPassword);
-    const r = await createTenantCore(
-      deps,
-      { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode },
-      actor,
-      { userId, create: { email: b.ownerEmail, name: b.ownerName ?? b.ownerEmail, passwordHash, locale: b.locale, verified: true } },
-      { requestId },
-    );
-    return r;
+  // The address counts as verified since the platform team vouches for it.
+  const problem = checkPassword(b.ownerPassword, [b.ownerEmail, b.name, b.slug]);
+  if (problem) throw new AppError('VALIDATION_FAILED', 'Choose a different password', { errors: [{ path: 'ownerPassword', message: problem }] });
+  if (await deps.db.platform().selectFrom('users').select('id').where('email', '=', b.ownerEmail).executeTakeFirst()) {
+    throw new AppError('EMAIL_TAKEN', 'An account with this email exists.');
   }
-  const r = await createTenantCore(
+  const userId = uuidv7();
+  const passwordHash = await hashSecret(b.ownerPassword);
+  return createTenantCore(
     deps,
-    { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode },
+    { name: b.name, slug: b.slug, country: b.country, locale: b.locale, complimentary: b.complimentary, planCode: b.planCode, planStartsAt: b.planStartsAt, planEndsAt: b.planEndsAt },
     actor,
-    null,
+    { userId, create: { email: b.ownerEmail, name: b.ownerName ?? b.ownerEmail, passwordHash, locale: b.locale, verified: true } },
     { requestId },
   );
-  await inviteMember(deps, actor, r.tenantId, b.ownerEmail, 'owner');
-  return r;
 }

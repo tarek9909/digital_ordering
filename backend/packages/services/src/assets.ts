@@ -51,6 +51,13 @@ export async function uploadLogo(deps: Deps, storage: ObjectStorage, actor: Acto
   return { logoUrl: urls(deps.config).logo(`${base}.png`) };
 }
 
+/** Console: sets the logo of a tenant's first venue, the one the admin dashboard shows. */
+export async function uploadTenantLogo(deps: Deps, storage: ObjectStorage, actor: Actor, tenantId: string, file: Buffer) {
+  const venue = await deps.db.forTenant(tenantId).selectFrom('venues').select('id').where('status', '=', 'active').orderBy('created_at').executeTakeFirst();
+  if (!venue) throw new AppError('NOT_FOUND');
+  return uploadLogo(deps, storage, actor, tenantId, venue.id, file);
+}
+
 const POSTER_SIZES = {
   a4: { w: 595.28, h: 841.89, qr: 360 },
   tent: { w: 420.94, h: 297.64, qr: 190 }, // A6 landscape, folded tent card
