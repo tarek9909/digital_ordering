@@ -14,3 +14,7 @@ test-results/
 deploy/.env
 deploy/secrets/
 deploy/backup/rclone.conf
+
+# Marketing media (videos, posters, brand kit) stays local; only the plan docs are tracked
+tanbeeh/*
+!tanbeeh/*.md
