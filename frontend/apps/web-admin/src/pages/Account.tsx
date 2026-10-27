@@ -1,6 +1,6 @@
 import { changeEmailBody, changePasswordBody, deleteMeBody, mePatch, totpConfirmBody, totpRemoveBody } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion, Select } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, PageShell, Select } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
@@ -394,6 +394,7 @@ function DeleteAccount() {
 export function AccountPage() {
   const { t } = useTranslation();
   const me = useMe();
+  const eyebrow = me.data?.user.email;
   return (
     <Page title={t('nav.account')} description={t('account.description')}>
       <QueryView q={me} skeleton="form">

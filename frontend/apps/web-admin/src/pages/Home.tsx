@@ -245,6 +245,34 @@ export function TodayStats({ r, next, venueId }: { r: TodayReport; next?: ReactN
   );
 }
 
+/** Open tickets waiting longest, oldest first (FR-RPT-01). Waiting time counts from ticket creation. */
+export function LongestWaiting({ items }: { items: WaitingTicket[] }) {
+  const { t } = useTranslation();
+  return (
+    <Section title={t('today.longestTitle')} description={t('today.longestNote')}>
+      {items.length === 0 ? (
+        <p className="text-muted">{t('today.longestEmpty')}</p>
+      ) : (
+        <Table caption={t('today.longestTitle')} head={[t('today.longestNumber'), t('today.longestStatus'), t('today.longestWaiting')]}>
+          {items.map((w) => (
+            <tr key={w.id}>
+              <Td>
+                <span dir="ltr" className="num font-display text-base font-bold">
+                  {w.displayNumber}
+                </span>
+              </Td>
+              <Td>
+                <span className={w.status === 'ready' ? 'font-semibold text-ok' : 'text-ink-2'}>{t(`common:status.${w.status}`, { defaultValue: w.status })}</span>
+              </Td>
+              <Td className="num font-semibold">{formatDuration(w.waitingSeconds)}</Td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Section>
+  );
+}
+
 function Today({ venueId }: { venueId: string }) {
   const { t } = useTranslation();
   const q = useQuery({

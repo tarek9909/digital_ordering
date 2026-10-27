@@ -1,7 +1,7 @@
 import { formatDateTime } from '@dop/client-sdk';
 import { deletionRequestBody, tenantPatch } from '@dop/contracts';
 import { useTranslation } from '@dop/i18n';
-import { Banner, Button, Field, LiveRegion } from '@dop/ui';
+import { Banner, Button, Field, LiveRegion, PageShell } from '@dop/ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -148,6 +148,7 @@ export function SettingsPage() {
   const tenant = useTenant();
   const isOwner = useMe().data?.currentRole === 'owner';
   const limited = isLimited(tenant.data?.status);
+  const eyebrow = usePageEyebrow('tenant');
   return (
     <TabPanel description={t('settings.description')}>
       <QueryView q={tenant} skeleton="form">

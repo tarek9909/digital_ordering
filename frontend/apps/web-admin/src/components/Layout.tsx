@@ -200,4 +200,82 @@ export function Layout() {
       {!isSupport && <LegalGate />}
     </>
   );
+
+  const footer = (
+    <div className="flex gap-2">
+      <Button variant="ghost" className="shrink-0 px-3" onClick={() => switchLang(lng === 'ar' ? 'en' : 'ar')} lang={lng === 'ar' ? 'en' : 'ar'}>
+        {lng === 'ar' ? 'English' : 'العربية'}
+      </Button>
+      <Button variant="secondary" className="flex-1 px-3 whitespace-nowrap" onClick={() => void signOut(isSupport)}>
+        {isSupport ? t('nav.leaveSupport') : t('common:signOut')}
+      </Button>
+    </div>
+  );
+
+  const nav = (
+    <>
+      <VenuePicker enabled={pickVenue} className="hidden px-1 pt-1 lg:flex" />
+      {groups.map((g) => (
+        <NavGroup key={g.group} label={t(`nav.groups.${g.group}`)}>
+          {g.items.map((n) => (
+            <NavLink key={n.section} to={n.to} end={n.to === '/'} onClick={() => setMenuOpen(false)} className={({ isActive }) => navItemClass(isActive)}>
+              {({ isActive }) => (
+                <>
+                  <NavMarker active={isActive} />
+                  {t(`nav.${n.section}`)}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </NavGroup>
+      ))}
+    </>
+  );
+
+  return (
+    <>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-input focus:bg-surface focus:p-3 focus:shadow-card">
+        {t('nav.skip')}
+      </a>
+      <SidebarShell
+        title={title}
+        nav={nav}
+        account={account}
+        footer={footer}
+        navLabel={t('nav.label')}
+        menuOpen={menuOpen}
+        onMenu={() => setMenuOpen((o) => !o)}
+        menuText={{ open: t('nav.menu'), close: t('nav.closeMenu') }}
+        top={
+          <div className="print:hidden">
+            {/* On small screens the sidebar is a top bar, so the venue switch sits above the page. */}
+            <VenuePicker enabled={pickVenue} className="border-b border-line bg-surface px-4 py-3 lg:hidden" />
+            <Banners />
+          </div>
+        }
+      >
+        {/* Pages render their own <main> through PageShell. */}
+        <div id="main" tabIndex={-1} className="outline-none">
+          {tenant.isLoading ? (
+            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+              <LoadingShape kind="tiles" />
+            </div>
+          ) : allowed ? (
+            <Outlet />
+          ) : limited && section === 'home' ? (
+            <Navigate to={`/${homeSection(status, role)}`} replace />
+          ) : limited ? (
+            <LimitedAccess />
+          ) : (
+            <PageShell title={t(`nav.${section}`)}>
+              <p role="alert" className="font-semibold text-danger">
+                {t('limited.notAllowed')}
+              </p>
+            </PageShell>
+          )}
+        </div>
+      </SidebarShell>
+      {!isSupport && <LegalGate />}
+    </>
+  );
 }

@@ -419,6 +419,7 @@ export function DisplaysPage() {
     enabled: Boolean(venueId),
     refetchInterval: 30_000,
   });
+  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
     <TabPanel

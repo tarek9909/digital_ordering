@@ -852,5 +852,14 @@
       "reach": "Alerts that reach customers without an app",
       "team": "Your team, screens and QR posters in one place"
     }
+  },
+  "auth": {
+    "eyebrow": "Restaurant admin",
+    "headline": "Call every order the moment it is ready.",
+    "points": {
+      "live": "Live tickets for every venue and counter",
+      "reach": "Alerts that reach customers without an app",
+      "team": "Your team, screens and QR posters in one place"
+    }
   }
 }

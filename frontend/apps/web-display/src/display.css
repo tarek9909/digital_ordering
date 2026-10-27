@@ -183,11 +183,17 @@
 @media (prefers-reduced-motion: reduce) {
   .prep-track {
     animation: none;
+    opacity: 0;
   }
   .live-dot.is-live::after {
     animation: none;
     opacity: 0;
   }
+}
+
+/* The code field shows focus with its ember border and halo; the global outline would double it. */
+.pair-code:focus-visible {
+  outline: none;
 }
 
 /* The code field shows focus with its ember border and halo; the global outline would double it. */

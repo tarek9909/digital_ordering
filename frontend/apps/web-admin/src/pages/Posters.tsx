@@ -1,5 +1,5 @@
 import { useTranslation } from '@dop/i18n';
-import { Select } from '@dop/ui';
+import { PageShell, Select } from '@dop/ui';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { TabPanel, Section, SectionTabs, linkClass } from '../components/common';
@@ -14,6 +14,7 @@ export function PostersPage() {
   const venue = useVenue(venueId).data;
   const [locale, setLocale] = useState<string>('ar');
   const locales = venue?.locales ?? ['ar', 'en'];
+  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
     <TabPanel description={t('posters.description')}>

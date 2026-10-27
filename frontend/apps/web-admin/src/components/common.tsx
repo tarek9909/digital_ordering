@@ -3,7 +3,33 @@ import { Banner, Button, Modal, Pill, Skeleton, Spinner } from '@dop/ui';
 import { createContext, useContext, useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from 'react';
 import { Link, useLocation } from 'react-router';
 import { errorText, isCode } from '../lib/errors';
-import { useRole } from '../lib/me';
+import { useRole, useTenant } from '../lib/me';
+import { useCurrentVenueId, useVenues } from '../lib/venue';
+
+// Local building blocks of the restaurant admin, on top of @dop/ui (brand: Ember console patterns).
+
+const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
+
+type LinkVariant = 'primary' | 'secondary' | 'ink' | 'ghost' | 'quiet';
+const LINK_VARIANTS: Record<LinkVariant, string> = {
+  primary: 'bg-primary text-on-primary shadow-button hover:bg-primary-hover hover:-translate-y-px',
+  ink: 'bg-ink text-white shadow-button hover:bg-ink-2 hover:-translate-y-px',
+  secondary: 'border border-line bg-surface text-ink hover:border-ink-2/30 hover:bg-canvas',
+  ghost: 'text-ink hover:bg-canvas',
+  // On a coloured banner: a white chip.
+  quiet: 'bg-surface/80 text-ink hover:bg-surface',
+};
+
+/** A link that looks like a Button (same pill, sizes and press feedback). */
+export const linkClass = (variant: LinkVariant = 'secondary', className?: string) =>
+  cx(
+    'inline-flex min-h-12 items-center justify-center gap-2 rounded-control px-4 font-semibold whitespace-nowrap transition-[background-color,border-color,transform] duration-150 active:scale-[.98]',
+    LINK_VARIANTS[variant],
+    className,
+  );
+
+/** An inline text link (underline that warms on hover). */
+export const textLinkClass = 'inline-flex min-h-12 items-center font-semibold text-ink underline decoration-primary/40 underline-offset-4 hover:text-primary-hover hover:decoration-primary';
 
 // Local building blocks of the restaurant admin, on top of @dop/ui. Pages sit on the canvas as flat, bordered panels;
 // the one raised surface on a page is its headline figures (brand: Ember).

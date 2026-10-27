@@ -145,6 +145,7 @@ export function StaffAccessPage() {
       void qc.invalidateQueries({ queryKey: ['devices', venueId] });
     },
   });
+  const eyebrow = usePageEyebrow('venue');
   if (!venueId) return null;
   return (
     <TabPanel description={t('staff.description')}>

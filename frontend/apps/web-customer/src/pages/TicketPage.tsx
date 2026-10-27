@@ -1,7 +1,7 @@
 import type { PublicTicket } from '@dop/contracts';
 import { ApiError, applyBrand, prefetchChime, type DopSocket } from '@dop/client-sdk';
 import { i18next, useTranslation } from '@dop/i18n';
-import { Banner, Button, LiveRegion, Spinner } from '@dop/ui';
+import { Banner, Button, Card, LiveRegion, Spinner } from '@dop/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from '../lib/router';
